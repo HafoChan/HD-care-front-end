@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Button,
   Typography,
@@ -14,6 +14,7 @@ import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import images from "../../constants/images";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import BookingForm from "./BookingForm";
+import axiosClient from "../../components/api/axiosClient";
 
 const HomePage = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
@@ -22,6 +23,11 @@ const HomePage = () => {
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
   };
+
+  // useEffect(async ()=>{
+  //   const response = await axiosClient.get("patient/my-info")
+  //   console.log(response.result)
+  // },[])
 
   const handleBookingClick = () => {
     setBookingFormOpen(true);

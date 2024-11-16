@@ -6,20 +6,69 @@ import {
   Typography,
   Box,
   Paper,
+  Snackbar
 } from "@mui/material";
-import { Link } from "react-router-dom";
+import { json, Link } from "react-router-dom";
 import "../../css/user/login_register.css";
+import { useNavigate } from 'react-router-dom';
 import images from "../../constants/images";
+import axiosClient from "../../components/api/axiosClient";
 
 const Login = () => {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Xử lý đăng nhập ở đây
-    console.log("Đăng nhập:", { email, password });
+  const [snackBarOpen, setSnackBarOpen] = useState(false);
+  const [snackBarMessage, setSnackBarMessage] = useState("");
+  const [snackType, setSnackType] = useState("error");
+  const navigate = useNavigate();
+  const handleCloseSnackBar = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setSnackBarOpen(false);
   };
+
+  const showError = (message) => {
+    setSnackType("error");
+    setSnackBarMessage(message);
+    setSnackBarOpen(true);
+  };
+
+  const showSuccess = (message) => {
+    setSnackType("success");
+    setSnackBarMessage(message);
+    setSnackBarOpen(true);
+  };
+
+  const handleSubmit = async (e) => {
+    e.preventDefault()
+    console.log(email+password)
+    const data = await axiosClient.post(
+      "auth/login",{username : email,password : password}
+    );
+    try {
+      if (data.code != 1000)
+      {
+        console.log(data.message)
+        throw new Error(data.message)
+      }
+      setSnackBarMessage(data.message)
+      showSuccess(snackBarMessage)
+
+    } catch (error) {
+      setSnackBarMessage(error.message)
+      showError(snackBarMessage)
+    }
+    console.log(data.result.token)
+
+    
+    localStorage.setItem("accessToken",data.result.accessToken)
+    localStorage.setItem("refreshToken",data.result.refreshToken)
+    navigate("/home")
+
+  }
 
   return (
     <div className="login-container bg-login-register">
