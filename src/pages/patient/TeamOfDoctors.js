@@ -33,12 +33,15 @@ const TeamOfDoctors = () => {
     setSelectedDates((prev) => ({ ...prev, [doctorId]: date })); // Cập nhật ngày cho bác sĩ tương ứng
   };
 
-  const fetchDoctors = async () => {
-    doctor.filterDoctor("Đạt Tian", "Quận 1", "TP.HCM", 1);
-  };
-
   useEffect(() => {
-    setDoctors(fetchDoctors()); // Gọi hàm fetchDoctors khi component được mount
+    
+  const fetchDoctors = async () => {
+    const response = doctor.filterDoctor(1).then((result) => {
+      console.log(result);
+      setDoctors(result.result);
+      });
+    };
+    fetchDoctors()
   }, []);
 
   return (
@@ -157,7 +160,7 @@ const TeamOfDoctors = () => {
       </Box>
 
       <Box container spacing={3} maxWidth={"1200px"} align="center">
-        {doctors.map((doctor) => (
+        {doctor && doctors.map((doctor) => (
           <Box
             item
             xs={12}
@@ -201,7 +204,7 @@ const TeamOfDoctors = () => {
                 >
                   LỊCH KHÁM
                 </Typography>
-                {doctor.availableTimes.map((time, index) => (
+                {/* {doctor.availableTimes.map((time, index) => (
                   <Button
                     key={index}
                     variant="outlined"
@@ -209,7 +212,7 @@ const TeamOfDoctors = () => {
                   >
                     {time}
                   </Button>
-                ))}
+                ))} */}
               </Box>
 
               <Box align="left" width={"230px"}>

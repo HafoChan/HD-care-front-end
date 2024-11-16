@@ -10,7 +10,7 @@ export const doctor = {
     }
   },
 
-  filterDoctor(name, district, city, page) {
+  filterDoctor(page, name, district, city) {
     try {
       const params = {
         ...(name && { name }),
@@ -25,7 +25,7 @@ export const doctor = {
     } catch (error) {
       console.error("Error:", error);
     }
-  },
+},
 
   getDoctorById(id) {
     try {
