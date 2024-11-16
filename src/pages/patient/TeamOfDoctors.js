@@ -1,5 +1,4 @@
 import React, { useState, useEffect } from "react";
-import axios from "axios";
 import {
   Typography,
   Paper,
@@ -24,10 +23,9 @@ const TeamOfDoctors = () => {
   const [doctorSelected, setDoctorSelected] = useState();
   const [selectedDates, setSelectedDates] = useState({});
 
-  const [isBookingFormOpen, setIsBookingFormOpen] = useState(false); // Thêm state để quản lý hiển thị BookingForm
-  const [selectedSchedule, setSelectedSchedule] = useState(null); // Thêm state để lưu thông tin lịch đã chọn
+  const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
+  const [selectedSchedule, setSelectedSchedule] = useState(null);
 
-  // const [schedules, setSchedules] = useState([]);
   const [selectedDateClick, setSelectedDateClick] = useState();
 
   const handleTabClick = (tab) => {
@@ -39,7 +37,7 @@ const TeamOfDoctors = () => {
   maxDate.setDate(today.getDate() + 7);
 
   const handleDateChange = async (doctorId, date) => {
-    setSelectedDates((prev) => ({ ...prev, [doctorId]: date })); // Cập nhật ngày đã chọn cho bác sĩ
+    setSelectedDates((prev) => ({ ...prev, [doctorId]: date }));
 
     try {
       const response = await schedule.getScheduleByDoctorAndDate(
@@ -65,10 +63,18 @@ const TeamOfDoctors = () => {
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      const response = doctor.filterDoctor(1).then((data) => {
-        console.log(data);
-        setDoctors(data.result);
+      const response = await doctor.filterDoctor(1);
+      console.log(response);
+      setDoctors(response.result);
+
+      // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
+      const initialSelectedDates = {};
+      response.result.forEach((doctor) => {
+        initialSelectedDates[doctor.id] = new Date()
+          .toISOString()
+          .split("T")[0];
       });
+      setSelectedDates(initialSelectedDates);
     };
     fetchDoctors();
   }, []);
@@ -78,9 +84,9 @@ const TeamOfDoctors = () => {
       (schedule) => schedule.id === scheduleId
     ); // Tìm lịch đã chọn
     setSelectedDateClick(date);
-    setDoctorSelected(doctor); // Lưu bác sĩ đã chọn
-    setSelectedSchedule(selectedSchedule); // Lưu lịch đã chọn
-    setIsBookingFormOpen(true); // Mở BookingForm
+    setDoctorSelected(doctor);
+    setSelectedSchedule(selectedSchedule);
+    setIsBookingFormOpen(true);
   };
 
   return (
@@ -255,7 +261,7 @@ const TeamOfDoctors = () => {
                           doctor,
                           schedule.id
                         )
-                      } // Cập nhật để truyền đúng tham số
+                      }
                     >
                       {schedule.start} - {schedule.end}
                     </Button>
@@ -277,10 +283,10 @@ const TeamOfDoctors = () => {
                     value={
                       selectedDates[doctor.id] ||
                       today.toISOString().split("T")[0]
-                    } // Hiển thị ngày đã chọn hoặc ngày hiện tại
+                    }
                     onChange={(e) =>
                       handleDateChange(doctor.id, e.target.value)
-                    } // Cập nhật ngày cho bác sĩ tương ứng
+                    }
                   />
 
                   <Box
