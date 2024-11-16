@@ -34,7 +34,13 @@ const TeamOfDoctors = () => {
   };
 
   const fetchDoctors = async () => {
-    doctor.filterDoctor("Đạt Tian", "Quận 1", "TP.HCM", 1);
+    try {
+      const response = await axios.get("http://localhost:8082/api/v1/doctors"); // Thay đổi URL theo API của bạn
+      console.log("Doctors data:", response.data); // Log dữ liệu trả về
+      setDoctors(response.data); // Cập nhật danh sách bác sĩ từ phản hồi
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
   };
 
   useEffect(() => {
