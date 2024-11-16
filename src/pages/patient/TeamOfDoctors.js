@@ -1,4 +1,5 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
+import axios from "axios";
 import {
   Typography,
   Paper,
@@ -13,39 +14,12 @@ import {
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SearchIcon from "@mui/icons-material/Search";
-
-const doctors = [
-  {
-    id: 1,
-    name: "Tiến sĩ, Bác sĩ chuyên khoa II Lê Quốc Việt",
-    experience:
-      "Hơn 30 năm kinh nghiệm khám và điều trị các bệnh nội cơ xương khớp.",
-    location: "Hà Nội",
-    availableTimes: ["16:30 - 17:00", "17:00 - 17:30", "17:30 - 18:00"],
-    price: "350.000đ",
-  },
-  {
-    id: 2,
-    name: "BSCKII Dương Minh Trí",
-    experience:
-      "Experience: Bác sĩ có 25 năm kinh nghiệm về bệnh lý liên quan cột sống Hiện là Trưởng khoa Phẫu thuật Cột sống, Bệnh viện Việt Đức Bác sĩ nhận khám từ 7 tuổi trở lên",
-    location: "Thành phố Hồ Chí Minh",
-    availableTimes: [
-      "18:30 - 19:00",
-      "19:00 - 19:30",
-      "19:00 - 19:30",
-      "19:00 - 19:30",
-      "19:00 - 19:30",
-      "19:00 - 19:30",
-      "19:00 - 19:30",
-      "19:00 - 19:30",
-    ],
-    price: "300.000đ - 400.000đ",
-  },
-];
+import { doctor } from "../../api/doctor";
 
 const TeamOfDoctors = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDates, setSelectedDates] = useState({});
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
@@ -55,11 +29,17 @@ const TeamOfDoctors = () => {
   const maxDate = new Date();
   maxDate.setDate(today.getDate() + 7);
 
-  const [selectedDates, setSelectedDates] = useState({}); // State để lưu ngày đã chọn cho từng bác sĩ
-
   const handleDateChange = (doctorId, date) => {
     setSelectedDates((prev) => ({ ...prev, [doctorId]: date })); // Cập nhật ngày cho bác sĩ tương ứng
   };
+
+  const fetchDoctors = async () => {
+    doctor.filterDoctor("Đạt Tian", "Quận 1", "TP.HCM", 1);
+  };
+
+  useEffect(() => {
+    setDoctors(fetchDoctors()); // Gọi hàm fetchDoctors khi component được mount
+  }, []);
 
   return (
     <Box align="center" backgroundColor="#c1e3ff" sx={{ minHeight: "100vh" }}>
@@ -196,7 +176,7 @@ const TeamOfDoctors = () => {
               }}
             >
               <img
-                src="https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRq5aoPDi_WOhlc3vAAk0SE_7bkMiyO8PC9Ag&s"
+                src={doctor.imageUrl || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
                 style={{
                   width: "150px",
                   height: "180px",
