@@ -33,18 +33,14 @@ const TeamOfDoctors = () => {
     setSelectedDates((prev) => ({ ...prev, [doctorId]: date })); // Cập nhật ngày cho bác sĩ tương ứng
   };
 
-  const fetchDoctors = async () => {
-    try {
-      const response = await axios.get("http://localhost:8082/api/v1/doctors"); // Thay đổi URL theo API của bạn
-      console.log("Doctors data:", response.data); // Log dữ liệu trả về
-      setDoctors(response.data); // Cập nhật danh sách bác sĩ từ phản hồi
-    } catch (error) {
-      console.error("Error fetching doctors:", error);
-    }
-  };
-
   useEffect(() => {
-    setDoctors(fetchDoctors()); // Gọi hàm fetchDoctors khi component được mount
+    const fetchDoctors = async () => {
+      const response = doctor.filterDoctor(1).then((result) => {
+        console.log(result);
+        setDoctors(result.result);
+      });
+    };
+    fetchDoctors();
   }, []);
 
   return (
@@ -163,51 +159,52 @@ const TeamOfDoctors = () => {
       </Box>
 
       <Box container spacing={3} maxWidth={"1200px"} align="center">
-        {doctors.map((doctor) => (
-          <Box
-            item
-            xs={12}
-            sm={6}
-            md={4}
-            key={doctor.id}
-            maxWidth={"1200px"}
-            padding={"24px"}
-          >
-            <Paper
-              elevation={3}
-              style={{
-                display: "flex",
-                padding: "20px",
-                justifyContent: "space-around",
-              }}
+        {doctor &&
+          doctors.map((doctor) => (
+            <Box
+              item
+              xs={12}
+              sm={6}
+              md={4}
+              key={doctor.id}
+              maxWidth={"1200px"}
+              padding={"24px"}
             >
-              <img
-                src={doctor.imageUrl || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
+              <Paper
+                elevation={3}
                 style={{
-                  width: "150px",
-                  height: "180px",
-                  objectFit: "cover",
+                  display: "flex",
+                  padding: "20px",
+                  justifyContent: "space-around",
                 }}
-              />
-              <Box align="left" width={"600px"} paddingX={"10px"}>
-                <Typography
-                  variant="h6"
-                  fontWeight={"bold"}
-                  style={{ margin: "2px 0" }}
-                >
-                  {doctor.name}
-                </Typography>
-                <Typography variant="body2" style={{ margin: "2px 0" }}>
-                  {doctor.experience}
-                </Typography>
-                <Typography
-                  variant="subtitle1"
-                  fontWeight={"bold"}
-                  style={{ margin: "2px 0" }}
-                >
-                  LỊCH KHÁM
-                </Typography>
-                {doctor.availableTimes.map((time, index) => (
+              >
+                <img
+                  src={doctor.imageUrl || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
+                  style={{
+                    width: "150px",
+                    height: "180px",
+                    objectFit: "cover",
+                  }}
+                />
+                <Box align="left" width={"600px"} paddingX={"10px"}>
+                  <Typography
+                    variant="h6"
+                    fontWeight={"bold"}
+                    style={{ margin: "2px 0" }}
+                  >
+                    {doctor.name}
+                  </Typography>
+                  <Typography variant="body2" style={{ margin: "2px 0" }}>
+                    {doctor.experience}
+                  </Typography>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={"bold"}
+                    style={{ margin: "2px 0" }}
+                  >
+                    LỊCH KHÁM
+                  </Typography>
+                  {/* {doctor.availableTimes.map((time, index) => (
                   <Button
                     key={index}
                     variant="outlined"
@@ -215,59 +212,61 @@ const TeamOfDoctors = () => {
                   >
                     {time}
                   </Button>
-                ))}
-              </Box>
-
-              <Box align="left" width={"230px"}>
-                <TextField
-                  label="Chọn ngày khám"
-                  type="date"
-                  InputLabelProps={{
-                    shrink: true,
-                  }}
-                  style={{ marginTop: "20px" }}
-                  inputProps={{
-                    min: today.toISOString().split("T")[0],
-                    max: maxDate.toISOString().split("T")[0],
-                  }}
-                  value={
-                    selectedDates[doctor.id] ||
-                    today.toISOString().split("T")[0]
-                  } // Hiển thị ngày đã chọn hoặc ngày hiện tại
-                  onChange={(e) => handleDateChange(doctor.id, e.target.value)} // Cập nhật ngày cho bác sĩ tương ứng
-                />
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    alignItems: "center",
-                    mt: 1,
-                    marginY: 2,
-                  }}
-                >
-                  <LocationOnIcon fontSize="small" />
-                  <Typography
-                    variant="body2"
-                    fontWeight={"bold"}
-                    style={{ margin: "2px 0" }}
-                  >
-                    {doctor.location}
-                  </Typography>
+                ))} */}
                 </Box>
 
-                <Typography
-                  variant="body2"
-                  color="#ff9c00"
-                  fontWeight={"bold"}
-                  style={{ margin: "2px 4px" }}
-                >
-                  <span style={{ color: "#000000" }}>Giá khám:</span>{" "}
-                  {doctor.price}
-                </Typography>
-              </Box>
-            </Paper>
-          </Box>
-        ))}
+                <Box align="left" width={"230px"}>
+                  <TextField
+                    label="Chọn ngày khám"
+                    type="date"
+                    InputLabelProps={{
+                      shrink: true,
+                    }}
+                    style={{ marginTop: "20px" }}
+                    inputProps={{
+                      min: today.toISOString().split("T")[0],
+                      max: maxDate.toISOString().split("T")[0],
+                    }}
+                    value={
+                      selectedDates[doctor.id] ||
+                      today.toISOString().split("T")[0]
+                    } // Hiển thị ngày đã chọn hoặc ngày hiện tại
+                    onChange={(e) =>
+                      handleDateChange(doctor.id, e.target.value)
+                    } // Cập nhật ngày cho bác sĩ tương ứng
+                  />
+
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mt: 1,
+                      marginY: 2,
+                    }}
+                  >
+                    <LocationOnIcon fontSize="small" />
+                    <Typography
+                      variant="body2"
+                      fontWeight={"bold"}
+                      style={{ margin: "2px 0" }}
+                    >
+                      {doctor.location}
+                    </Typography>
+                  </Box>
+
+                  <Typography
+                    variant="body2"
+                    color="#ff9c00"
+                    fontWeight={"bold"}
+                    style={{ margin: "2px 4px" }}
+                  >
+                    <span style={{ color: "#000000" }}>Giá khám:</span>{" "}
+                    {doctor.price}
+                  </Typography>
+                </Box>
+              </Paper>
+            </Box>
+          ))}
       </Box>
     </Box>
   );
