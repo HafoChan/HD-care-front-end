@@ -25,12 +25,12 @@ export const doctor = {
     } catch (error) {
       console.error("Error:", error);
     }
-},
+  },
 
   getDoctorById(id) {
     try {
       const response = axiosInstance.get(`/doctor/${id}`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error:", error);
     }

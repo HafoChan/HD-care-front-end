@@ -12,25 +12,10 @@ import {
   RadioGroup,
   FormControlLabel,
   Radio,
+  Avatar,
 } from "@mui/material";
 
-const BookingForm = ({ open, onClose }) => {
-  const [selectedDate, setSelectedDate] = useState(
-    new Date().toISOString().split("T")[0]
-  );
-  const [startTime, setStartTime] = useState("08:00");
-  const [endTime, setEndTime] = useState("09:00");
-
-  const handleStartTimeChange = (e) => {
-    const newStartTime = e.target.value;
-    setStartTime(newStartTime);
-    const [hours, minutes] = newStartTime.split(":").map(Number);
-    const newEndTime = new Date(0, 0, 0, hours + 1, minutes)
-      .toTimeString()
-      .slice(0, 5);
-    setEndTime(newEndTime);
-  };
-
+const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md">
       <DialogContent
@@ -49,6 +34,32 @@ const BookingForm = ({ open, onClose }) => {
         >
           ĐĂNG KÝ LỊCH KHÁM
         </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            gap: 2,
+            mb: 4,
+          }}
+        >
+          {doctor?.avatar != null ? (
+            <Avatar
+              alt="Avatar"
+              src={doctor?.avatar}
+              sx={{ width: 56, height: 56 }}
+            />
+          ) : null}
+
+          <Box>
+            <Typography variant="h6" fontWeight={"bold"}>
+              {doctor?.name}
+            </Typography>
+            <Typography>
+              {doctor?.district} {doctor?.city}
+            </Typography>
+          </Box>
+        </Box>
         <Box
           component="form"
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
@@ -75,16 +86,10 @@ const BookingForm = ({ open, onClose }) => {
             label="Ngày"
             type="date"
             fullWidth
-            InputLabelProps={{ shrink: true }} // Thêm thuộc tính này để nhãn không bị che
+            InputLabelProps={{ shrink: true }}
             InputProps={{
-              inputProps: {
-                min: new Date().toISOString().split("T")[0], // Ngày hiện tại
-                max: new Date(new Date().setDate(new Date().getDate() + 7))
-                  .toISOString()
-                  .split("T")[0], // Ngày tối đa là 7 ngày sau
-              },
-              value: selectedDate, // Sử dụng state để quản lý giá trị
-              onChange: (e) => setSelectedDate(e.target.value), // Cập nhật state khi chọn ngày
+              value: selectedDate,
+              readOnly: true,
             }}
             required
           />
@@ -92,13 +97,10 @@ const BookingForm = ({ open, onClose }) => {
             label="Giờ bắt đầu"
             type="time"
             fullWidth
-            InputLabelProps={{ shrink: true }} // Thêm thuộc tính này để nhãn không bị che
+            InputLabelProps={{ shrink: true }}
             InputProps={{
-              inputProps: {
-                step: 3600, // Chỉ cho phép chọn theo giờ (3600 giây)
-              },
-              value: startTime, // Sử dụng state để quản lý giá trị
-              onChange: handleStartTimeChange, // Cập nhật state khi chọn giờ bắt đầu
+              value: schedule?.start,
+              readOnly: true,
             }}
             required
           />
@@ -108,10 +110,7 @@ const BookingForm = ({ open, onClose }) => {
             fullWidth
             InputLabelProps={{ shrink: true }} // Thêm thuộc tính này để nhãn không bị che
             InputProps={{
-              inputProps: {
-                step: 3600, // Chỉ cho phép chọn theo giờ (3600 giây)
-              },
-              value: endTime, // Sử dụng state để quản lý giá trị
+              value: schedule?.end, // Sử dụng state để quản lý giá trị
               readOnly: true, // Không cho phép chỉnh sửa giờ kết thúc
             }}
             required

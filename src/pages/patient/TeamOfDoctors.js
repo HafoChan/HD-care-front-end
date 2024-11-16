@@ -15,11 +15,20 @@ import HeaderComponent from "../../components/patient/HeaderComponent";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import SearchIcon from "@mui/icons-material/Search";
 import { doctor } from "../../api/doctor";
+import { schedule } from "../../api/schedule";
+import BookingForm from "./BookingForm";
 
 const TeamOfDoctors = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [doctors, setDoctors] = useState([]);
+  const [doctorSelected, setDoctorSelected] = useState();
   const [selectedDates, setSelectedDates] = useState({});
+
+  const [isBookingFormOpen, setIsBookingFormOpen] = useState(false); // Thêm state để quản lý hiển thị BookingForm
+  const [selectedSchedule, setSelectedSchedule] = useState(null); // Thêm state để lưu thông tin lịch đã chọn
+
+  // const [schedules, setSchedules] = useState([]);
+  const [selectedDateClick, setSelectedDateClick] = useState();
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
@@ -29,19 +38,50 @@ const TeamOfDoctors = () => {
   const maxDate = new Date();
   maxDate.setDate(today.getDate() + 7);
 
-  const handleDateChange = (doctorId, date) => {
-    setSelectedDates((prev) => ({ ...prev, [doctorId]: date })); // Cập nhật ngày cho bác sĩ tương ứng
+  const handleDateChange = async (doctorId, date) => {
+    setSelectedDates((prev) => ({ ...prev, [doctorId]: date })); // Cập nhật ngày đã chọn cho bác sĩ
+
+    try {
+      const response = await schedule.getScheduleByDoctorAndDate(
+        doctorId,
+        date
+      );
+      if (response.code === 1000) {
+        const updatedSchedules = response.result; // Lịch mới từ API
+
+        // Tạo bản sao danh sách bác sĩ và chỉ cập nhật lịch của bác sĩ được chọn
+        setDoctors((prevDoctors) =>
+          prevDoctors.map((doctor) =>
+            doctor.id === doctorId
+              ? { ...doctor, schedules: updatedSchedules }
+              : doctor
+          )
+        );
+      }
+    } catch (error) {
+      console.error("Error fetching schedules:", error);
+    }
   };
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      const response = doctor.filterDoctor(1).then((result) => {
-        console.log(result);
-        setDoctors(result.result);
+      const response = doctor.filterDoctor(1).then((data) => {
+        console.log(data);
+        setDoctors(data.result);
       });
     };
     fetchDoctors();
   }, []);
+
+  const handleScheduleClick = (date, doctor, scheduleId) => {
+    const selectedSchedule = doctor.schedules.find(
+      (schedule) => schedule.id === scheduleId
+    ); // Tìm lịch đã chọn
+    setSelectedDateClick(date);
+    setDoctorSelected(doctor); // Lưu bác sĩ đã chọn
+    setSelectedSchedule(selectedSchedule); // Lưu lịch đã chọn
+    setIsBookingFormOpen(true); // Mở BookingForm
+  };
 
   return (
     <Box align="center" backgroundColor="#c1e3ff" sx={{ minHeight: "100vh" }}>
@@ -204,15 +244,22 @@ const TeamOfDoctors = () => {
                   >
                     LỊCH KHÁM
                   </Typography>
-                  {/* {doctor.availableTimes.map((time, index) => (
-                  <Button
-                    key={index}
-                    variant="outlined"
-                    style={{ margin: "5px" }}
-                  >
-                    {time}
-                  </Button>
-                ))} */}
+                  {doctor.schedules.map((schedule, index) => (
+                    <Button
+                      key={schedule.id}
+                      variant="outlined"
+                      style={{ margin: "5px" }}
+                      onClick={() =>
+                        handleScheduleClick(
+                          selectedDates[doctor.id],
+                          doctor,
+                          schedule.id
+                        )
+                      } // Cập nhật để truyền đúng tham số
+                    >
+                      {schedule.start} - {schedule.end}
+                    </Button>
+                  ))}
                 </Box>
 
                 <Box align="left" width={"230px"}>
@@ -250,7 +297,7 @@ const TeamOfDoctors = () => {
                       fontWeight={"bold"}
                       style={{ margin: "2px 0" }}
                     >
-                      {doctor.location}
+                      {doctor.district} - {doctor.city}
                     </Typography>
                   </Box>
 
@@ -268,6 +315,14 @@ const TeamOfDoctors = () => {
             </Box>
           ))}
       </Box>
+
+      <BookingForm
+        open={isBookingFormOpen}
+        onClose={() => setIsBookingFormOpen(false)}
+        doctor={doctorSelected}
+        schedule={selectedSchedule}
+        selectedDate={selectedDateClick}
+      />
     </Box>
   );
 };

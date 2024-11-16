@@ -1,7 +1,8 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import DoctorProfileComponent from "../../components/patient/DoctorProfileComponent";
 import AppointmentSchedulerComponent from "../../components/patient/AppointmentSchedulerComponent";
+import { doctor } from "../../api/doctor";
 import {
   Box,
   Card,
@@ -185,6 +186,20 @@ function App() {
     setSelectedTab(tab);
   };
 
+  const [doctorInfo, setDoctorInfo] = useState();
+
+  useEffect(() => {
+    const fetchDoctors = async () => {
+      const response = doctor
+        .getDoctorById("f6ac4c48-fc09-43ec-8eb0-a32da98560dc")
+        .then((data) => {
+          console.log(data);
+          setDoctorInfo(data.result);
+        });
+    };
+    fetchDoctors();
+  }, []);
+
   return (
     <Box width={"100%"} align="center">
       <Box maxWidth={"1200px"}>
@@ -196,7 +211,7 @@ function App() {
 
       <Box width={"100%"} backgroundColor="#1d8be4">
         <Box maxWidth={"1200px"} align="left">
-          <DoctorProfileComponent />
+          <DoctorProfileComponent doctorInfo={doctorInfo} />
         </Box>
       </Box>
 
@@ -221,7 +236,7 @@ function App() {
           >
             <CardContent sx={{ padding: "0px", color: "white" }}>
               <Typography variant="h5" fontWeight={"bold"} mb={4} mt={2}>
-                Trình Độ Chuyên Môn
+                {doctorInfo?.specialization}
               </Typography>
               <Box display={"flex"} gap={6} marginX={6}>
                 <Box
@@ -233,8 +248,7 @@ function App() {
                   }}
                 >
                   <Typography fontSize={"18px"} textAlign={"center"}>
-                    Tốt nghiệp Bác sĩ nội trú Chuyên khoa da liễu - Đại học Y
-                    Dược TP.HCM
+                    {doctorInfo?.experience}
                   </Typography>
                 </Box>
                 <Box
