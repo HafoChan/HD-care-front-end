@@ -6,13 +6,12 @@ import {
   Typography,
   Box,
   Paper,
-  Snackbar
 } from "@mui/material";
-import { json, Link } from "react-router-dom";
+import { Link } from "react-router-dom";
 import "../../css/user/login_register.css";
-import { useNavigate } from 'react-router-dom';
+import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
-import axiosClient from "../../components/api/axiosClient";
+import axiosClient from "../../api/axios-instance";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -43,32 +42,29 @@ const Login = () => {
   };
 
   const handleSubmit = async (e) => {
-    e.preventDefault()
-    console.log(email+password)
-    const data = await axiosClient.post(
-      "auth/login",{username : email,password : password}
-    );
+    e.preventDefault();
+    console.log(email + password);
+    const data = await axiosClient.post("auth/login", {
+      username: email,
+      password: password,
+    });
     try {
-      if (data.code != 1000)
-      {
-        console.log(data.message)
-        throw new Error(data.message)
+      if (data.code != 1000) {
+        console.log(data.message);
+        throw new Error(data.message);
       }
-      setSnackBarMessage(data.message)
-      showSuccess(snackBarMessage)
-
+      setSnackBarMessage(data.message);
+      showSuccess(snackBarMessage);
     } catch (error) {
-      setSnackBarMessage(error.message)
-      showError(snackBarMessage)
+      setSnackBarMessage(error.message);
+      showError(snackBarMessage);
     }
-    console.log(data.result.token)
+    console.log(data.result.token);
 
-    
-    localStorage.setItem("accessToken",data.result.accessToken)
-    localStorage.setItem("refreshToken",data.result.refreshToken)
-    navigate("/home")
-
-  }
+    localStorage.setItem("accessToken", data.result.accessToken);
+    localStorage.setItem("refreshToken", data.result.refreshToken);
+    navigate("/home");
+  };
 
   return (
     <div className="login-container bg-login-register">

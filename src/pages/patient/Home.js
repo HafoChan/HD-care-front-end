@@ -14,7 +14,7 @@ import PhoneIphoneIcon from "@mui/icons-material/PhoneIphone";
 import images from "../../constants/images";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import BookingForm from "./BookingForm";
-import axiosClient from "../../components/api/axiosClient";
+import axiosClient from "../../api/axios-instance";
 
 const HomePage = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");

@@ -13,6 +13,7 @@ import {
   Avatar,
   Rating,
 } from "@mui/material";
+import { schedule } from "../../api/schedule";
 
 const reviews = [
   {
@@ -187,11 +188,26 @@ function App() {
   };
 
   const [doctorInfo, setDoctorInfo] = useState();
+  const [doctorSchedule, setDoctorSchedule] = useState([]);
+  const today = new Date();
+  // Điều chỉnh thời gian theo múi giờ Việt Nam (UTC+7)
+  const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
+  const formattedDate = localDate.toISOString().split("T")[0];
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      const response = doctor
-        .getDoctorById("f6ac4c48-fc09-43ec-8eb0-a32da98560dc")
+      const response = schedule
+        .getScheduleByDoctorAndDate(
+          window.location.pathname.split("/")[2],
+          formattedDate
+        )
+        .then((data) => {
+          console.log(data);
+          setDoctorSchedule(data.result);
+        });
+
+      const response2 = doctor
+        .getDoctorById(window.location.pathname.split("/")[2])
         .then((data) => {
           console.log(data);
           setDoctorInfo(data.result);

@@ -1,15 +1,29 @@
 import React, { useState } from "react";
-import { TextField, Button, Container, Typography, Paper } from "@mui/material";
+import {
+  TextField,
+  Button,
+  Container,
+  Typography,
+  Paper,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+} from "@mui/material";
 import "../../css/user/login_register.css";
 
 const Register = () => {
   const [username, setUsername] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [name, setName] = useState("");
+  const [phone, setPhone] = useState("");
+  const [gender, setGender] = useState("");
 
   const handleSubmit = (e) => {
     e.preventDefault();
-    console.log("Đăng ký:", { username, email, password });
+    console.log("Đăng ký:", { username, email, password, name, phone, gender });
   };
 
   return (
@@ -45,6 +59,35 @@ const Register = () => {
               required
             />
             <TextField
+              label="Tên"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              required
+            />
+            <TextField
+              label="Số điện thoại"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              value={phone}
+              onChange={(e) => setPhone(e.target.value)}
+              required
+            />
+            <FormControl variant="outlined" fullWidth margin="normal" required>
+              <InputLabel>Giới tính</InputLabel>
+              <Select
+                value={gender}
+                onChange={(e) => setGender(e.target.value)}
+                label="Giới tính"
+              >
+                <MenuItem value="male">Nam</MenuItem>
+                <MenuItem value="female">Nữ</MenuItem>
+              </Select>
+            </FormControl>
+            <TextField
               label="Email"
               variant="outlined"
               fullWidth
@@ -64,7 +107,23 @@ const Register = () => {
               onChange={(e) => setPassword(e.target.value)}
               required
             />
-            <Button variant="contained" color="primary" type="submit" fullWidth>
+            <TextField
+              label="Xác nhận mật khẩu"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              type="password"
+              value={confirmPassword}
+              onChange={(e) => setConfirmPassword(e.target.value)}
+              required
+            />
+            <Button
+              variant="contained"
+              color="primary"
+              type="submit"
+              fullWidth
+              sx={{ mt: 3 }}
+            >
               Đăng ký
             </Button>
           </form>

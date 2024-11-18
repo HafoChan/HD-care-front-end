@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Typography,
   Paper,
@@ -18,6 +19,7 @@ import { schedule } from "../../api/schedule";
 import BookingForm from "./BookingForm";
 
 const TeamOfDoctors = () => {
+  const navigate = useNavigate();
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [doctors, setDoctors] = useState([]);
   const [doctorSelected, setDoctorSelected] = useState();
@@ -70,9 +72,11 @@ const TeamOfDoctors = () => {
       // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
       const initialSelectedDates = {};
       response.result.forEach((doctor) => {
-        initialSelectedDates[doctor.id] = new Date()
-          .toISOString()
-          .split("T")[0];
+        const today = new Date();
+        // Điều chỉnh thời gian theo múi giờ Việt Nam (UTC+7)
+        const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
+        const formattedDate = localDate.toISOString().split("T")[0];
+        initialSelectedDates[doctor.id] = formattedDate;
       });
       setSelectedDates(initialSelectedDates);
     };
@@ -87,6 +91,10 @@ const TeamOfDoctors = () => {
     setDoctorSelected(doctor);
     setSelectedSchedule(selectedSchedule);
     setIsBookingFormOpen(true);
+  };
+
+  const handleDoctorClick = (doctor) => {
+    navigate(`/doctor/${doctor.id}`); // Điều hướng đến trang DoctorDetail
   };
 
   return (
@@ -222,7 +230,9 @@ const TeamOfDoctors = () => {
                   display: "flex",
                   padding: "20px",
                   justifyContent: "space-around",
+                  cursor: "pointer",
                 }}
+                onClick={() => handleDoctorClick(doctor)}
               >
                 <img
                   src={doctor.imageUrl || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
@@ -284,9 +294,10 @@ const TeamOfDoctors = () => {
                       selectedDates[doctor.id] ||
                       today.toISOString().split("T")[0]
                     }
-                    onChange={(e) =>
-                      handleDateChange(doctor.id, e.target.value)
-                    }
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleDateChange(doctor.id, selectedDates[doctor.id]);
+                    }}
                   />
 
                   <Box
