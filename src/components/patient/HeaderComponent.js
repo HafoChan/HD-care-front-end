@@ -1,10 +1,25 @@
-import React from "react";
 import { AppBar, Toolbar, Button, Box, IconButton } from "@mui/material";
 import { Link } from "react-router-dom";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import images from "../../constants/images";
-
+import React, { useEffect, useState } from "react";
+import {remove,getImg,getRefreshToken,getAccessToken} from "../../service/localStorage"
 const HeaderComponent = ({ selectedTab, handleTabClick }) => {
+  const [userInfo, setUserInfo] = useState(""); // State to hold user info
+  const handleLogout = () =>{
+    remove()
+    localStorage.removeItem("userInfo")
+    setUserInfo("")
+  }
+  const getInfo = () =>{
+    const storedUserInfo = getImg();
+    if (storedUserInfo) {
+      setUserInfo(storedUserInfo); // Parse and set user info if it exists
+    }
+  }
+  useEffect(() => {
+   getInfo()
+  }, [userInfo]);
   return (
     <Box sx={{ backgroundColor: "white", paddingY: 2 }}>
       <AppBar
@@ -45,7 +60,12 @@ const HeaderComponent = ({ selectedTab, handleTabClick }) => {
             )}
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Link to="/login" style={{ textDecoration: "none" }}>
+            <Link to={userInfo ? "#" : "/login"} style={{ textDecoration: "none" }} onClick={userInfo ? handleLogout : undefined}>
+            {userInfo ? ( // Display user avatar if userInfo exists
+              <Box display="flex" alignItems="center" sx={{ mt: 0 }}>
+                <img src={userInfo} alt="User Icon" style={{ borderRadius: '50%', width: '40px', height: '40px', marginRight: '8px' }} />
+              </Box>
+            ) : ( // Show login button if userInfo does not exist
               <Button
                 variant="contained"
                 color="primary"
@@ -53,6 +73,7 @@ const HeaderComponent = ({ selectedTab, handleTabClick }) => {
               >
                 Đăng nhập
               </Button>
+            )}
             </Link>
             <IconButton color="primary">
               <NotificationsNoneIcon />

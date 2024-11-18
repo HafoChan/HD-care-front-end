@@ -5,6 +5,8 @@ import {
   Container,
   Typography,
   Box,
+  Snackbar,
+  Alert,
   Paper,
 } from "@mui/material";
 import { Link } from "react-router-dom";
@@ -12,6 +14,7 @@ import "../../css/user/login_register.css";
 import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
 import axiosClient from "../../api/axios-instance";
+import {remove,getImg,getRefreshToken,getAccessToken,setItem} from "../../service/localStorage"
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -53,21 +56,32 @@ const Login = () => {
         console.log(data.message);
         throw new Error(data.message);
       }
-      setSnackBarMessage(data.message);
-      showSuccess(snackBarMessage);
+      showSuccess(data.message);
+      setItem(data.result.accessToken,data.result.refreshToken,data.result.userResponse.img)
+      navigate("/home");
     } catch (error) {
-      setSnackBarMessage(error.message);
-      showError(snackBarMessage);
+      showError(error.message);
     }
-    console.log(data.result.token);
-
-    localStorage.setItem("accessToken", data.result.accessToken);
-    localStorage.setItem("refreshToken", data.result.refreshToken);
-    navigate("/home");
+  
   };
 
   return (
     <div className="login-container bg-login-register">
+       <Snackbar
+        open={snackBarOpen}
+        onClose={handleCloseSnackBar}
+        autoHideDuration={6000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackBar}
+          severity={snackType}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackBarMessage}
+        </Alert>
+      </Snackbar>
       <Container
         component="main"
         maxWidth="lg"
@@ -124,7 +138,7 @@ const Login = () => {
           </form>
           <Box display="flex" justifyContent="flex-end">
             <Box style={{ marginTop: "15px" }}>
-              <Link to="/register" style={{ textDecoration: "none" }}>
+              <Link to="/" style={{ textDecoration: "none" }}>
                 <Button color="primary">Don't have an account? Sign up</Button>
               </Link>
             </Box>

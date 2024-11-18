@@ -19,6 +19,14 @@ import axiosClient from "../../api/axios-instance";
 const HomePage = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [isBookingFormOpen, setBookingFormOpen] = useState(false); // State to handle form visibility
+  const [userInfo, setUserInfo] = useState(""); // State to hold user info
+
+  useEffect(() => {
+    const storedUserInfo = localStorage.getItem("userInfo");
+    if (storedUserInfo) {
+      setUserInfo(storedUserInfo); // Parse and set user info if it exists
+    }
+  }, []);
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
@@ -92,11 +100,12 @@ const HomePage = () => {
             <Button
               variant="contained"
               color="warning"
-              sx={{ mt: 4, borderRadius: "20px" }}
+              sx={{ mt: 4, borderRadius: "20px", display: userInfo ? 'none' : 'block' }} // Hide button if userInfo exists
               onClick={handleBookingClick} // Show form on button click
             >
               ĐẶT LỊCH KHÁM NGAY
             </Button>
+          
           </Box>
 
           <Box

@@ -1,12 +1,22 @@
-import { get, set } from "@/hooks/use-local-storage";
-
-
-export const setToken = (accessToken,refreshToken) =>{
-    set("accessToken",accessToken)
-    set("refreshToken",refreshToken)
+export const setItem = (accessToken,refreshToken,userImg) =>{
+    localStorage.setItem("accessToken",accessToken)
+    localStorage.setItem("refreshToken",refreshToken)
+    localStorage.setItem("userImg",userImg)
 }
 
+export const getAccessToken = () =>{
+    return localStorage.getItem("accessToken")
+}
 
-export const getToken = () =>{
-    get("accessToken")
+export const getRefreshToken = () =>{
+    return localStorage.getItem("refreshToken")
+}
+export const getImg = () =>{
+    return localStorage.getItem("userImg")
+}
+
+export const remove = () => {
+    localStorage.removeItem("accessToken")
+    localStorage.removeItem("refreshToken")
+    localStorage.removeItem("userImg")
 }

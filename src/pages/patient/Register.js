@@ -8,22 +8,86 @@ import {
   FormControl,
   InputLabel,
   Select,
+  Snackbar,
+  Alert,
   MenuItem,
 } from "@mui/material";
 import "../../css/user/login_register.css";
+import patientApi from "../../api/patient";
+import passwordService from "../../services/passwordService";
+import { useNavigate } from "react-router-dom";
 
 const Register = () => {
-  const [username, setUsername] = useState("");
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [confirmPassword, setConfirmPassword] = useState("");
-  const [name, setName] = useState("");
-  const [phone, setPhone] = useState("");
-  const [gender, setGender] = useState("");
+  const [userInfo, setUserInfo] = useState({
+    username: "",
+    email: "",
+    password: "",
+    name: "",
+    phone: "",
+    gender: "",
+  });
+  const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
+  const [snackBarOpen, setSnackBarOpen] = useState(false);
+  const [snackBarMessage, setSnackBarMessage] = useState("");
+  const [snackType, setSnackType] = useState("error");
+
+  const showError = (message) => {
+    setSnackType("error");
+    setSnackBarMessage(message);
+    setSnackBarOpen(true);
+  };
+
+  const showSuccess = (message) => {
+    setSnackType("success");
+    setSnackBarMessage(message);
+    setSnackBarOpen(true);
+  };
+
+  const [confirmPassword,setConfirmPassword] = useState("")
+
+  const handleChange = (e) => {
+    const { name, value } = e.target;
+    setUserInfo((prevInfo) => ({
+      ...prevInfo,
+      [name]: value,
+    }));
+  };
+
+  const handleCloseSnackBar = (event, reason) => {
+    if (reason === "clickaway") {
+      return;
+    }
+
+    setSnackBarOpen(false);
+  };
+
+  const handleSubmit =  (e) => {
     e.preventDefault();
-    console.log("Đăng ký:", { username, email, password, name, phone, gender });
+    try {
+      if (!passwordService.validatePasswords(userInfo.password, confirmPassword)) {
+        throw new Error("Mật khẩu xác nhận không đúng");
+      }
+      patientApi.create(userInfo)
+      .then((data) => {
+        console.log(data);
+        if (data.code == 1028)
+          {
+            showSuccess(data.message)
+            setTimeout(() => {
+              navigate("/login");
+            }, 2000);         
+          }
+          else throw new Error(data.message);
+        
+      })
+      .catch((error) => {
+        showError(error.message);
+        return;
+      });
+    } catch (error) {
+      showError(error.message);
+    }
   };
 
   return (
@@ -31,6 +95,21 @@ const Register = () => {
       className="login-container bg-login-register"
       style={{ display: "flex", height: "100vh" }}
     >
+      <Snackbar
+        open={snackBarOpen}
+        onClose={handleCloseSnackBar}
+        autoHideDuration={6000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackBar}
+          severity={snackType}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackBarMessage}
+        </Alert>
+      </Snackbar>
       <Container
         component="main"
         maxWidth="lg"
@@ -54,8 +133,9 @@ const Register = () => {
               variant="outlined"
               fullWidth
               margin="normal"
-              value={username}
-              onChange={(e) => setUsername(e.target.value)}
+              name="username"
+              value={userInfo.username}
+              onChange={handleChange}
               required
             />
             <TextField
@@ -63,8 +143,9 @@ const Register = () => {
               variant="outlined"
               fullWidth
               margin="normal"
-              value={name}
-              onChange={(e) => setName(e.target.value)}
+              name="name"
+              value={userInfo.name}
+              onChange={handleChange}
               required
             />
             <TextField
@@ -72,15 +153,17 @@ const Register = () => {
               variant="outlined"
               fullWidth
               margin="normal"
-              value={phone}
-              onChange={(e) => setPhone(e.target.value)}
+              name="phone"
+              value={userInfo.phone}
+              onChange={handleChange}
               required
             />
             <FormControl variant="outlined" fullWidth margin="normal" required>
               <InputLabel>Giới tính</InputLabel>
               <Select
-                value={gender}
-                onChange={(e) => setGender(e.target.value)}
+                name="gender"
+                value={userInfo.gender}
+                onChange={handleChange}
                 label="Giới tính"
               >
                 <MenuItem value="male">Nam</MenuItem>
@@ -93,8 +176,9 @@ const Register = () => {
               fullWidth
               margin="normal"
               type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
+              name="email"
+              value={userInfo.email}
+              onChange={handleChange}
               required
             />
             <TextField
@@ -103,8 +187,9 @@ const Register = () => {
               fullWidth
               margin="normal"
               type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
+              name="password"
+              value={userInfo.password}
+              onChange={handleChange}
               required
             />
             <TextField
@@ -113,6 +198,7 @@ const Register = () => {
               fullWidth
               margin="normal"
               type="password"
+              name="confirmPassword"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
               required
