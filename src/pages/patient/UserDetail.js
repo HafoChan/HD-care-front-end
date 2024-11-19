@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import {
   Box,
   Button,
@@ -15,12 +15,64 @@ import {
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
 import HeaderComponent from "../../components/patient/HeaderComponent";
+import patientApi from "../../api/patient";
+import UploadFiles from "../../components/patient/uploadFile";
+import {getImg, setImg} from "../../service/otherService/localStorage"
 
 function UserDetail() {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
+  const [isEditing, setIsEditing] = useState(false);
+  const [isSave, setIsSave] = useState(false);
+  const [refresh, setRefresh] = useState(false);
+
+  const [userInfo, setUserInfo] = useState({
+    name: "",
+    phone: "",
+    gender: "nam",
+    address: "",
+    img:getImg(),
+    dob:""
+  });
+
+const handleSubmit = async () => {
+    setIsSave(prev => !prev)
+    const response = await patientApi.updatePatient(userInfo)
+    setIsEditing(false)
+    setRefresh(prev => !prev)
+}
+
+ const getInfo = async () =>{
+      const response = await patientApi.getInfo();
+      setUserInfo(response.result)
+    }
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
+  };
+  useEffect(()=>{   
+    console.log("innn")
+    getInfo()
+    setImg(userInfo.img)
+  },[refresh])
+  
+  const handleInputChange = (e) => {
+    const { name, value } = e.target;
+    setUserInfo((prevUserInfo) => ({
+      ...prevUserInfo,
+      [name]: value,
+    }));
+  };
+
+  const handleEditClick = () => {
+    setIsEditing(true);
+  };
+
+  const handleFileUpload = (fileInfo) => {
+    console.log(fileInfo)
+    setUserInfo((prevUserInfo)=>({
+      ...prevUserInfo,
+      img : fileInfo[0]
+    }))    // You can update the state or perform any action with the uploaded file info here
   };
 
   return (
@@ -28,6 +80,7 @@ function UserDetail() {
       <HeaderComponent
         selectedTab={selectedTab}
         handleTabClick={handleTabClick}
+        userInfo={userInfo}
       />
 
       <Divider
@@ -38,7 +91,7 @@ function UserDetail() {
 
       <Container
         sx={{
-          display: "flex",
+          display: "flex",  
           flexDirection: "column",
           alignItems: "center",
           margin: "0 auto",
@@ -53,16 +106,12 @@ function UserDetail() {
             mt: 4,
           }}
         >
-          <Avatar
-            alt="User Avatar"
-            src="https://via.placeholder.com/100" // Đổi URL này thành ảnh của bạn
-            sx={{ width: 80, height: 80, marginRight: 4 }}
-          />
+          <UploadFiles askUrl = {handleFileUpload} />
           <Box align="left">
             <Typography variant="h6" fontWeight={"bold"} mb={0.5}>
-              TuanDat01
+              {userInfo?.username}
             </Typography>
-            <Typography color="textSecondary">tuandat12@gmail.com</Typography>
+            <Typography color="textSecondary">{userInfo?.email}</Typography>
           </Box>
         </Card>
 
@@ -85,50 +134,61 @@ function UserDetail() {
           <Box sx={{ flex: 2 }}>
             <TextField
               label="Họ tên"
-              defaultValue="Nguyễn Văn A"
+              name="name"
+              value={userInfo?.name}
+              onChange={handleInputChange}
               fullWidth
-              InputProps={{
-                readOnly: true,
-              }}
+              InputLabelProps={{ shrink: true }}
               sx={{ marginBottom: 6 }}
+              InputProps={{ readOnly: !isEditing }}
             />
             <TextField
               label="Birthday"
-              defaultValue="12/02/1990"
+              type="date"
+              name="dob"
+              value={userInfo?.dob ? userInfo.dob : ''}
+              onChange={handleInputChange}
               fullWidth
-              InputProps={{
-                readOnly: true,
-              }}
+              InputLabelProps={{ shrink: true }}
               sx={{ marginBottom: 2 }}
+              InputProps={{ readOnly: !isEditing }}
             />
             <Box display={"flex"} alignItems={"center"}>
               <Typography variant="subtitle1" mr={6}>
                 Giới tính
               </Typography>
-              <RadioGroup row defaultValue="Nam">
-                <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
-                <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
-              </RadioGroup>
+              <RadioGroup 
+       row 
+       name="gender" 
+       value={userInfo.gender || "nam"} // Sử dụng giá trị mặc định nếu là undefined
+       onChange={handleInputChange} 
+       disabled={!isEditing}
+   >
+       <FormControlLabel value="nam" control={<Radio />} label="Nam" />
+       <FormControlLabel value="nu" control={<Radio />} label="Nữ" />
+   </RadioGroup>
             </Box>
           </Box>
           <Box sx={{ flex: 3 }}>
             <TextField
               label="Địa chỉ"
-              defaultValue="Tòa nhà GP, 257 Giải Phóng, Phương Mai, Đống Đa, Hà Nội"
+              name="address"
+              value={userInfo?.address}
+              onChange={handleInputChange}
               fullWidth
-              InputProps={{
-                readOnly: true,
-              }}
+              InputLabelProps={{ shrink: true }}
               sx={{ marginBottom: 6 }}
+              InputProps={{ readOnly: !isEditing }}
             />
             <TextField
               label="Số điện thoại"
-              defaultValue="0123456789"
+              name="phone"
+              value={userInfo?.phone}
+              onChange={handleInputChange}
               fullWidth
-              InputProps={{
-                readOnly: true,
-              }}
+              InputLabelProps={{ shrink: true }}
               sx={{ marginBottom: 2 }}
+              InputProps={{ readOnly: !isEditing }}
             />
           </Box>
         </Box>
@@ -137,10 +197,10 @@ function UserDetail() {
           width={"100%"}
           sx={{ display: "flex", gap: 2, justifyContent: "end" }}
         >
-          <Button variant="contained" color="warning" startIcon={<EditIcon />}>
+          <Button variant="contained" color="warning" startIcon={<EditIcon />} onClick={handleEditClick}>
             Chỉnh sửa thông tin
           </Button>
-          <Button variant="contained" color="primary" startIcon={<SaveIcon />}>
+          <Button variant="contained" color="primary" startIcon={<SaveIcon />} onClick={handleSubmit}>
             Lưu
           </Button>
         </Box>

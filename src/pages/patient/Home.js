@@ -24,10 +24,6 @@ const HomePage = () => {
     setSelectedTab(tab);
   };
 
-  // useEffect(async ()=>{
-  //   const response = await axiosClient.get("patient/my-info")
-  //   console.log(response.result)
-  // },[])
 
   const handleBookingClick = () => {
     setBookingFormOpen(true);
@@ -48,7 +44,7 @@ const HomePage = () => {
       <Container sx={{ py: 5 }}>
         <Box display="flex" flexDirection="row" spacing={3} alignItems="center">
           {/* Văn bản */}
-          <Box item xs={12} md={6}>
+          <Box xs={12} md={6}>
             <Typography
               variant="h4"
               color="primary"

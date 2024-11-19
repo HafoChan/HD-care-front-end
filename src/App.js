@@ -13,14 +13,16 @@ import PatientManagement from "./pages/doctor/PatientManagement";
 import AppointmentManagement from "./pages/doctor/AppointmentManagement";
 import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
+import upload from "./service/otherService/upload";
+import UploadFiles from "./components/patient/uploadFile";
 
 const App = () => {
   return (
     <Router>
       <Routes>
         <Route path="/home" element={<Home />} />
-        <Route index element={<Login />} />
-        <Route path="/register" element={<Register />} />
+        <Route path="/login" element={<Login />} />
+        <Route index element={<Register />} />
         <Route path="/doctor/:id" element={<DoctorDetail />} />
         <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
         <Route path="/profile" element={<Profile />} />
@@ -49,6 +51,14 @@ const App = () => {
         />
       </Routes>
     </Router>
+    // <div className="container" style={{ width: "600px" }}>
+    //   <div style={{ margin: "20px" }}>
+    //     <h3>bezkoder.com</h3>
+    //     <h4>React upload Files</h4>
+    //   </div>
+
+    //   <UploadFiles />
+    // </div>
   );
 };
 
