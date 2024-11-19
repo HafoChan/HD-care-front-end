@@ -10,6 +10,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
+  Pagination, // Import Pagination từ Material-UI
 } from "@mui/material";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -24,15 +25,13 @@ const TeamOfDoctors = () => {
   const [doctors, setDoctors] = useState([]);
   const [doctorSelected, setDoctorSelected] = useState();
   const [selectedDates, setSelectedDates] = useState({});
-
   const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
-
   const [selectedDateClick, setSelectedDateClick] = useState();
 
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-  };
+  // Thêm trạng thái cho phân trang
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageMax, setPageMax] = useState(1);
 
   const today = new Date();
   const maxDate = new Date();
@@ -48,8 +47,6 @@ const TeamOfDoctors = () => {
       );
       if (response.code === 1000) {
         const updatedSchedules = response.result; // Lịch mới từ API
-
-        // Tạo bản sao danh sách bác sĩ và chỉ cập nhật lịch của bác sĩ được chọn
         setDoctors((prevDoctors) =>
           prevDoctors.map((doctor) =>
             doctor.id === doctorId
@@ -63,25 +60,26 @@ const TeamOfDoctors = () => {
     }
   };
 
-  useEffect(() => {
-    const fetchDoctors = async () => {
-      const response = await doctor.filterDoctor(1);
-      console.log(response);
-      setDoctors(response.result);
+  // Cập nhật hàm fetchDoctors để lấy dữ liệu cho trang hiện tại
+  const fetchDoctors = async (page) => {
+    const response = await doctor.filterDoctor(page);
+    console.log(response);
+    setDoctors(response.result.doctorResponse);
+    setPageMax(response.result.pageMax); // Cập nhật tổng số trang
 
-      // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
-      const initialSelectedDates = {};
-      response.result.forEach((doctor) => {
-        const today = new Date();
-        // Điều chỉnh thời gian theo múi giờ Việt Nam (UTC+7)
-        const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
-        const formattedDate = localDate.toISOString().split("T")[0];
-        initialSelectedDates[doctor.id] = formattedDate;
-      });
-      setSelectedDates(initialSelectedDates);
-    };
-    fetchDoctors();
-  }, []);
+    // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
+    const initialSelectedDates = {};
+    response.result.doctorResponse.forEach((doctor) => {
+      const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
+      const formattedDate = localDate.toISOString().split("T")[0];
+      initialSelectedDates[doctor.id] = formattedDate;
+    });
+    setSelectedDates(initialSelectedDates);
+  };
+
+  useEffect(() => {
+    fetchDoctors(currentPage); // Gọi hàm fetchDoctors với trang hiện tại
+  }, [currentPage]);
 
   const handleScheduleClick = (date, doctor, scheduleId) => {
     const selectedSchedule = doctor.schedules.find(
@@ -97,12 +95,21 @@ const TeamOfDoctors = () => {
     navigate(`/doctor/${doctor.id}`); // Điều hướng đến trang DoctorDetail
   };
 
+  // Hàm để chuyển trang
+  const handlePageChange = (event, newPage) => {
+    setCurrentPage(newPage);
+  };
+
   return (
-    <Box align="center" backgroundColor="#c1e3ff" sx={{ minHeight: "100vh" }}>
+    <Box
+      align="center"
+      backgroundColor="#c1e3ff"
+      sx={{ minHeight: "100vh", paddingBottom: 8 }}
+    >
       {/* Header */}
       <HeaderComponent
         selectedTab={selectedTab}
-        handleTabClick={handleTabClick}
+        handleTabClick={setSelectedTab}
       />
 
       <Box container maxWidth={"1200px"}>
@@ -115,6 +122,7 @@ const TeamOfDoctors = () => {
           maxWidth={"1200px"}
           paddingX={"24px"}
           marginY={"24px"}
+          marginBottom={"0px"}
           alignItems={"center"}
         >
           <Box>
@@ -212,9 +220,9 @@ const TeamOfDoctors = () => {
         </Box>
       </Box>
 
-      <Box container spacing={3} maxWidth={"1200px"} align="center">
-        {doctor &&
-          doctors.map((doctor) => (
+      <Box container maxWidth={"1200px"}>
+        <Box container spacing={3} maxWidth={"1200px"} align="center">
+          {doctors.map((doctor) => (
             <Box
               item
               xs={12}
@@ -235,7 +243,7 @@ const TeamOfDoctors = () => {
                 onClick={() => handleDoctorClick(doctor)}
               >
                 <img
-                  src={doctor.imageUrl || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
+                  src={doctor.imageUrl || "default_image_url"}
                   style={{
                     width: "150px",
                     height: "180px",
@@ -260,31 +268,29 @@ const TeamOfDoctors = () => {
                   >
                     LỊCH KHÁM
                   </Typography>
-                  {doctor.schedules.map((schedule, index) => (
+                  {doctor.schedules.map((schedule) => (
                     <Button
                       key={schedule.id}
                       variant="outlined"
                       style={{ margin: "5px" }}
-                      onClick={() =>
+                      onClick={(e) => {
+                        e.stopPropagation();
                         handleScheduleClick(
                           selectedDates[doctor.id],
                           doctor,
                           schedule.id
-                        )
-                      }
+                        );
+                      }}
                     >
                       {schedule.start} - {schedule.end}
                     </Button>
                   ))}
                 </Box>
-
                 <Box align="left" width={"230px"}>
                   <TextField
                     label="Chọn ngày khám"
                     type="date"
-                    InputLabelProps={{
-                      shrink: true,
-                    }}
+                    InputLabelProps={{ shrink: true }}
                     style={{ marginTop: "20px" }}
                     inputProps={{
                       min: today.toISOString().split("T")[0],
@@ -294,12 +300,12 @@ const TeamOfDoctors = () => {
                       selectedDates[doctor.id] ||
                       today.toISOString().split("T")[0]
                     }
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      handleDateChange(doctor.id, selectedDates[doctor.id]);
+                    onChange={(e) => {
+                      const newDate = e.target.value;
+                      handleDateChange(doctor.id, newDate);
                     }}
+                    onClick={(e) => e.stopPropagation()}
                   />
-
                   <Box
                     sx={{
                       display: "flex",
@@ -317,7 +323,6 @@ const TeamOfDoctors = () => {
                       {doctor.district} - {doctor.city}
                     </Typography>
                   </Box>
-
                   <Typography
                     variant="body2"
                     color="#ff9c00"
@@ -331,6 +336,17 @@ const TeamOfDoctors = () => {
               </Paper>
             </Box>
           ))}
+        </Box>
+
+        {/* Phân trang */}
+        <Box display="flex" justifyContent="center" marginTop={3}>
+          <Pagination
+            count={pageMax}
+            page={currentPage}
+            onChange={handlePageChange}
+            color="primary"
+          />
+        </Box>
       </Box>
 
       <BookingForm

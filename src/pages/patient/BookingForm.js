@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React from "react";
 import {
   Box,
   Button,
@@ -24,7 +24,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
           maxWidth: "1000px",
           maxHeight: "80vh",
           overflowY: "auto",
-        }} // Thêm maxHeight và overflowY
+        }}
       >
         <Typography
           variant="h5"
@@ -65,23 +65,13 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
           <TextField label="Họ và tên" fullWidth required />
-
           <FormControl>
             <FormLabel>Giới tính</FormLabel>
             <RadioGroup row>
-              <FormControlLabel
-                value="male"
-                control={<Radio />} // Thay đổi từ Checkbox thành Radio
-                label="Nam"
-              />
-              <FormControlLabel
-                value="female"
-                control={<Radio />} // Thay đổi từ Checkbox thành Radio
-                label="Nữ"
-              />
+              <FormControlLabel value="male" control={<Radio />} label="Nam" />
+              <FormControlLabel value="female" control={<Radio />} label="Nữ" />
             </RadioGroup>
           </FormControl>
-
           <TextField
             label="Ngày"
             type="date"
@@ -108,10 +98,10 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             label="Giờ kết thúc"
             type="time"
             fullWidth
-            InputLabelProps={{ shrink: true }} // Thêm thuộc tính này để nhãn không bị che
+            InputLabelProps={{ shrink: true }}
             InputProps={{
-              value: schedule?.end, // Sử dụng state để quản lý giá trị
-              readOnly: true, // Không cho phép chỉnh sửa giờ kết thúc
+              value: schedule?.end,
+              readOnly: true,
             }}
             required
           />

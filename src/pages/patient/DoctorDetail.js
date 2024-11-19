@@ -180,48 +180,68 @@ function OtherDoctorsSection() {
   );
 }
 
-function App() {
+function DoctorDetail() {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
-
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-  };
-
   const [doctorInfo, setDoctorInfo] = useState();
   const [doctorSchedule, setDoctorSchedule] = useState([]);
+  const [selectedDate, setSelectedDate] = useState("");
+  const [availableTimes, setAvailableTimes] = useState([]);
+
+  const doctorId = window.location.pathname.split("/")[2];
   const today = new Date();
-  // Điều chỉnh thời gian theo múi giờ Việt Nam (UTC+7)
   const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
   const formattedDate = localDate.toISOString().split("T")[0];
 
   useEffect(() => {
-    const fetchDoctors = async () => {
-      const response = schedule
-        .getScheduleByDoctorAndDate(
-          window.location.pathname.split("/")[2],
-          formattedDate
-        )
-        .then((data) => {
-          console.log(data);
-          setDoctorSchedule(data.result);
-        });
+    const fetchDoctorData = async () => {
+      try {
+        const [scheduleResponse, doctorResponse] = await Promise.all([
+          schedule.getScheduleByDoctorAndDate(doctorId, formattedDate),
+          doctor.getDoctorById(doctorId),
+        ]);
 
-      const response2 = doctor
-        .getDoctorById(window.location.pathname.split("/")[2])
-        .then((data) => {
-          console.log(data);
-          setDoctorInfo(data.result);
-        });
+        console.log("--------Doctor schedule---------");
+
+        if (scheduleResponse.code === 1000) {
+          setDoctorSchedule(scheduleResponse.result);
+          setAvailableTimes(scheduleResponse.result); // Cập nhật lịch khả dụng
+        }
+
+        setDoctorInfo(doctorResponse.result);
+        setSelectedDate(formattedDate); // Đặt giá trị ban đầu cho ngày
+      } catch (error) {
+        console.error("Error fetching doctor data:", error);
+      }
     };
-    fetchDoctors();
-  }, []);
+
+    fetchDoctorData();
+  }, [doctorId, formattedDate]);
+
+  const fetchAvailableTimes = async (date) => {
+    if (!date) return; // Tránh gọi API nếu không có ngày
+
+    try {
+      const response = await schedule.getScheduleByDoctorAndDate(
+        doctorId,
+        date
+      );
+
+      console.log("--------Doctor available times---------");
+
+      if (response.code === 1000) {
+        setAvailableTimes(response.result); // Cập nhật lịch khả dụng
+      }
+    } catch (error) {
+      console.error("Error fetching available times:", error);
+    }
+  };
 
   return (
     <Box width={"100%"} align="center">
       <Box maxWidth={"1200px"}>
         <HeaderComponent
           selectedTab={selectedTab}
-          handleTabClick={handleTabClick}
+          handleTabClick={setSelectedTab}
         />
       </Box>
 
@@ -233,7 +253,13 @@ function App() {
 
       <Box width={"100%"} backgroundColor="white">
         <Box maxWidth={"1200px"} align="left">
-          <AppointmentSchedulerComponent />
+          <AppointmentSchedulerComponent
+            doctorId={doctorId}
+            selectedDate={selectedDate}
+            setSelectedDate={setSelectedDate}
+            fetchAvailableTimes={fetchAvailableTimes}
+            availableTimes={availableTimes} // Truyền lịch khả dụng
+          />
         </Box>
       </Box>
 
@@ -420,4 +446,4 @@ function App() {
   );
 }
 
-export default App;
+export default DoctorDetail;
