@@ -188,9 +188,12 @@ function DoctorDetail() {
   const [availableTimes, setAvailableTimes] = useState([]);
 
   const doctorId = window.location.pathname.split("/")[2];
-  const today = new Date();
-  const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
-  const formattedDate = localDate.toISOString().split("T")[0];
+
+  const [formattedDate] = useState(() => {
+    const today = new Date();
+    const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
+    return localDate.toISOString().split("T")[0];
+  });
 
   useEffect(() => {
     const fetchDoctorData = async () => {
@@ -200,22 +203,20 @@ function DoctorDetail() {
           doctor.getDoctorById(doctorId),
         ]);
 
-        console.log("--------Doctor schedule---------");
-
         if (scheduleResponse.code === 1000) {
           setDoctorSchedule(scheduleResponse.result);
-          setAvailableTimes(scheduleResponse.result); // Cập nhật lịch khả dụng
+          setAvailableTimes(scheduleResponse.result);
         }
 
         setDoctorInfo(doctorResponse.result);
-        setSelectedDate(formattedDate); // Đặt giá trị ban đầu cho ngày
+        setSelectedDate(formattedDate);
       } catch (error) {
         console.error("Error fetching doctor data:", error);
       }
     };
 
     fetchDoctorData();
-  }, [doctorId, formattedDate]);
+  }, [doctorId]); // Chỉ phụ thuộc vào `doctorId`
 
   const fetchAvailableTimes = async (date) => {
     if (!date) return; // Tránh gọi API nếu không có ngày
@@ -225,8 +226,6 @@ function DoctorDetail() {
         doctorId,
         date
       );
-
-      console.log("--------Doctor available times---------");
 
       if (response.code === 1000) {
         setAvailableTimes(response.result); // Cập nhật lịch khả dụng

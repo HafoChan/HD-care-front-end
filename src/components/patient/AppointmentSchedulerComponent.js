@@ -15,18 +15,12 @@ const AppointmentSchedulerComponent = ({
   const [openBookingForm, setOpenBookingForm] = useState(false); // Trạng thái để mở form
   const [selectedSchedule, setSelectedSchedule] = useState(null); // Trạng thái để lưu thông tin lịch đã chọn
 
-  useEffect(() => {
-    if (selectedDate) {
-      // Chỉ gọi nếu selectedDate có giá trị
-      fetchAvailableTimes(selectedDate);
-      console.log("Appointment schedule component");
-    }
-  }, [selectedDate, fetchAvailableTimes]);
-
   const handleDateChange = (event) => {
     const newDate = event.target.value;
-    setSelectedDate(newDate);
-    fetchAvailableTimes(newDate);
+    if (newDate !== selectedDate) {
+      setSelectedDate(newDate);
+      fetchAvailableTimes(newDate);
+    }
   };
 
   const handleScheduleClick = (schedule) => {
