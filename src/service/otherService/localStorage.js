@@ -20,3 +20,7 @@ export const remove = () => {
     localStorage.removeItem("refreshToken")
     localStorage.removeItem("userImg")
 }
+
+export const setImg = (userImg) => {
+    localStorage.setItem("userImg",userImg)
+}

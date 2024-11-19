@@ -21,11 +21,14 @@ import axiosInstance from "./axios-instance";
 //   };
 // };
 const patientApi = {
-  create(data){
+  create(data){ 
       return axiosInstance.post("/patient",data)
   },
-  updateDoctor(id,data){
-      return axiosInstance.put(`/doctor/${id}`,data)
+  updatePatient(data){
+      return axiosInstance.put(`/patient`,data)
+  },
+  getInfo(){
+    return axiosInstance.get("/patient/my-info")
   }
 }
 export default patientApi

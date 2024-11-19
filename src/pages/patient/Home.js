@@ -19,23 +19,11 @@ import axiosClient from "../../api/axios-instance";
 const HomePage = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [isBookingFormOpen, setBookingFormOpen] = useState(false); // State to handle form visibility
-  const [userInfo, setUserInfo] = useState(""); // State to hold user info
-
-  useEffect(() => {
-    const storedUserInfo = localStorage.getItem("userInfo");
-    if (storedUserInfo) {
-      setUserInfo(storedUserInfo); // Parse and set user info if it exists
-    }
-  }, []);
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
   };
 
-  // useEffect(async ()=>{
-  //   const response = await axiosClient.get("patient/my-info")
-  //   console.log(response.result)
-  // },[])
 
   const handleBookingClick = () => {
     setBookingFormOpen(true);
@@ -56,7 +44,7 @@ const HomePage = () => {
       <Container sx={{ py: 5 }}>
         <Box display="flex" flexDirection="row" spacing={3} alignItems="center">
           {/* Văn bản */}
-          <Box item xs={12} md={6}>
+          <Box xs={12} md={6}>
             <Typography
               variant="h4"
               color="primary"
@@ -100,12 +88,11 @@ const HomePage = () => {
             <Button
               variant="contained"
               color="warning"
-              sx={{ mt: 4, borderRadius: "20px", display: userInfo ? 'none' : 'block' }} // Hide button if userInfo exists
+              sx={{ mt: 4, borderRadius: "20px" }}
               onClick={handleBookingClick} // Show form on button click
             >
               ĐẶT LỊCH KHÁM NGAY
             </Button>
-          
           </Box>
 
           <Box

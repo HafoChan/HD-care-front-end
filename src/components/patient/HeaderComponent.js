@@ -3,18 +3,24 @@ import { Link } from "react-router-dom";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import images from "../../constants/images";
 import React, { useEffect, useState } from "react";
-import {remove,getImg,getRefreshToken,getAccessToken} from "../../service/localStorage"
-const HeaderComponent = ({ selectedTab, handleTabClick }) => {
-  const [userInfo, setUserInfo] = useState(""); // State to hold user info
-  const handleLogout = () =>{
-    remove()
-    localStorage.removeItem("userInfo")
-    setUserInfo("")
+import {remove,getImg,getRefreshToken,getAccessToken} from "../../service/otherService/localStorage"
+import { useNavigate } from "react-router-dom";
+
+
+const HeaderComponent = ({ selectedTab, handleTabClick,userInfo }) => {
+  const navigate = useNavigate()
+  const [img, setImg] = useState(""); // State to hold user info
+
+  const viewInfo = () =>{
+    // remove()
+    // localStorage.removeItem("userInfo")
+    // setUserInfo("")
+    navigate("/user-detail")
   }
   const getInfo = () =>{
     const storedUserInfo = getImg();
     if (storedUserInfo) {
-      setUserInfo(storedUserInfo); // Parse and set user info if it exists
+      setImg(storedUserInfo); // Parse and set user info if it exists
     }
   }
   useEffect(() => {
@@ -60,10 +66,10 @@ const HeaderComponent = ({ selectedTab, handleTabClick }) => {
             )}
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-            <Link to={userInfo ? "#" : "/login"} style={{ textDecoration: "none" }} onClick={userInfo ? handleLogout : undefined}>
-            {userInfo ? ( // Display user avatar if userInfo exists
+            <Link to={img ? "/user-detail" : "/login"} style={{ textDecoration: "none" }} onClick={img ? viewInfo : undefined}>
+            {img ? ( // Display user avatar if userInfo exists
               <Box display="flex" alignItems="center" sx={{ mt: 0 }}>
-                <img src={userInfo} alt="User Icon" style={{ borderRadius: '50%', width: '40px', height: '40px', marginRight: '8px' }} />
+                <img src={img} alt="User Icon" style={{ borderRadius: '50%', width: '40px', height: '40px', marginRight: '8px' }} />
               </Box>
             ) : ( // Show login button if userInfo does not exist
               <Button

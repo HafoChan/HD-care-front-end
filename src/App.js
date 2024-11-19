@@ -13,6 +13,8 @@ import PatientManagement from "./pages/doctor/PatientManagement";
 import AppointmentManagement from "./pages/doctor/AppointmentManagement";
 import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
+import upload from "./service/otherService/upload";
+import UploadFiles from "./components/patient/uploadFile";
 
 const App = () => {
   return (
@@ -49,6 +51,14 @@ const App = () => {
         />
       </Routes>
     </Router>
+    // <div className="container" style={{ width: "600px" }}>
+    //   <div style={{ margin: "20px" }}>
+    //     <h3>bezkoder.com</h3>
+    //     <h4>React upload Files</h4>
+    //   </div>
+
+    //   <UploadFiles />
+    // </div>
   );
 };
 

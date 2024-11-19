@@ -14,7 +14,7 @@ import {
 } from "@mui/material";
 import "../../css/user/login_register.css";
 import patientApi from "../../api/patient";
-import passwordService from "../../services/passwordService";
+import passwordService from "../../service/patientService/passwordService";
 import { useNavigate } from "react-router-dom";
 
 const Register = () => {
@@ -24,6 +24,7 @@ const Register = () => {
     password: "",
     name: "",
     phone: "",
+    address : "",
     gender: "",
   });
   const navigate = useNavigate();
@@ -170,6 +171,16 @@ const Register = () => {
                 <MenuItem value="female">Nữ</MenuItem>
               </Select>
             </FormControl>
+            <TextField
+              label="Email"
+              variant="outlined"
+              fullWidth
+              margin="normal"
+              name="address"
+              value={userInfo.address}
+              onChange={handleChange}
+              required
+            />
             <TextField
               label="Email"
               variant="outlined"
