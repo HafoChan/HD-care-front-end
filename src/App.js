@@ -13,13 +13,13 @@ import PatientManagement from "./pages/doctor/PatientManagement";
 import AppointmentManagement from "./pages/doctor/AppointmentManagement";
 import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
-import upload from "./service/otherService/upload";
-import UploadFiles from "./components/patient/uploadFile";
+import EvaluateForm from "./components/patient/evaluateForm";
 
 const App = () => {
   return (
     <Router>
       <Routes>
+        <Route path="/evaluate" element={<EvaluateForm />} />
         <Route path="/home" element={<Home />} />
         <Route path="/login" element={<Login />} />
         <Route index element={<Register />} />
@@ -27,6 +27,7 @@ const App = () => {
         <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/user-detail" element={<UserDetail />} />
+        <Route path="/appointment-history" element={<AppointmentHistory />} />
         <Route path="/appointment-history" element={<AppointmentHistory />} />
 
         <Route

@@ -8,8 +8,8 @@ export default class UploadFiles extends Component {
     super(props);
 
     this.state = {
-      selectedFiles: undefined,
-      currentFile: undefined,
+      selectedFiles: [],
+      currentFiles: [],
       progress: 0,
       message: "",
 
@@ -20,10 +20,11 @@ export default class UploadFiles extends Component {
   selectFile = (event) => {
     this.setState(
       {
-        selectedFiles: event.target.files,
+        selectedFiles: Array.from(event.target.files),
       },
       () => {
-        if (this.state.selectedFiles) {
+        if (this.state.selectedFiles.length > 0) {
+          console.log("Selected files: ", this.state.selectedFiles);
           this.upload();
         }
       }
@@ -31,52 +32,52 @@ export default class UploadFiles extends Component {
   };
 
   upload = () => {
-    // Hoặc, bạn có thể định nghĩa nó như một hàm mũi tên
-    let currentFile = this.state.selectedFiles[0];
+    const { selectedFiles } = this.state;
 
     this.setState({
       progress: 0,
-      currentFile: currentFile,
+      currentFiles: selectedFiles,
     });
 
-    UploadFilesService.upload(currentFile, (event) => {
-      this.setState({
-        progress: Math.round((100 * event.loaded) / event.total),
-      });
-    })
-      .then((response) => {
+      UploadFilesService.upload(selectedFiles, (event) => {
         this.setState({
-          message: response.message,
+          progress: Math.round((100 * event.loaded) / event.total),
         });
-        return response.result;
       })
-      .then((files) => {
-        this.setState({
-          fileInfos: [...this.state.fileInfos, files],
-        });
-        console.log("file " + files)
-        this.props.askUrl(files);
+        .then((response) => {
+          this.setState({
+            message: response.message,
+          });
+          return response.result;
+        })
+        .then((files) => {
+          this.setState((prevState) => ({
+            fileInfos: [...prevState.fileInfos, ...files],
+          }));
+          console.log(files)
+          this.props.askUrl(files);
 
-        setTimeout(() => {
-          this.setState({ progress: 101 });
-        }, 1000);
-      })
-      .catch(() => {
-        this.setState({
-          progress: 0,
-          message: "Could not upload the file!",
-          currentFile: undefined,
+          setTimeout(() => {
+            this.setState({ progress: 101 });
+          }, 1000);
+        })
+        .catch(() => {
+          this.setState({
+            progress: 0,
+            message: "Could not upload the file!",
+            currentFiles: [],
+          });
         });
-      });
 
     this.setState({
-      selectedFiles: undefined,
+      selectedFiles: [],
     });
   };
 
   render() {
-    const { selectedFiles, currentFile, progress, message, fileInfos } =
+    const { selectedFiles, currentFiles, progress, message, fileInfos } =
       this.state;
+    const { allowAvatarUpload } = this.props;
     return (
       <div>
         <label className="btn btn-default">
@@ -87,21 +88,39 @@ export default class UploadFiles extends Component {
             ref={(ref) => (this.fileInput = ref)}
             style={{ display: "none" }}
           />
+          {allowAvatarUpload ? (
             <Avatar
               src={
-                this.state.fileInfos.length > 0 ? this.state.fileInfos[0] : getImg()
+                fileInfos.length > 0 ? fileInfos[0] : getImg()
               }
               sx={{ width: 180, height: 180, marginRight: 10 }}
             />
+          ) : (
+            <div>
+            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
+              {fileInfos.length > 0 && fileInfos.map((file, index) => (
+                <img
+                  key={index}
+                  src={file}
+                  style={{ width: '45%', height: 'auto', margin: '2.5%' }} // Adjust width and margin for 2 images per row
+                />
+              ))}
+              </div>
+              <button onClick={() => this.fileInput.click()} className="btn btn-upload">
+                Upload
+              </button>
+            </div>
+          )}
         </label>
-        {currentFile && progress < 101 && (
-          <div style={{ marginTop: 10 }}>
+       
+        {currentFiles.length > 0 && progress < 101 && (
+          <div style={{ marginTop: 10, marginLeft: allowAvatarUpload ? -50 : 150 }}>
             <LinearProgress
               variant="determinate"
               value={progress}
               style={{ width: 180 }}
             />
-            <div>{progress}%</div>
+            <div style={{marginLeft:-175}}>{progress}%</div>
           </div>
         )}
       </div>

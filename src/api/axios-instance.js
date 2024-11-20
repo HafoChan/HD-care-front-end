@@ -45,16 +45,20 @@ axiosClient.interceptors.response.use(
       const refreshToken = localStorage.getItem("refreshToken");
       if (!refreshToken || originalRequest._retry) {
         localStorage.setItem("refreshToken", "");
-        window.location.href = "/login";
-        return Promise.reject(error);
-      }
-      try {
-        const result = await axiosClient.post("/auth/refreshToken", {
-          refreshToken,
-        });
-        console.log(result);
-        const data = result.result;
-        const newAccessToken = data.accessToken;
+    }
+    else {
+        // Update the styling for self.bangtinh.text()
+        const bangtinhElement = document.querySelector('.bangtinh'); // Adjust the selector as needed
+        if (bangtinhElement) {
+            bangtinhElement.style.textAlign = 'right'; // Align text to the right
+            bangtinhElement.style.color = 'white'; // Set text color to white
+            bangtinhElement.style.fontSize = 'larger'; // Increase font size
+        }
+        console.log(error.response.data)
+        return Promise.resolve(error.response.data); // Return the data for 404 errors
+    }
+    return Promise.reject(error);
+  });
 
         localStorage.setItem("accessToken", newAccessToken);
         originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;

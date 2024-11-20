@@ -243,7 +243,7 @@ const TeamOfDoctors = () => {
                 onClick={() => handleDoctorClick(doctor)}
               >
                 <img
-                  src={doctor.imageUrl || "default_image_url"}
+                  src={doctor.img || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
                   style={{
                     width: "150px",
                     height: "180px",

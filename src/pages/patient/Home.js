@@ -15,10 +15,20 @@ import images from "../../constants/images";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import BookingForm from "./BookingForm";
 import axiosClient from "../../api/axios-instance";
+import EvaluateForm from "../../components/patient/evaluateForm";
 
 const HomePage = () => {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [isBookingFormOpen, setBookingFormOpen] = useState(false); // State to handle form visibility
+  const [isEvaluateFormOpen, setEvaluateFormOpen] = useState(false); // State to handle evaluate form visibility
+
+  useEffect(() => {
+    const queryParams = new URLSearchParams(window.location.search);
+    console.log(queryParams.get('evaluate'))
+    if (queryParams.get('evaluate') == '1') {
+      setEvaluateFormOpen(true); // Open evaluate form if the query parameter is present
+    }
+  }, []); // Run once on component mount
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
@@ -32,6 +42,16 @@ const HomePage = () => {
   const handleFormClose = () => {
     setBookingFormOpen(false);
   };
+
+  const handleEvaluateClick = () => {
+    setEvaluateFormOpen(true); // Open the evaluate form
+    setBookingFormOpen(false); // Close the booking form if it's open
+  };
+
+  const handleEvaluateFormClose = () => {
+    setEvaluateFormOpen(false); // Close the evaluate form
+  };
+
   return (
     <Box sx={{ backgroundColor: "#e0f7fa" }}>
       {/* Header */}
@@ -133,6 +153,25 @@ const HomePage = () => {
 
       {/* Booking Form */}
       <BookingForm open={isBookingFormOpen} onClose={handleFormClose} />
+      {/* Evaluate Form */}
+      {isEvaluateFormOpen && (
+        <Box
+          sx={{
+            position: "fixed",
+            top: 0,
+            left: 0,
+            right: 0,
+            bottom: 0,
+            backgroundColor: "rgba(0, 0, 0, 0.5)", // Semi-transparent background
+            display: "flex",
+            justifyContent: "center",
+            alignItems: "center",
+            zIndex: 1000, // Ensure it appears above other content
+          }}
+        >
+          <EvaluateForm open={isEvaluateFormOpen} onClose={handleEvaluateFormClose} />
+        </Box>
+      )}
     </Box>
   );
 };

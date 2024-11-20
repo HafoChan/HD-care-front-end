@@ -1,9 +1,9 @@
-import axiosInstance from "./axios-instance";
+import axiosClient from "./axios-instance";
 
 export const doctor = {
   createDoctor(data) {
     try {
-      const response = axiosInstance.post("/doctor", data);
+      const response = axiosClient.post("/doctor", data);
       return response.data;
     } catch (error) {
       console.error("Error:", error);
@@ -21,7 +21,7 @@ export const doctor = {
 
       const endpoint = "/doctor";
       console.log(endpoint);
-      return axiosInstance.get(endpoint, { params }); // Truyền params vào axios
+      return axiosClient.get(endpoint, { params }); // Truyền params vào axios
     } catch (error) {
       console.error("Error:", error);
     }
@@ -29,7 +29,7 @@ export const doctor = {
 
   getDoctorById(id) {
     try {
-      const response = axiosInstance.get(`/doctor/${id}`);
+      const response = axiosClient.get(`/doctor/${id}`);
       return response;
     } catch (error) {
       console.error("Error:", error);
@@ -38,7 +38,7 @@ export const doctor = {
 
   getReviewDoctorById(id) {
     try {
-      const response = axiosInstance.get(`/doctor/${id}/review`);
+      const response = axiosClient.get(`/doctor/${id}/review`);
       return response.data;
     } catch (error) {
       console.error("Error:", error);
