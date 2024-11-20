@@ -4,12 +4,13 @@ import {
   Button,
   Card,
   TextField,
-  Avatar,
+  Snackbar,
   Typography,
   Radio,
   RadioGroup,
   FormControlLabel,
   Container,
+  Alert,
   Divider,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
@@ -22,8 +23,10 @@ import {getImg, setImg} from "../../service/otherService/localStorage"
 function UserDetail() {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [isEditing, setIsEditing] = useState(false);
-  const [isSave, setIsSave] = useState(false);
   const [refresh, setRefresh] = useState(false);
+  const [snackBarOpen, setSnackBarOpen] = useState(false);
+  const [snackBarMessage, setSnackBarMessage] = useState("");
+  const [snackType, setSnackType] = useState("error");
 
   const [userInfo, setUserInfo] = useState({
     name: "",
@@ -34,16 +37,44 @@ function UserDetail() {
     dob:""
   });
 
-const handleSubmit = async () => {
-    setIsSave(prev => !prev)
-    const response = await patientApi.updatePatient(userInfo)
-    setIsEditing(false)
-    setRefresh(prev => !prev)
+  const handleCloseSnackBar = (event, reason) => {
+
+    setSnackBarOpen(false);
+  };
+
+  const showError = (message) => {
+    setSnackType("error");
+    setSnackBarMessage(message);
+    setSnackBarOpen(true);
+  };
+
+  const showSuccess = (message) => {
+    setSnackType("success");
+    setSnackBarMessage(message);
+    setSnackBarOpen(true);
+  };
+
+const handleSubmit = () => {
+    patientApi.updatePatient(userInfo)
+    .then((response) => {
+      if (response.code == 1000)
+      {
+        console.log("in success")
+        showSuccess(response.message)
+        setRefresh(prev => !prev)
+      }
+      else
+        throw Error(response.message)
+    })
+    .catch((e) => {
+      showError(e.message)
+    })
 }
 
  const getInfo = async () =>{
-      const response = await patientApi.getInfo();
+      const response = await patientApi.getInfo()
       setUserInfo(response.result)
+     
     }
 
   const handleTabClick = (tab) => {
@@ -71,7 +102,7 @@ const handleSubmit = async () => {
     console.log(fileInfo)
     setUserInfo((prevUserInfo)=>({
       ...prevUserInfo,
-      img : fileInfo[0]
+      img : fileInfo
     }))    // You can update the state or perform any action with the uploaded file info here
   };
 
@@ -97,6 +128,21 @@ const handleSubmit = async () => {
           margin: "0 auto",
         }}
       >
+         <Snackbar
+        open={snackBarOpen}
+        onClose={handleCloseSnackBar}
+        autoHideDuration={6000}
+        anchorOrigin={{ vertical: "top", horizontal: "right" }}
+      >
+        <Alert
+          onClose={handleCloseSnackBar}
+          severity={snackType}
+          variant="filled"
+          sx={{ width: "100%" }}
+        >
+          {snackBarMessage}
+        </Alert>
+      </Snackbar>
         <Card
           sx={{
             display: "flex",
@@ -106,7 +152,7 @@ const handleSubmit = async () => {
             mt: 4,
           }}
         >
-          <UploadFiles askUrl = {handleFileUpload} />
+          <UploadFiles askUrl = {handleFileUpload} allowAvatarUpload = {true} />
           <Box align="left">
             <Typography variant="h6" fontWeight={"bold"} mb={0.5}>
               {userInfo?.username}

@@ -72,6 +72,7 @@ axiosClient.interceptors.response.use(function (config) {
             bangtinhElement.style.color = 'white'; // Set text color to white
             bangtinhElement.style.fontSize = 'larger'; // Increase font size
         }
+        console.log(error.response.data)
         return Promise.resolve(error.response.data); // Return the data for 404 errors
     }
     return Promise.reject(error);

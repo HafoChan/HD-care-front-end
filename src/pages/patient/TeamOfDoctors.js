@@ -65,13 +65,13 @@ const TeamOfDoctors = () => {
 
   useEffect(() => {
     const fetchDoctors = async () => {
-      const response = await doctor.filterDoctor(1);
-      console.log(response);
-      setDoctors(response.result);
+      const response = await doctor.filterDoctor(3);
+      console.log(response.result);
+      setDoctors(response.result.doctorResponse);
 
       // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
       const initialSelectedDates = {};
-      response.result.forEach((doctor) => {
+      response.result.doctorResponse.forEach((doctor) => {
         const today = new Date();
         // Điều chỉnh thời gian theo múi giờ Việt Nam (UTC+7)
         const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
@@ -235,7 +235,7 @@ const TeamOfDoctors = () => {
                 onClick={() => handleDoctorClick(doctor)}
               >
                 <img
-                  src={doctor.imageUrl || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
+                  src={doctor.img || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
                   style={{
                     width: "150px",
                     height: "180px",

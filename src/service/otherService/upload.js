@@ -4,8 +4,11 @@ import axiosClient from "../../api/axios-instance";
 class UploadFilesService {
   upload(file, onUploadProgress) {
     let formData = new FormData();
+    file.forEach(file => {
+      formData.append('file', file); // Ensure the key matches what the backend expects
+    });
 
-    formData.append("file", file);
+    console.log(formData + " --- ")
 
     return axiosClient.post("patient/upload", formData, {
       headers: {
