@@ -30,7 +30,7 @@ function DoctorProfileComponent({ doctorInfo }) {
 
       <img
         alt="Doctor Image"
-        src={doctorInfo.img}
+        src={doctorInfo?.img}
         style={{
           width: "250px",
           height: "250px",

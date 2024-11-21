@@ -68,11 +68,11 @@ export default class EvaluateForm extends Component {
       .getAppointmentById(idAppointment) // Gọi API để lấy thông tin bác sĩ
       .then((response) => {
         this.setState({
-          doctorName: response.result.nameDoctor, // Giả sử response có thuộc tính name
-          doctorImage: response.result.img, // Giả sử response có thuộc tính image
-          appointmentStartDate: response.result.start, // Giả sử response có thuộc tính startDate
-          appointmentEndDate: response.result.end, // Giả sử response có thuộc tính endDate
-          doctorId: response.result.idDoctor,
+          doctorName: response.result?.nameDoctor, // Giả sử response có thuộc tính name
+          doctorImage: response.result?.img, // Giả sử response có thuộc tính image
+          appointmentStartDate: response.result?.start, // Giả sử response có thuộc tính startDate
+          appointmentEndDate: response.result?.end, // Giả sử response có thuộc tính endDate
+          doctorId: response.result?.idDoctor,
         });
       })
       .catch((error) => {
@@ -90,8 +90,8 @@ export default class EvaluateForm extends Component {
 
   handleImageUpload = (file) => {
     this.setState({
-      uploadedImage : file
-  })// Store the uploaded image in state
+      uploadedImage: file,
+    }); // Store the uploaded image in state
   };
 
   handleSubmit = () => {
