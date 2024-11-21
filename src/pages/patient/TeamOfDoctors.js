@@ -10,7 +10,7 @@ import {
   MenuItem,
   FormControl,
   InputLabel,
-  Pagination, // Import Pagination từ Material-UI
+  Pagination,
 } from "@mui/material";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
@@ -18,6 +18,7 @@ import SearchIcon from "@mui/icons-material/Search";
 import { doctor } from "../../api/doctor";
 import { schedule } from "../../api/schedule";
 import BookingForm from "./BookingForm";
+import { UserProvider } from "../../context/UserContext";
 
 const TeamOfDoctors = () => {
   const navigate = useNavigate();
@@ -78,7 +79,7 @@ const TeamOfDoctors = () => {
   };
 
   useEffect(() => {
-    fetchDoctors(currentPage); // Gọi hàm fetchDoctors với trang hiện tại
+    fetchDoctors(currentPage);
   }, [currentPage]);
 
   const handleScheduleClick = (date, doctor, scheduleId) => {
@@ -349,13 +350,15 @@ const TeamOfDoctors = () => {
         </Box>
       </Box>
 
-      <BookingForm
-        open={isBookingFormOpen}
-        onClose={() => setIsBookingFormOpen(false)}
-        doctor={doctorSelected}
-        schedule={selectedSchedule}
-        selectedDate={selectedDateClick}
-      />
+      <UserProvider>
+        <BookingForm
+          open={isBookingFormOpen}
+          onClose={() => setIsBookingFormOpen(false)}
+          doctor={doctorSelected}
+          schedule={selectedSchedule}
+          selectedDate={selectedDateClick}
+        />
+      </UserProvider>
     </Box>
   );
 };

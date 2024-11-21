@@ -1,63 +1,29 @@
 import axiosInstance from "./axios-instance";
 
-export default appointment = () => {
-  const headers = {
-    "Content-Type": "application/json",
-  };
-
-  const createAppointment = async (
-    idPatient,
-    name,
-    gender,
-    dateOfAppointment,
-    address,
-    description,
-    title,
-    nameDoctor,
-    startTime,
-    endTime,
-    dob,
-    scheduleId
-  ) => {
+export const appointment = {
+  async createAppointment(appointmentData) {
     try {
       const response = await axiosInstance.post(
         "/appointment",
-        {
-          idPatient,
-          name,
-          gender,
-          dateOfAppointment,
-          address,
-          description,
-          title,
-          nameDoctor,
-          startTime,
-          endTime,
-          dob,
-          scheduleId,
-        },
-        { headers: headers }
+        appointmentData
       );
       return response.data;
     } catch (error) {
-      console.error("Error:", error);
+      console.error("Error creating appointment:", error.response || error);
+      throw error; // Ném lỗi để xử lý ở nơi gọi hàm
     }
-  };
+  },
 
-  const getAppointment = async (idPatient, idSchedule, idDoctor) => {
+  getAppointment(idPatient, idSchedule, idDoctor) {
     try {
-      const response = await axiosInstance.get(
-        "/appointment",
-        {
-          idPatient,
-          idSchedule,
-          idDoctor,
-        },
-        { headers: headers }
-      );
+      const response = axiosInstance.get("/appointment", {
+        idPatient,
+        idSchedule,
+        idDoctor,
+      });
       return response.data;
     } catch (error) {
       console.error("Error:", error);
     }
-  };
+  },
 };

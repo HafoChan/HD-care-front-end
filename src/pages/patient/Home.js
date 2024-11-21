@@ -24,8 +24,8 @@ const HomePage = () => {
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    console.log(queryParams.get('evaluate'))
-    if (queryParams.get('evaluate') == '1') {
+    console.log(queryParams.get("evaluate"));
+    if (queryParams.get("evaluate") == "1") {
       setEvaluateFormOpen(true); // Open evaluate form if the query parameter is present
     }
   }, []); // Run once on component mount
@@ -33,7 +33,6 @@ const HomePage = () => {
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
   };
-
 
   const handleBookingClick = () => {
     setBookingFormOpen(true);
@@ -151,8 +150,6 @@ const HomePage = () => {
         </Box>
       </Container>
 
-      {/* Booking Form */}
-      <BookingForm open={isBookingFormOpen} onClose={handleFormClose} />
       {/* Evaluate Form */}
       {isEvaluateFormOpen && (
         <Box
@@ -169,7 +166,10 @@ const HomePage = () => {
             zIndex: 1000, // Ensure it appears above other content
           }}
         >
-          <EvaluateForm open={isEvaluateFormOpen} onClose={handleEvaluateFormClose} />
+          <EvaluateForm
+            open={isEvaluateFormOpen}
+            onClose={handleEvaluateFormClose}
+          />
         </Box>
       )}
     </Box>

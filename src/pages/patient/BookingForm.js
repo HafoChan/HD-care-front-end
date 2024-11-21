@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import {
   Box,
   Button,
@@ -14,8 +14,62 @@ import {
   Radio,
   Avatar,
 } from "@mui/material";
+import { useUserContext } from "../../context/UserContext";
+import { appointment } from "../../api/appointment";
 
 const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
+  const { id, name, email, address, phone, gender, dob } = useUserContext();
+  const [nameForm, setNameForm] = useState();
+  const [emailForm, setEmailForm] = useState();
+  const [addressForm, setAddressForm] = useState();
+  const [phoneForm, setPhoneForm] = useState();
+  const [genderForm, setGenderForm] = useState();
+  const [description, setDescription] = useState("");
+  const [title, setTitle] = useState("");
+
+  {
+    /* idPatient, name, gender, dateOfAppointment, address, description, title, nameDoctor, startTime, endTime, dob, scheduleId, email */
+  }
+
+  const data = {
+    idPatient: id,
+    name: nameForm,
+    gender: genderForm,
+    dob: dob,
+    address: addressForm,
+    description: description,
+    title: title,
+    scheduleId: schedule?.id,
+    email: emailForm,
+  };
+
+  useEffect(() => {
+    setNameForm(name || "");
+    setEmailForm(email || "");
+    setAddressForm(address || "");
+    setPhoneForm(phone || "");
+    setGenderForm(gender || "Nam");
+    console.log(schedule?.id);
+  }, [schedule]);
+
+  const handleSubmit = async (event) => {
+    event.preventDefault();
+
+    if (!nameForm || !emailForm || !addressForm || !title || !description) {
+      alert("Vui lòng điền đầy đủ thông tin!");
+      return;
+    }
+
+    try {
+      const response = await appointment.createAppointment(data);
+      console.log("Đặt lịch thành công:", response);
+      onClose();
+    } catch (error) {
+      console.error("Đặt lịch thất bại:", error);
+      console.error("Đặt lịch thất bại:", error);
+    }
+  };
+
   return (
     <Dialog open={open} onClose={onClose} maxWidth="md">
       <DialogContent
@@ -64,12 +118,22 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
           component="form"
           sx={{ display: "flex", flexDirection: "column", gap: 2 }}
         >
-          <TextField label="Họ và tên" fullWidth required />
+          <TextField
+            label="Họ và tên"
+            fullWidth
+            required
+            value={nameForm}
+            onChange={(e) => setNameForm(e.target.value)}
+          />
           <FormControl>
             <FormLabel>Giới tính</FormLabel>
-            <RadioGroup row>
-              <FormControlLabel value="male" control={<Radio />} label="Nam" />
-              <FormControlLabel value="female" control={<Radio />} label="Nữ" />
+            <RadioGroup
+              row
+              value={genderForm}
+              onChange={(e) => setGenderForm(e.target.value)}
+            >
+              <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
+              <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
             </RadioGroup>
           </FormControl>
           <TextField
@@ -105,15 +169,42 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             }}
             required
           />
-          <TextField label="Email xác nhận" fullWidth required />
-          <TextField label="Địa chỉ" fullWidth required />
-          <TextField label="Tiêu đề buổi khám" fullWidth required />
+          <TextField
+            label="Email xác nhận"
+            fullWidth
+            required
+            value={emailForm}
+            onChange={(e) => setEmailForm(e.target.value)}
+          />
+          <TextField
+            label="Số điện thoại"
+            fullWidth
+            required
+            value={phoneForm}
+            onChange={(e) => setPhoneForm(e.target.value)}
+          />
+          <TextField
+            label="Địa chỉ"
+            fullWidth
+            required
+            value={addressForm}
+            onChange={(e) => setAddressForm(e.target.value)}
+          />
+          <TextField
+            label="Tiêu đề buổi khám"
+            fullWidth
+            required
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+          />
           <TextField
             label="Mô tả triệu chứng và nhu cầu thăm khám"
             multiline
             rows={4}
             fullWidth
             required
+            value={description}
+            onChange={(e) => setDescription(e.target.value)}
           />
         </Box>
       </DialogContent>
@@ -121,7 +212,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
         <Button onClick={onClose} color="secondary">
           Hủy
         </Button>
-        <Button variant="contained" color="primary">
+        <Button variant="contained" color="primary" onClick={handleSubmit}>
           Xác nhận đặt lịch
         </Button>
       </DialogActions>

@@ -149,9 +149,9 @@ function UserDetail() {
           }}
         >
           <UploadFiles askUrl={handleFileUpload} allowAvatarUpload={true} />
-          <Box align="left">
+          <Box align="left" mt={2}>
             <Typography variant="h6" fontWeight={"bold"} mb={0.5}>
-              {userInfo?.username}
+              {userInfo?.name}
             </Typography>
             <Typography color="textSecondary">{userInfo?.email}</Typography>
           </Box>
@@ -202,12 +202,12 @@ function UserDetail() {
               <RadioGroup
                 row
                 name="gender"
-                value={userInfo.gender || "nam"} // Sử dụng giá trị mặc định nếu là undefined
+                value={userInfo.gender || "Nam"} // Sử dụng giá trị mặc định nếu là undefined
                 onChange={handleInputChange}
                 disabled={!isEditing}
               >
-                <FormControlLabel value="nam" control={<Radio />} label="Nam" />
-                <FormControlLabel value="nu" control={<Radio />} label="Nữ" />
+                <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
+                <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
               </RadioGroup>
             </Box>
           </Box>
