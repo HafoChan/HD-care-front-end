@@ -24,7 +24,6 @@ const HomePage = () => {
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
-    console.log(queryParams.get("evaluate"));
     if (queryParams.get("evaluate") == "1") {
       setEvaluateFormOpen(true); // Open evaluate form if the query parameter is present
     }

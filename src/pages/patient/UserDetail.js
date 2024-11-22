@@ -95,7 +95,6 @@ function UserDetail() {
   };
 
   const handleFileUpload = (fileInfo) => {
-    console.log(fileInfo);
     setUserInfo((prevUserInfo) => ({
       ...prevUserInfo,
       img: fileInfo,

@@ -24,7 +24,6 @@ export default class UploadFiles extends Component {
       },
       () => {
         if (this.state.selectedFiles.length > 0) {
-          console.log("Selected files: ", this.state.selectedFiles);
           this.upload();
         }
       }
@@ -48,31 +47,16 @@ export default class UploadFiles extends Component {
         this.setState({
           message: response.message,
         });
-        console.log(response.result);
+        console.log("Result is : " + response);
         return response.result; //test
       })
-      .then((response) => {
-        this.setState({
-          message: response.message,
-        });
-        return response.result;
-      })
       .then((files) => {
-        if (Array.isArray(files)) {
-          this.setState((prevState) => ({
-            fileInfos: [...prevState.fileInfos, ...files],
-          }));
-        } else {
-          this.setState((prevState) => ({
-            fileInfos: [...prevState.fileInfos, files],
-          }));
-        }
-        console.log(files.length);
+        this.setState((prevState) => ({
+          fileInfos: [...prevState.fileInfos, ...files],
+        }));
         if (files.length > 1) this.props.askUrl(files);
-        else {
-          this.props.askUrl(files[0]);
-          console.log("result : " + files[0]);
-        }
+        else this.props.askUrl(files[0]);
+
         setTimeout(() => {
           this.setState({ progress: 101 });
         }, 1000);
