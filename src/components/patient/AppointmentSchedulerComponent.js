@@ -1,30 +1,32 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { TextField, Button, Box, Typography, Divider } from "@mui/material";
+import BookingForm from "../../pages/patient/BookingForm";
+import { UserProvider } from "../../context/UserContext";
 
-const doctor = {
-  id: 2,
-  name: "BSCKII Dương Minh Trí",
-  experience:
-    "Experience: Bác sĩ có 25 năm kinh nghiệm về bệnh lý liên quan cột sống Hiện là Trưởng khoa Phẫu thuật Cột sống, Bệnh viện Việt Đức Bác sĩ nhận khám từ 7 tuổi trở lên",
-  location: "Thành phố Hồ Chí Minh",
-  availableTimes: [
-    "18:30 - 19:00",
-    "19:00 - 19:30",
-    "19:00 - 19:30",
-    "19:00 - 19:30",
-    "19:00 - 19:30",
-    "19:00 - 19:30",
-    "19:00 - 19:30",
-    "19:00 - 19:30",
-  ],
-  price: "300.000đ - 400.000đ",
-};
-
-function AppointmentSchedulerComponent() {
-  const [selectedDate, setSelectedDate] = useState("");
+const AppointmentSchedulerComponent = ({
+  doctorId,
+  selectedDate,
+  setSelectedDate,
+  fetchAvailableTimes,
+  availableTimes,
+}) => {
+  const [currentTime, setCurrentTime] = useState(
+    new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" })
+  );
+  const [openBookingForm, setOpenBookingForm] = useState(false); // Trạng thái để mở form
+  const [selectedSchedule, setSelectedSchedule] = useState(null); // Trạng thái để lưu thông tin lịch đã chọn
 
   const handleDateChange = (event) => {
-    setSelectedDate(event.target.value);
+    const newDate = event.target.value;
+    if (newDate !== selectedDate) {
+      setSelectedDate(newDate);
+      fetchAvailableTimes(newDate);
+    }
+  };
+
+  const handleScheduleClick = (schedule) => {
+    setSelectedSchedule(schedule); // Lưu thông tin lịch đã chọn
+    setOpenBookingForm(true); // Mở form
   };
 
   return (
@@ -32,9 +34,9 @@ function AppointmentSchedulerComponent() {
       <TextField
         label="Chọn ngày khám"
         type="date"
-        InputLabelProps={{
-          shrink: true,
-        }}
+        InputLabelProps={{ shrink: true }}
+        value={selectedDate}
+        onChange={handleDateChange}
         style={{ marginTop: "20px" }}
         inputProps={{ shrink: true }}
       />
@@ -44,9 +46,14 @@ function AppointmentSchedulerComponent() {
         sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}
       >
         <Box>
-          {doctor.availableTimes.map((time, index) => (
-            <Button key={index} variant="outlined" style={{ margin: "5px" }}>
-              {time}
+          {availableTimes.map((time, index) => (
+            <Button
+              key={index}
+              variant="outlined"
+              style={{ margin: "5px" }}
+              onClick={() => handleScheduleClick(time)}
+            >
+              {time.start} - {time.end}
             </Button>
           ))}
         </Box>
@@ -66,13 +73,24 @@ function AppointmentSchedulerComponent() {
               fontWeight={"bold"}
               sx={{ marginLeft: "8px" }}
             >
-              150.00đ
+              150.000đ
             </Typography>
           </Typography>
         </Box>
       </Box>
+
+      {/* Hiển thị BookingForm khi openBookingForm là true */}
+      <UserProvider>
+        <BookingForm
+          open={openBookingForm}
+          onClose={() => setOpenBookingForm(false)} // Đóng form
+          selectedDate={selectedDate}
+          doctor={doctorId} // Truyền thông tin bác sĩ
+          schedule={selectedSchedule} // Truyền thông tin lịch đã chọn
+        />
+      </UserProvider>
     </Box>
   );
-}
+};
 
 export default AppointmentSchedulerComponent;

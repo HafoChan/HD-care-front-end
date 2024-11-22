@@ -24,7 +24,7 @@ const Register = () => {
     password: "",
     name: "",
     phone: "",
-    address : "",
+    address: "",
     gender: "",
   });
   const navigate = useNavigate();
@@ -45,7 +45,7 @@ const Register = () => {
     setSnackBarOpen(true);
   };
 
-  const [confirmPassword,setConfirmPassword] = useState("")
+  const [confirmPassword, setConfirmPassword] = useState("");
 
   const handleChange = (e) => {
     const { name, value } = e.target;
@@ -63,29 +63,29 @@ const Register = () => {
     setSnackBarOpen(false);
   };
 
-  const handleSubmit =  (e) => {
+  const handleSubmit = (e) => {
     e.preventDefault();
     try {
-      if (!passwordService.validatePasswords(userInfo.password, confirmPassword)) {
+      if (
+        !passwordService.validatePasswords(userInfo.password, confirmPassword)
+      ) {
         throw new Error("Mật khẩu xác nhận không đúng");
       }
-      patientApi.create(userInfo)
-      .then((data) => {
-        console.log(data);
-        if (data.code == 1028)
-          {
-            showSuccess(data.message)
+      patientApi
+        .create(userInfo)
+        .then((data) => {
+          console.log(data);
+          if (data.code == 1028) {
+            showSuccess(data.message);
             setTimeout(() => {
               navigate("/login");
-            }, 2000);         
-          }
-          else throw new Error(data.message);
-        
-      })
-      .catch((error) => {
-        showError(error.message);
-        return;
-      });
+            }, 2000);
+          } else throw new Error(data.message);
+        })
+        .catch((error) => {
+          showError(error.message);
+          return;
+        });
     } catch (error) {
       showError(error.message);
     }
@@ -129,7 +129,7 @@ const Register = () => {
             Đăng ký tài khoản
           </Typography>
           <form onSubmit={handleSubmit}>
-            <TextField
+          <TextField
               label="Tên người dùng"
               variant="outlined"
               fullWidth
@@ -172,7 +172,7 @@ const Register = () => {
               </Select>
             </FormControl>
             <TextField
-              label="Email"
+              label="Địa chỉ"
               variant="outlined"
               fullWidth
               margin="normal"
