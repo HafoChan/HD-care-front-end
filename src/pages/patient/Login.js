@@ -46,12 +46,11 @@ const Login = () => {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log(email + password);
     const data = await axiosClient.post("auth/login", {
       username: email,
       password: password,
     });
-    console.log(data)
+
     try {
       if (data.code != 1000) {
         console.log(data.message);
@@ -59,7 +58,7 @@ const Login = () => {
       }
       showSuccess(data.message);
       setItem(data.result.accessToken,data.result.refreshToken,data.result.userResponse.img)
-      navigate("/home");
+      // navigate("/home");
     } catch (error) {
       showError(error.message);
     }

@@ -19,6 +19,7 @@ import { doctor } from "../../api/doctor";
 import { schedule } from "../../api/schedule";
 import BookingForm from "./BookingForm";
 import { UserProvider } from "../../context/UserContext";
+import axios from "axios";
 
 const TeamOfDoctors = () => {
   const navigate = useNavigate();
@@ -29,6 +30,8 @@ const TeamOfDoctors = () => {
   const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedDateClick, setSelectedDateClick] = useState();
+    const [selectedProvince, setSelectedProvince] = useState(null); // Lưu tỉnh đã chọn
+  const [selectedDistrict, setSelectedDistrict] = useState(null); // Lưu huyện đã chọn
 
   // Thêm trạng thái cho phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -37,6 +40,15 @@ const TeamOfDoctors = () => {
   const today = new Date();
   const maxDate = new Date();
   maxDate.setDate(today.getDate() + 7);
+
+  const [options, setOptions] = useState([]); // State to store city options
+
+
+  const getCity = async () => {
+    const data = await axios.get("https://raw.githubusercontent.com/kenzouno1/DiaGioiHanhChinhVN/master/data.json");
+    console.log(data.data)
+    setOptions(data.data); // Set the fetched options
+  };
 
   const handleDateChange = async (doctorId, date) => {
     setSelectedDates((prev) => ({ ...prev, [doctorId]: date }));
@@ -160,13 +172,16 @@ const TeamOfDoctors = () => {
             >
               <InputLabel id="demo-select-small-label">Khu vực</InputLabel>
               <Select
+                onClick={getCity}
                 labelId="demo-select-small-label"
                 id="demo-select-small"
                 label="Khu vực"
               >
-                <MenuItem value={1}>Khu vực 1</MenuItem>
-                <MenuItem value={2}>Khu vực 2</MenuItem>
-                <MenuItem value={3}>Khu vực 3</MenuItem>
+                {options.map((option) => ( // Map over options to create MenuItems
+                  <MenuItem key={option.id} value={option.id}>
+                    {option.Name} {/* Adjust according to the structure of your data */}
+                  </MenuItem>
+                ))}
               </Select>
             </FormControl>
 
