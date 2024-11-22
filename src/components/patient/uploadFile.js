@@ -1,7 +1,7 @@
 import { Avatar, LinearProgress } from "@mui/material";
 import { Component } from "react";
 import UploadFilesService from "../../service/otherService/upload";
-import {getImg} from "../../service/otherService/localStorage"
+import { getImg } from "../../service/otherService/localStorage";
 
 export default class UploadFiles extends Component {
   constructor(props) {
@@ -39,10 +39,17 @@ export default class UploadFiles extends Component {
       currentFiles: selectedFiles,
     });
 
-      UploadFilesService.upload(selectedFiles, (event) => {
+    UploadFilesService.upload(selectedFiles, (event) => {
+      this.setState({
+        progress: Math.round((100 * event.loaded) / event.total),
+      });
+    })
+      .then((response) => {
         this.setState({
-          progress: Math.round((100 * event.loaded) / event.total),
+          message: response.message,
         });
+        console.log(response.result);
+        return response.result; //test 
       })
         .then((response) => {
           this.setState({
@@ -73,6 +80,7 @@ export default class UploadFiles extends Component {
             currentFiles: [],
           });
         });
+      });
 
     this.setState({
       selectedFiles: [],
@@ -95,37 +103,47 @@ export default class UploadFiles extends Component {
           />
           {allowAvatarUpload ? (
             <Avatar
-              src={
-                fileInfos.length > 0 ? fileInfos[0] : getImg()
-              }
-              sx={{ width: 180, height: 180, marginRight: 10 }}
+              src={fileInfos.length > 0 ? fileInfos[0] : getImg()}
+              sx={{ width: 140, height: 140, marginRight: 10 }}
             />
           ) : (
             <div>
-            <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'center' }}>
-              {fileInfos.length > 0 && fileInfos.map((file, index) => (
-                <img
-                  key={index}
-                  src={file}
-                  style={{ width: '45%', height: 'auto', margin: '2.5%' }} // Adjust width and margin for 2 images per row
-                />
-              ))}
+              <div
+                style={{
+                  display: "flex",
+                  flexWrap: "wrap",
+                  justifyContent: "center",
+                }}
+              >
+                {fileInfos.length > 0 &&
+                  fileInfos.map((file, index) => (
+                    <img
+                      key={index}
+                      src={file}
+                      style={{ width: "45%", height: "auto", margin: "2.5%" }} // Adjust width and margin for 2 images per row
+                    />
+                  ))}
               </div>
-              <button onClick={() => this.fileInput.click()} className="btn btn-upload">
+              <button
+                onClick={() => this.fileInput.click()}
+                className="btn btn-upload"
+              >
                 Upload
               </button>
             </div>
           )}
         </label>
-       
+
         {currentFiles.length > 0 && progress < 101 && (
-          <div style={{ marginTop: 10, marginLeft: allowAvatarUpload ? -50 : 150 }}>
+          <div
+            style={{ marginTop: 10, marginLeft: allowAvatarUpload ? -50 : 150 }}
+          >
             <LinearProgress
               variant="determinate"
               value={progress}
               style={{ width: 180 }}
             />
-            <div style={{marginLeft:-175}}>{progress}%</div>
+            <div style={{ marginLeft: -175 }}>{progress}%</div>
           </div>
         )}
       </div>

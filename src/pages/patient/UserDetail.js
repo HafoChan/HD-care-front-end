@@ -18,7 +18,7 @@ import SaveIcon from "@mui/icons-material/Save";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import patientApi from "../../api/patient";
 import UploadFiles from "../../components/patient/uploadFile";
-import {getImg, setImg} from "../../service/otherService/localStorage"
+import { getImg, setImg } from "../../service/otherService/localStorage";
 
 function UserDetail() {
   const [selectedTab, setSelectedTab] = useState("Trang chủ");
@@ -33,12 +33,11 @@ function UserDetail() {
     phone: "",
     gender: "nam",
     address: "",
-    img:getImg(),
-    dob:""
+    img: getImg(),
+    dob: "",
   });
 
   const handleCloseSnackBar = (event, reason) => {
-
     setSnackBarOpen(false);
   };
 
@@ -54,38 +53,35 @@ function UserDetail() {
     setSnackBarOpen(true);
   };
 
-const handleSubmit = () => {
-    patientApi.updatePatient(userInfo)
-    .then((response) => {
-      if (response.code == 1000)
-      {
-        console.log("in success")
-        showSuccess(response.message)
-        setRefresh(prev => !prev)
-      }
-      else
-        throw Error(response.message)
-    })
-    .catch((e) => {
-      showError(e.message)
-    })
-}
+  const handleSubmit = () => {
+    patientApi
+      .updatePatient(userInfo)
+      .then((response) => {
+        if (response.code == 1000) {
+          console.log("in success");
+          showSuccess(response.message);
+          setRefresh((prev) => !prev);
+        } else throw Error(response.message);
+      })
+      .catch((e) => {
+        showError(e.message);
+      });
+  };
 
- const getInfo = async () =>{
-      const response = await patientApi.getInfo()
-      setUserInfo(response.result)
-     
-    }
+  const getInfo = async () => {
+    const response = await patientApi.getInfo();
+    setUserInfo(response.result);
+  };
 
   const handleTabClick = (tab) => {
     setSelectedTab(tab);
   };
-  useEffect(()=>{   
-    console.log("innn")
-    getInfo()
-    setImg(userInfo.img)
-  },[refresh])
-  
+  useEffect(() => {
+    console.log("innn");
+    getInfo();
+    setImg(userInfo.img);
+  }, [refresh]);
+
   const handleInputChange = (e) => {
     const { name, value } = e.target;
     setUserInfo((prevUserInfo) => ({
@@ -99,11 +95,11 @@ const handleSubmit = () => {
   };
 
   const handleFileUpload = (fileInfo) => {
-    console.log(fileInfo)
-    setUserInfo((prevUserInfo)=>({
+    console.log(fileInfo);
+    setUserInfo((prevUserInfo) => ({
       ...prevUserInfo,
-      img : fileInfo
-    }))    // You can update the state or perform any action with the uploaded file info here
+      img: fileInfo,
+    })); // You can update the state or perform any action with the uploaded file info here
   };
 
   return (
@@ -122,27 +118,27 @@ const handleSubmit = () => {
 
       <Container
         sx={{
-          display: "flex",  
+          display: "flex",
           flexDirection: "column",
           alignItems: "center",
           margin: "0 auto",
         }}
       >
-         <Snackbar
-        open={snackBarOpen}
-        onClose={handleCloseSnackBar}
-        autoHideDuration={6000}
-        anchorOrigin={{ vertical: "top", horizontal: "right" }}
-      >
-        <Alert
+        <Snackbar
+          open={snackBarOpen}
           onClose={handleCloseSnackBar}
-          severity={snackType}
-          variant="filled"
-          sx={{ width: "100%" }}
+          autoHideDuration={6000}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
-          {snackBarMessage}
-        </Alert>
-      </Snackbar>
+          <Alert
+            onClose={handleCloseSnackBar}
+            severity={snackType}
+            variant="filled"
+            sx={{ width: "100%" }}
+          >
+            {snackBarMessage}
+          </Alert>
+        </Snackbar>
         <Card
           sx={{
             display: "flex",
@@ -152,10 +148,10 @@ const handleSubmit = () => {
             mt: 4,
           }}
         >
-          <UploadFiles askUrl = {handleFileUpload} allowAvatarUpload = {true} />
-          <Box align="left">
+          <UploadFiles askUrl={handleFileUpload} allowAvatarUpload={true} />
+          <Box align="left" mt={2}>
             <Typography variant="h6" fontWeight={"bold"} mb={0.5}>
-              {userInfo?.username}
+              {userInfo?.name}
             </Typography>
             <Typography color="textSecondary">{userInfo?.email}</Typography>
           </Box>
@@ -192,7 +188,7 @@ const handleSubmit = () => {
               label="Birthday"
               type="date"
               name="dob"
-              value={userInfo?.dob ? userInfo.dob : ''}
+              value={userInfo?.dob ? userInfo.dob : ""}
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
@@ -203,16 +199,16 @@ const handleSubmit = () => {
               <Typography variant="subtitle1" mr={6}>
                 Giới tính
               </Typography>
-              <RadioGroup 
-       row 
-       name="gender" 
-       value={userInfo.gender || "nam"} // Sử dụng giá trị mặc định nếu là undefined
-       onChange={handleInputChange} 
-       disabled={!isEditing}
-   >
-       <FormControlLabel value="nam" control={<Radio />} label="Nam" />
-       <FormControlLabel value="nu" control={<Radio />} label="Nữ" />
-   </RadioGroup>
+              <RadioGroup
+                row
+                name="gender"
+                value={userInfo.gender || "Nam"} // Sử dụng giá trị mặc định nếu là undefined
+                onChange={handleInputChange}
+                disabled={!isEditing}
+              >
+                <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
+                <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
+              </RadioGroup>
             </Box>
           </Box>
           <Box sx={{ flex: 3 }}>
@@ -243,10 +239,20 @@ const handleSubmit = () => {
           width={"100%"}
           sx={{ display: "flex", gap: 2, justifyContent: "end" }}
         >
-          <Button variant="contained" color="warning" startIcon={<EditIcon />} onClick={handleEditClick}>
+          <Button
+            variant="contained"
+            color="warning"
+            startIcon={<EditIcon />}
+            onClick={handleEditClick}
+          >
             Chỉnh sửa thông tin
           </Button>
-          <Button variant="contained" color="primary" startIcon={<SaveIcon />} onClick={handleSubmit}>
+          <Button
+            variant="contained"
+            color="primary"
+            startIcon={<SaveIcon />}
+            onClick={handleSubmit}
+          >
             Lưu
           </Button>
         </Box>
