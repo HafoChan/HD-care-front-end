@@ -7,20 +7,26 @@ const axiosClient = axios.create({
         'Content-Type': 'application/json',
     }
 })
-
-axiosClient.interceptors.request.use(
-    (config) => {
-        console.log("Axios request!");
-        const accessToken = localStorage.getItem("accessToken");
-        const language = localStorage.getItem("language") || "vi";
-        if (accessToken) {
-            config.headers.Authorization = `Bearer ${accessToken}`;
-        }
-        config.headers["Accept-Language"] = language;
-        return config;
-    },
-    (error) => Promise.reject(error)
-);
+axiosClient.interceptors.request.use(function (config) {
+    // Do something before request is sent
+    return config;
+  }, function (error) {
+    // Do something with request error
+    return Promise.reject(error);
+  });
+// axiosClient.interceptors.request.use(
+//     (config) => {
+//         console.log("Axios request!");
+//         const accessToken = localStorage.getItem("accessToken");
+//         const language = localStorage.getItem("language") || "vi";
+//         if (accessToken) {
+//             config.headers.Authorization = `Bearer ${accessToken}`;
+//         }
+//         config.headers["Accept-Language"] = language;
+//         return config;
+//     },
+//     (error) => Promise.reject(error)
+// );
 // Add a response interceptor
 axiosClient.interceptors.response.use(function (config) {      
     // Any status code that lie within the range of 2xx cause this function to trigger
@@ -65,13 +71,7 @@ axiosClient.interceptors.response.use(function (config) {
         localStorage.setItem("refreshToken", "");
     }
     else {
-        // Update the styling for self.bangtinh.text()
-        const bangtinhElement = document.querySelector('.bangtinh'); // Adjust the selector as needed
-        if (bangtinhElement) {
-            bangtinhElement.style.textAlign = 'right'; // Align text to the right
-            bangtinhElement.style.color = 'white'; // Set text color to white
-            bangtinhElement.style.fontSize = 'larger'; // Increase font size
-        }
+    
         console.log(error.response.data)
         return Promise.resolve(error.response.data); // Return the data for 404 errors
     }

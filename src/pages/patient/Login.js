@@ -14,7 +14,7 @@ import "../../css/user/login_register.css";
 import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
 import axiosClient from "../../api/axios-instance";
-import {remove,getImg,getRefreshToken,getAccessToken,setItem} from "../../service/otherService/localStorage"
+import {setItem} from "../../service/otherService/localStorage"
 
 const Login = () => {
   const [email, setEmail] = useState("");

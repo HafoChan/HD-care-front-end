@@ -233,7 +233,7 @@ const TeamOfDoctors = () => {
                   cursor: "pointer",
                 }}
                 onClick={() => handleDoctorClick(doctor)}
-              >
+              > 
                 <img
                   src={doctor.img || "default_image_url"} // Thay đổi theo cấu trúc dữ liệu của bạn
                   style={{

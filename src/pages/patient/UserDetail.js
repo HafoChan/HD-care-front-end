@@ -38,7 +38,6 @@ function UserDetail() {
   });
 
   const handleCloseSnackBar = (event, reason) => {
-
     setSnackBarOpen(false);
   };
 
