@@ -49,24 +49,36 @@ export default class UploadFiles extends Component {
           message: response.message,
         });
         console.log(response.result);
-        return response.result; //test ki
+        return response.result; //test 
       })
-      .then((files) => {
-        this.setState((prevState) => ({
-          fileInfos: [...prevState.fileInfos, ...files],
-        }));
-        console.log(files);
-        this.props.askUrl(files);
-
-        setTimeout(() => {
-          this.setState({ progress: 101 });
-        }, 1000);
-      })
-      .catch(() => {
-        this.setState({
-          progress: 0,
-          message: "Could not upload the file!",
-          currentFiles: [],
+        .then((response) => {
+          this.setState({
+            message: response.message,
+          });
+          return response.result;
+        })
+        .then((files) => {
+          this.setState((prevState) => ({
+            fileInfos: [...prevState.fileInfos, ...files],
+          }));
+          console.log(files.length)
+          if (files.length > 1)
+            this.props.askUrl(files);
+          else
+          {
+            this.props.askUrl(files[0])
+            console.log("result : " + files[0])
+          }
+          setTimeout(() => {
+            this.setState({ progress: 101 });
+          }, 1000);
+        })
+        .catch(() => {
+          this.setState({
+            progress: 0,
+            message: "Could not upload the file!",
+            currentFiles: [],
+          });
         });
       });
 

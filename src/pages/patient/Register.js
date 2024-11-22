@@ -129,7 +129,7 @@ const Register = () => {
             Đăng ký tài khoản
           </Typography>
           <form onSubmit={handleSubmit}>
-            <TextField
+          <TextField
               label="Tên người dùng"
               variant="outlined"
               fullWidth
