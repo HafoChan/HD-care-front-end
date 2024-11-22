@@ -54,9 +54,14 @@ export default class UploadFiles extends Component {
           this.setState((prevState) => ({
             fileInfos: [...prevState.fileInfos, ...files],
           }));
-          console.log(files)
-          this.props.askUrl(files);
-
+          console.log(files.length)
+          if (files.length > 1)
+            this.props.askUrl(files);
+          else
+          {
+            this.props.askUrl(files[0])
+            console.log("result : " + files[0])
+          }
           setTimeout(() => {
             this.setState({ progress: 101 });
           }, 1000);
