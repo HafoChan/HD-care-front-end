@@ -48,7 +48,8 @@ export default class UploadFiles extends Component {
         this.setState({
           message: response.message,
         });
-        return response.result;
+        console.log(response.result);
+        return response.result; //test ki
       })
       .then((files) => {
         this.setState((prevState) => ({
