@@ -12,16 +12,19 @@ export const doctor = {
 
   filterDoctor(page, name, district, city) {
     try {
-      const params = {
-        ...(name && { name }),
-        ...(district && { district }),
-        ...(city && { city }),
-        ...(page && { page }),
-      };
+      const query = [
+        city ? `city=${city}` : "",
+        name ? `name=${name}` : "",
+        district ? `district=${district}` : "",
+      ]
+        .filter(Boolean)
+        .join("&");
 
-      const endpoint = "/doctor";
+      const endpoint = query
+        ? `/doctor?${query}&page=${page}`
+        : `/doctor?page=${page}`;
       console.log(endpoint);
-      return axiosClient.get(endpoint, { params }); // Truyền params vào axios
+      return axiosClient.get(endpoint);
     } catch (error) {
       console.error("Error:", error);
     }
