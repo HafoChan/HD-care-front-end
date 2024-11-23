@@ -30,8 +30,9 @@ const TeamOfDoctors = () => {
   const [isBookingFormOpen, setIsBookingFormOpen] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
   const [selectedDateClick, setSelectedDateClick] = useState();
-    const [selectedProvince, setSelectedProvince] = useState(null); // Lưu tỉnh đã chọn
+  const [selectedProvince, setSelectedProvince] = useState(null); // Lưu tỉnh đã chọn
   const [selectedDistrict, setSelectedDistrict] = useState(null); // Lưu huyện đã chọn
+  const [keyword, setKeyword] = useState("")
 
   // Thêm trạng thái cho phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -92,6 +93,7 @@ const TeamOfDoctors = () => {
 
   useEffect(() => {
     fetchDoctors(currentPage);
+    getCity()
   }, [currentPage]);
 
   const handleScheduleClick = (date, doctor, scheduleId) => {
@@ -111,6 +113,16 @@ const TeamOfDoctors = () => {
   // Hàm để chuyển trang
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
+  };
+
+  const handleSubmitSearch = async (event) => {
+  }
+
+  const [age, setAge] = React.useState('');
+
+  const handleChange = (event) => {
+    console.log(event.target.value)
+    setSelectedProvince(event.target.value)
   };
 
   return (
@@ -139,6 +151,46 @@ const TeamOfDoctors = () => {
           alignItems={"center"}
         >
           <Box>
+          <FormControl
+      sx={{
+        m: 1,
+        minWidth: 250,
+        backgroundColor: "white",
+        borderRadius: "4px",
+      }}
+      size="small"
+    >
+      <InputLabel id="demo-select-small-label">Khu vực</InputLabel>
+      <Select
+        labelId="demo-select-small-label"
+        id="demo-select-small"
+        value={selectedProvince} // Bind the selected value
+        onChange={handleChange} // Handle change event
+        label="Khu vực"
+      >
+        {options.map((option) => (
+          <MenuItem value={option.Name}>
+            {option.Name}
+          </MenuItem>
+        ))}
+      </Select>
+    </FormControl>
+
+    {/* <FormControl fullWidth>
+        <InputLabel id="demo-simple-select-label">Age</InputLabel>
+        <Select
+          labelId="demo-simple-select-label"
+          id="demo-simple-select"
+          value={age}
+          label="Age"
+          onChange={handleChange}
+        >
+          <MenuItem value={10}>Ten</MenuItem>
+          <MenuItem value={20}>Twenty</MenuItem>
+          <MenuItem value={30}>Thirty</MenuItem>
+        </Select>
+      </FormControl> */}
+
             <FormControl
               sx={{
                 m: 1,
@@ -149,37 +201,15 @@ const TeamOfDoctors = () => {
               }}
               size="small"
             >
-              <InputLabel id="demo-select-small-label">Chuyên khoa</InputLabel>
+              <InputLabel id="demo-select-small-label">Quận/Huyện</InputLabel>
               <Select
                 labelId="demo-select-small-label"
                 id="demo-select-small"
-                label="Chuyên khoa"
+                label="Quận/Huyện"
               >
-                <MenuItem value={1}>Chuyên khoa 1</MenuItem>
-                <MenuItem value={2}>Chuyên khoa 2</MenuItem>
-                <MenuItem value={3}>Chuyên khoa 3</MenuItem>
-              </Select>
-            </FormControl>
-
-            <FormControl
-              sx={{
-                m: 1,
-                minWidth: 160,
-                backgroundColor: "white",
-                borderRadius: "4px",
-              }}
-              size="small"
-            >
-              <InputLabel id="demo-select-small-label">Khu vực</InputLabel>
-              <Select
-                onClick={getCity}
-                labelId="demo-select-small-label"
-                id="demo-select-small"
-                label="Khu vực"
-              >
-                {options.map((option) => ( // Map over options to create MenuItems
-                  <MenuItem key={option.id} value={option.id}>
-                    {option.Name} {/* Adjust according to the structure of your data */}
+                {selectedProvince && selectedProvince.Districts?.map((district) => ( // Map over districts to create MenuItems
+                  <MenuItem key={district.id} value={district.id}>
+                    {district.Name} {/* Adjust according to the structure of your data */}
                   </MenuItem>
                 ))}
               </Select>
@@ -218,6 +248,9 @@ const TeamOfDoctors = () => {
             }}
             variant="outlined"
             placeholder="Search"
+            defaultValue={keyword}
+            onChange={() => setKeyword()}
+            onSubmit={handleSubmitSearch}
             InputProps={{
               startAdornment: (
                 <Box
