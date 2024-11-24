@@ -4,7 +4,7 @@ export const doctor = {
   createDoctor(data) {
     try {
       const response = axiosClient.post("/doctor", data);
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error:", error);
     }
@@ -24,7 +24,7 @@ export const doctor = {
       const endpoint = query
         ? `/doctor?${query}&page=${page}`
         : `/doctor?page=${page}`;
-      console.log(endpoint);
+      
       return axiosClient.get(endpoint);
     } catch (error) {
       console.error("Error:", error);
@@ -43,13 +43,18 @@ export const doctor = {
   getReviewDoctorById(id) {
     try {
       const response = axiosClient.get(`/doctor/${id}/review`);
-      return response.data;
+      return response;
     } catch (error) {
       console.error("Error:", error);
     }
   },
 
-  getInfo(){
-    return axiosClient.get("/doctor/my-info")
-  }
+  getInfo() {
+    try {
+      const response = axiosClient.get("/doctor/my-info");
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
 };

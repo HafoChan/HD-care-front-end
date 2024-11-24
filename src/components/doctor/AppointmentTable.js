@@ -15,7 +15,7 @@ const AppointmentTable = ({ appointments }) => {
       <Table>
         <TableHead>
           <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-            <TableCell sx={{ fontWeight: "bold" }}>STT</TableCell>
+            <TableCell sx={{ fontWeight: "bold" }}>ID bệnh nhân</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Họ và tên</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Ngày khám</TableCell>
             <TableCell sx={{ fontWeight: "bold" }}>Thời gian</TableCell>
@@ -25,15 +25,18 @@ const AppointmentTable = ({ appointments }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {appointments.map((appointment, index) => (
+          {appointments?.content?.map((appointment, index) => (
             <TableRow
               key={appointment.id}
               sx={{ "&:nth-of-type(odd)": { backgroundColor: "#fafafa" } }}
             >
-              <TableCell>{index + 1}</TableCell>
+              <TableCell>{appointment.id}</TableCell>
               <TableCell>{appointment.name}</TableCell>
-              <TableCell>{appointment.date}</TableCell>
-              <TableCell>{appointment.time}</TableCell>
+              <TableCell>{appointment.start.split(" ")[0]}</TableCell>
+              <TableCell>
+                {appointment.start.split(" ")[1]} -{" "}
+                {appointment.end.split(" ")[1]}
+              </TableCell>
               <TableCell>{appointment.title}</TableCell>
               <TableCell>{appointment.email}</TableCell>
               <TableCell>{appointment.status}</TableCell>

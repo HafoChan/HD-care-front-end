@@ -1,7 +1,10 @@
 import axios from "axios";
 // import { get, set } from "@/hooks/use-local-storage";
 import { Router } from "react-router-dom";
-import { getAccessToken, getRefreshToken } from "../service/otherService/localStorage";
+import {
+  getAccessToken,
+  getRefreshToken,
+} from "../service/otherService/localStorage";
 const axiosClient = axios.create({
   baseURL: "http://localhost:8082/api/v1/",
   headers: {
@@ -14,12 +17,11 @@ axiosClient.interceptors.request.use(
     console.log("Axios request!");
     const accessToken = localStorage.getItem("accessToken");
     const language = localStorage.getItem("language") || "vi";
-    
+
     // Check if the role is doctor
     if (accessToken) {
-
-        config.headers.Authorization = `Bearer ${accessToken}`;
-        config.headers["Accept-Language"] = language; 
+      config.headers.Authorization = `Bearer ${accessToken}`;
+      config.headers["Accept-Language"] = language;
     }
     return config;
   },
@@ -28,14 +30,12 @@ axiosClient.interceptors.request.use(
 // Add a response interceptor
 axiosClient.interceptors.response.use(
   function (config) {
-    if(config.data.result.roles === "DOCTOR")
-    {
-      console.log("doctor")
-      window.location.href = "/doctor/manage-appointment-history"; // Redirect if role is doctor
-    }
-    else if(config.data.result.roles === "PATIENT")
-      window.location.href = "/home"
-    return config.data
+    if (config.data?.result?.roles === "DOCTOR") {
+      console.log("doctor");
+      window.location.href = "doctor/schedule-management"; // Redirect if role is doctor
+    } else if (config.data?.result?.roles === "PATIENT")
+      window.location.href = "/home";
+    return config.data;
   },
   async function (error) {
     // Return the response data for both 404 and 200 status codes
@@ -77,9 +77,7 @@ axiosClient.interceptors.response.use(
       localStorage.setItem("accessToken", "");
       localStorage.setItem("refreshToken", "");
       localStorage.setItem("img", "");
-    }
-
-    else {
+    } else {
       // Update the styling for self.bangtinh.text()
       console.log(error.response.data);
       return Promise.resolve(error.response.data); // Return the data for 404 errors

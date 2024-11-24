@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import PropTypes from "prop-types";
 import {
   Box,
@@ -8,10 +8,15 @@ import {
   Pagination,
   Tabs,
   Tab,
+  Select,
+  MenuItem,
+  FormControl,
+  InputLabel,
 } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import Sidebar from "../../components/doctor/Sidebar";
 import AppointmentTable from "../../components/doctor/AppointmentTable";
+import { appointment } from "../../api/appointment";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -43,44 +48,79 @@ function a11yProps(index) {
 }
 
 const AppointmentManagement = () => {
-  const [selectedDate, setSelectedDate] = useState("");
+  const [appointments, setAppointments] = useState();
+  const [selectedDate, setSelectedDate] = useState(
+    new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0]
+  );
 
-  const [value, setValue] = React.useState(0);
+  const [value, setValue] = React.useState(3);
+  const [dateFilter, setDateFilter] = useState("today");
+  const [currentPage, setCurrentPage] = useState(1);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
+    setCurrentPage(1);
+    fetchData(newValue, 1);
   };
 
-  // Mock data - thay thế bằng dữ liệu thực tế
-  const appointments = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      date: "2024-10-01",
-      time: "8:00 - 9:00",
-      title: "Tái khái mụn trứng cá",
-      email: "nguyenvana@email.com",
-      status: "Đã khám",
-    },
-    {
-      id: 2,
-      name: "Nguyễn Văn A",
-      date: "2024-10-01",
-      time: "8:00 - 9:00",
-      title: "Tái khái mụn trứng cá",
-      email: "nguyenvana@email.com",
-      status: "Đã khám",
-    },
-    {
-      id: 3,
-      name: "Nguyễn Văn A",
-      date: "2024-10-01",
-      time: "8:00 - 9:00",
-      title: "Tái khái mụn trứng cá",
-      email: "nguyenvana@email.com",
-      status: "Đã khám",
-    },
-  ];
+  const handleDateFilter = (e) => {
+    console.log(e.target.value);
+    setDateFilter(e.target.value);
+  };
+
+  const fetchData = async (value, page) => {
+    const status = filterAppointment(value);
+    let response;
+
+    try {
+      if (dateFilter === "today" || dateFilter === "cancel") {
+        response = await appointment.getAppointmentByDoctor(
+          "f053016f-15b6-4a36-8a4b-1b422492d9c0",
+          status,
+          selectedDate,
+          page
+        );
+      } else {
+        const week = dateFilter === "week" ? selectedDate : null;
+        const month = dateFilter === "month" ? selectedDate : null;
+
+        response = await appointment.getAppointmentFilter(
+          "f053016f-15b6-4a36-8a4b-1b422492d9c0",
+          week,
+          month,
+          status,
+          page
+        );
+      }
+
+      console.log(response);
+      if (response.code === 1000) {
+        setAppointments(response.result);
+      } else {
+        console.error("Error fetching appointment data:", response.message);
+      }
+    } catch (error) {
+      console.error("Error fetching appointment data:", error);
+    }
+  };
+
+  useEffect(() => {
+    fetchData(value, currentPage);
+  }, [value, dateFilter, selectedDate, currentPage]);
+
+  const filterAppointment = (value) => {
+    if (value == 0) return "CONFIRMED";
+    else if (value == 1) return "PENDING";
+    else if (value == 2) return "COMPLETED";
+    else return "CANCELLED";
+  };
+
+  const handleChangePage = (event, newPage) => {
+    setCurrentPage(newPage);
+    fetchData(value, newPage);
+  };
 
   return (
     <Box
@@ -100,7 +140,7 @@ const AppointmentManagement = () => {
         sx={{
           display: "flex",
           flexDirection: "column",
-          width: "70%",
+          width: "90%",
           margin: "0 auto",
         }}
       >
@@ -133,6 +173,27 @@ const AppointmentManagement = () => {
                 shrink: true, // Đảm bảo nhãn khôn g bị ẩn khi có giá trị
               }}
             />
+          </Box>
+
+          <Box>
+            <FormControl sx={{ width: 200 }}>
+              <InputLabel id="demo-simple-select-label" size="small">
+                Lọc
+              </InputLabel>
+              <Select
+                labelId="demo-simple-select-label"
+                size="small"
+                value={dateFilter}
+                onChange={(e) => handleDateFilter(e)}
+                label="Lọc"
+              >
+                <MenuItem value="cancel">Bỏ lọc</MenuItem>
+                <MenuItem value="all">Tất cả ngày</MenuItem>
+                <MenuItem value="today">Hôm nay</MenuItem>
+                <MenuItem value="week">Tuần này</MenuItem>
+                <MenuItem value="month">Tháng này</MenuItem>
+              </Select>
+            </FormControl>
           </Box>
 
           <Button
@@ -212,7 +273,12 @@ const AppointmentManagement = () => {
         </CustomTabPanel>
 
         <Box display="flex" justifyContent="center" mt={3}>
-          <Pagination count={15} color="primary" />
+          <Pagination
+            count={appointments ? appointments.totalPages : 0}
+            page={currentPage}
+            onChange={handleChangePage}
+            color="primary"
+          />
         </Box>
       </Box>
     </Box>

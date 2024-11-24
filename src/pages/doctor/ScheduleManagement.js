@@ -4,42 +4,6 @@ import { Box, Typography, Tabs, Tab } from "@mui/material";
 import Sidebar from "../../components/doctor/Sidebar";
 import DoctorSchedule from "../../components/doctor/DoctorSchedule";
 
-const timeActiveSlots = [
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-];
-
-const timeUnActiveSlots = [
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-];
-
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -137,10 +101,10 @@ function ScheduleManagement() {
             </Tabs>
           </Box>
           <CustomTabPanel value={value} index={0}>
-            <DoctorSchedule times={timeActiveSlots} />
+            <DoctorSchedule />
           </CustomTabPanel>
           <CustomTabPanel value={value} index={1}>
-            <DoctorSchedule times={timeUnActiveSlots} type={"add"} />
+            <DoctorSchedule type={"add"} />
           </CustomTabPanel>
         </Box>
       </Box>
