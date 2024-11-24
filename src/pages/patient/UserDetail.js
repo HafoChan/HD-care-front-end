@@ -187,7 +187,7 @@ function UserDetail() {
               label="Birthday"
               type="date"
               name="dob"
-              value={userInfo?.dob ? userInfo.dob : ""}
+              value={userInfo?.dob || ""}
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}

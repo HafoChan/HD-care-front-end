@@ -10,12 +10,13 @@ export const doctor = {
     }
   },
 
-  filterDoctor(page, name, district, city) {
+  filterDoctor(page, name, district, city,sorted) {
     try {
       const query = [
         city ? `city=${city}` : "",
         name ? `name=${name}` : "",
         district ? `district=${district}` : "",
+        sorted ? `order=${sorted}` : ""
       ]
         .filter(Boolean)
         .join("&");
@@ -47,4 +48,8 @@ export const doctor = {
       console.error("Error:", error);
     }
   },
+
+  getInfo(){
+    return axiosClient.get("/doctor/my-info")
+  }
 };

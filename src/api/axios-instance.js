@@ -28,12 +28,12 @@ axiosClient.interceptors.request.use(
 // Add a response interceptor
 axiosClient.interceptors.response.use(
   function (config) {
-    if(config.data.result.role === "DOCTOR")
+    if(config.data.result.roles === "DOCTOR")
     {
       console.log("doctor")
-      window.location.href = "doctor/schedule-management"; // Redirect if role is doctor
+      window.location.href = "/doctor/manage-appointment-history"; // Redirect if role is doctor
     }
-    else if(config.data.result.role === "PATIENT")
+    else if(config.data.result.roles === "PATIENT")
       window.location.href = "/home"
     return config.data
   },

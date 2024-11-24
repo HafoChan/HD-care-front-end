@@ -38,12 +38,8 @@ const TeamOfDoctors = () => {
   const [selectedDateClick, setSelectedDateClick] = useState();
   const [selectedProvince, setSelectedProvince] = useState(null); // Lưu tỉnh đã chọn
   const [selectedDistrict, setSelectedDistrict] = useState(null); // Lưu huyện đã chọn
-<<<<<<< HEAD
-  const [keyword, setKeyword] = useState("")
-=======
   const [fullname, setFullName] = useState("");
   const [sortOrder, setSortOrder] = useState("");
->>>>>>> 9a2b43ed76adfdb75d17f1dc427c9f36193f6b88
 
   // Thêm trạng thái cho phân trang
   const [currentPage, setCurrentPage] = useState(1);
@@ -176,16 +172,11 @@ const TeamOfDoctors = () => {
       currentPage,
       fullname,
       selectedDistrict && selectedDistrict.Name,
-      selectedProvince && selectedProvince.Name
+      selectedProvince && selectedProvince.Name,
+      sortOrder && sortOrder
     );
     setDoctors(data.result.doctorResponse);
     // navigate(url);
-    if (sortOrder) {
-      const sorted = [...data.result?.doctorResponse].sort((a, b) => {
-        return sortOrder === "asc" ? a.price - b.price : b.price - a.price;
-      });
-      setDoctors(sorted);
-    }
   };
 
   // Hàm để chuyển trang
@@ -193,15 +184,6 @@ const TeamOfDoctors = () => {
     setCurrentPage(newPage);
   };
 
-  const handleSubmitSearch = async (event) => {
-  }
-
-  const [age, setAge] = React.useState('');
-
-  const handleChange = (event) => {
-    console.log(event.target.value)
-    setSelectedProvince(event.target.value)
-  };
 
   return (
     <Box
@@ -228,124 +210,6 @@ const TeamOfDoctors = () => {
           marginBottom={"0px"}
           alignItems={"center"}
         >
-<<<<<<< HEAD
-          <Box>
-          <FormControl
-      sx={{
-        m: 1,
-        minWidth: 250,
-        backgroundColor: "white",
-        borderRadius: "4px",
-      }}
-      size="small"
-    >
-      <InputLabel id="demo-select-small-label">Khu vực</InputLabel>
-      <Select
-        labelId="demo-select-small-label"
-        id="demo-select-small"
-        value={selectedProvince} // Bind the selected value
-        onChange={handleChange} // Handle change event
-        label="Khu vực"
-      >
-        {options.map((option) => (
-          <MenuItem value={option.Name}>
-            {option.Name}
-          </MenuItem>
-        ))}
-      </Select>
-    </FormControl>
-
-    {/* <FormControl fullWidth>
-        <InputLabel id="demo-simple-select-label">Age</InputLabel>
-        <Select
-          labelId="demo-simple-select-label"
-          id="demo-simple-select"
-          value={age}
-          label="Age"
-          onChange={handleChange}
-        >
-          <MenuItem value={10}>Ten</MenuItem>
-          <MenuItem value={20}>Twenty</MenuItem>
-          <MenuItem value={30}>Thirty</MenuItem>
-        </Select>
-      </FormControl> */}
-
-            <FormControl
-              sx={{
-                m: 1,
-                minWidth: 180,
-                backgroundColor: "white",
-                borderRadius: "4px",
-                ml: 0,
-              }}
-              size="small"
-            >
-              <InputLabel id="demo-select-small-label">Quận/Huyện</InputLabel>
-              <Select
-                labelId="demo-select-small-label"
-                id="demo-select-small"
-                label="Quận/Huyện"
-              >
-                {selectedProvince && selectedProvince.Districts?.map((district) => ( // Map over districts to create MenuItems
-                  <MenuItem key={district.id} value={district.id}>
-                    {district.Name} {/* Adjust according to the structure of your data */}
-                  </MenuItem>
-                ))}
-              </Select>
-            </FormControl>
-
-            <FormControl
-              sx={{
-                m: 1,
-                minWidth: 250,
-                backgroundColor: "white",
-                borderRadius: "4px",
-              }}
-              size="small"
-            >
-              <InputLabel id="demo-select-small-label">Giá</InputLabel>
-              <Select
-                labelId="demo-select-small-label"
-                id="demo-select-small"
-                label="Giá"
-              >
-                <MenuItem value={1}>Dưới 200.000đ</MenuItem>
-                <MenuItem value={2}>Từ 200.000đ - 500.000đ</MenuItem>
-                <MenuItem value={3}>Trên 500.000đ</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <TextField
-            sx={{
-              height: "40px",
-              justifyContent: "center",
-              flexGrow: 1,
-              backgroundColor: "white",
-              borderRadius: "4px",
-              ml: 1,
-            }}
-            variant="outlined"
-            placeholder="Search"
-            defaultValue={keyword}
-            onChange={() => setKeyword()}
-            onSubmit={handleSubmitSearch}
-            InputProps={{
-              startAdornment: (
-                <Box
-                  style={{
-                    marginRight: "20px",
-                    alignItems: "center",
-                    display: "flex",
-                  }}
-                >
-                  <SearchIcon style={{ color: "#576064" }} />
-                </Box>
-              ),
-              sx: { height: "40px" },
-            }}
-          />
-=======
           <Grid container spacing={2} alignItems="center">
             <Grid item xs={4}>
               <Autocomplete
@@ -439,7 +303,6 @@ const TeamOfDoctors = () => {
           >
             Lọc
           </Button>
->>>>>>> 9a2b43ed76adfdb75d17f1dc427c9f36193f6b88
         </Box>
       </Box>
 
