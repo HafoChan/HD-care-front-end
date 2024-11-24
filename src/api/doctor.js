@@ -47,4 +47,13 @@ export const doctor = {
       console.error("Error:", error);
     }
   },
+
+  getInfo() {
+    try {
+      const response = axiosClient.get("/doctor/my-info");
+      return response.data;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
 };

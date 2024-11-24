@@ -13,4 +13,28 @@ export const schedule = {
       console.error("Error:", error);
     }
   },
+
+  postCreateSchedule(idDoctor, data) {
+    try {
+      const response = axiosInstance.post(
+        `/doctor-schedule?idDoctor=${idDoctor}`,
+        data
+      );
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
+
+  deleteSchedule(idDoctor, data) {
+    try {
+      const response = axiosInstance.post(
+        `/doctor-schedule/delete-schedules?idDoctor=${idDoctor}`,
+        data
+      );
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
 };

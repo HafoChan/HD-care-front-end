@@ -14,6 +14,8 @@ import AppointmentManagement from "./pages/doctor/AppointmentManagement";
 import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
 import EvaluateForm from "./components/patient/evaluateForm";
+import { ToastContainer } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const App = () => {
   return (
@@ -21,13 +23,12 @@ const App = () => {
       <Routes>
         <Route path="/evaluate" element={<EvaluateForm />} />
         <Route path="/home" element={<Home />} />
-        <Route path = "/login" element={<Login />} />
+        <Route path="/login" element={<Login />} />
         <Route index element={<Register />} />
         <Route path="/doctor/:id" element={<DoctorDetail />} />
         <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
         <Route path="/profile" element={<Profile />} />
         <Route path="/user-detail" element={<UserDetail />} />
-        <Route path="/appointment-history" element={<AppointmentHistory />} />
         <Route path="/appointment-history" element={<AppointmentHistory />} />
 
         <Route
@@ -51,6 +52,7 @@ const App = () => {
           element={<ManageAppointmentHistory />}
         />
       </Routes>
+      <ToastContainer />
     </Router>
     // <div className="container" style={{ width: "600px" }}>
     //   <div style={{ margin: "20px" }}>
