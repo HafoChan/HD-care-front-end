@@ -134,6 +134,7 @@ const TeamOfDoctors = () => {
 
   useEffect(() => {
     fetchDoctors(currentPage);
+    getCity()
   }, [currentPage]);
 
   const handleScheduleClick = (date, doctor, scheduleId) => {
@@ -171,22 +172,18 @@ const TeamOfDoctors = () => {
       currentPage,
       fullname,
       selectedDistrict && selectedDistrict.Name,
-      selectedProvince && selectedProvince.Name
+      selectedProvince && selectedProvince.Name,
+      sortOrder && sortOrder
     );
     setDoctors(data.result.doctorResponse);
     // navigate(url);
-    if (sortOrder) {
-      const sorted = [...data.result?.doctorResponse].sort((a, b) => {
-        return sortOrder === "asc" ? a.price - b.price : b.price - a.price;
-      });
-      setDoctors(sorted);
-    }
   };
 
   // Hàm để chuyển trang
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
   };
+
 
   return (
     <Box
