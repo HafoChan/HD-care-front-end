@@ -70,7 +70,7 @@ const DoctorSchedule = ({ type }) => {
   const getTimeActiveDoctor = async (doctorId, selectedDate) => {
     try {
       const response = await schedule.getScheduleByDoctorAndDate(
-        "f053016f-15b6-4a36-8a4b-1b422492d9c0", // doctorId
+        "2ca3e6e9-08d9-44ad-8518-0bf13e05f15d", // doctorId
         selectedDate
       );
       console.log(response);
@@ -201,7 +201,7 @@ const DoctorSchedule = ({ type }) => {
         selectedDate={selectedDate}
         onDateChange={(e) => setSelectedDate(e.target.value)}
         selectedSlots={selectedSlots}
-        doctorId="f053016f-15b6-4a36-8a4b-1b422492d9c0"
+        doctorId="2ca3e6e9-08d9-44ad-8518-0bf13e05f15d"
         onScheduleCreated={handleScheduleCreated}
       />
 
@@ -215,7 +215,7 @@ const DoctorSchedule = ({ type }) => {
         selectedSlots={selectedSlots}
         timeActiveDoctor={timeActiveDoctor}
         onScheduleCancelled={handleScheduleCancelled}
-        doctorId="f053016f-15b6-4a36-8a4b-1b422492d9c0"
+        doctorId="2ca3e6e9-08d9-44ad-8518-0bf13e05f15d"
       />
     </Box>
   );

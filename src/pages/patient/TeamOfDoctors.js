@@ -69,14 +69,25 @@ const TeamOfDoctors = () => {
           selectedDistrict && selectedDistrict.Name,
           selectedProvince && selectedProvince.Name
         );
-        setDoctors(data.result.doctorResponse);
+        setDoctors(data.result?.typeResponse);
+        setPageMax(data.result?.pageMax); // Cập nhật tổng số trang
+        console.log(pageMax)
+
+        // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
+        const initialSelectedDates = {};
+        data.result?.typeResponse.forEach((doctor) => {
+          const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
+          const formattedDate = localDate.toISOString().split("T")[0];
+          initialSelectedDates[doctor.id] = formattedDate;
+        });
+        setSelectedDates(initialSelectedDates);
       } catch (error) {
         console.log(error);
       }
     };
     getAllDoctor();
     getCity();
-  }, [provinceSlug, districtSlug]);
+  }, [currentPage,fullname]);
 
   const handleSortChange = (event) => {
     const order = event.target.value;
@@ -114,28 +125,6 @@ const TeamOfDoctors = () => {
       console.error("Error fetching schedules:", error);
     }
   };
-
-  // Cập nhật hàm fetchDoctors để lấy dữ liệu cho trang hiện tại
-  const fetchDoctors = async (page) => {
-    const response = await doctor.filterDoctor(page);
-    console.log(response);
-    setDoctors(response.result?.doctorResponse);
-    setPageMax(response.result?.pageMax); // Cập nhật tổng số trang
-
-    // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
-    const initialSelectedDates = {};
-    response.result?.doctorResponse.forEach((doctor) => {
-      const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
-      const formattedDate = localDate.toISOString().split("T")[0];
-      initialSelectedDates[doctor.id] = formattedDate;
-    });
-    setSelectedDates(initialSelectedDates);
-  };
-
-  useEffect(() => {
-    fetchDoctors(currentPage);
-    getCity()
-  }, [currentPage]);
 
   const handleScheduleClick = (date, doctor, scheduleId) => {
     const selectedSchedule = doctor.schedules.find(
@@ -175,7 +164,9 @@ const TeamOfDoctors = () => {
       selectedProvince && selectedProvince.Name,
       sortOrder && sortOrder
     );
-    setDoctors(data.result.doctorResponse);
+    setCurrentPage(1)
+    setDoctors(data.result.typeResponse);
+    setPageMax(data.result?.pageMax); // Cập nhật tổng số trang
     // navigate(url);
   };
 
@@ -183,7 +174,6 @@ const TeamOfDoctors = () => {
   const handlePageChange = (event, newPage) => {
     setCurrentPage(newPage);
   };
-
 
   return (
     <Box

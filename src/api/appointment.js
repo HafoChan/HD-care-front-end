@@ -27,11 +27,12 @@ export const appointment = {
     }
   },
 
-  async getAppointmentByDoctor(doctorId, status, date, page) {
+  async filterByToday(doctorId, status, date, page,name) {
     const query = [
       doctorId ? `doctorId=${doctorId}` : "",
       date ? `date=${date}` : "",
       status ? `status=${status}` : "",
+      name ? `name=${name}` : "",
       page ? `page=${page}` : "",
     ]
       .filter(Boolean)
@@ -49,10 +50,11 @@ export const appointment = {
     }
   },
 
-  async getAppointmentFilter(doctorId, week, month, status, page) {
+  async filterByWeekAndMonth(doctorId, week, month, status, page,name) {
     const query = [
       doctorId ? `doctorId=${doctorId}` : "",
       status ? `status=${status}` : "",
+      name ? `name=${name}` : "",
       page ? `page=${page}` : "",
       week ? `week=${week}` : "",
       month ? `month=${month}` : "",
@@ -60,10 +62,10 @@ export const appointment = {
       .filter(Boolean)
       .join("&");
 
-    console.log(`/appointment/doctor-appointment/time?${query}`);
+    console.log(`/appointment/doctor-appointments/time?${query}`);
     try {
       const response = await axiosInstance.get(
-        `/appointment/doctor-appointment/time?${query}`
+        `/appointment/doctor-appointments/time?${query}`
       );
       return response;
     } catch (error) {

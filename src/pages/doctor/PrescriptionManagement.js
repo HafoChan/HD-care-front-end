@@ -39,8 +39,9 @@ const Prescription = () => {
       try {
         if (location.state?.appointment?.idPatient) {
           const response = await prescriptionApi.getInfoPatient(location.state.appointment.idPatient);
-          console.log(location.state.appointment)
+
           const listmedicine = await prescriptionApi.getListMedicine(location.state.appointment.prescriptionId)
+
           setPrescriptionList(listmedicine.result)
           setPatientInfo(response.result);
           setAppointment(location.state.appointment)
@@ -109,11 +110,12 @@ const Prescription = () => {
 
   const handleExport = async (e) => {
     try {
-      console.log(appointment.result)
       const prescription = await prescriptionApi.createPrescription(appointment.prescriptionId, {
         result: appointment?.result,
       });
+
       setAppointment((appointment)=>({...appointment,[e.target.name] : prescription.result.result}))
+
       const response = await fetch(`http://localhost:8082/api/v1/appointment/pdf?status=${e.target.textContent}`, {
         method: "POST",
         headers: {
@@ -121,6 +123,7 @@ const Prescription = () => {
         },
         body: JSON.stringify(appointment),
       });
+
       if (e.target.textContent === "Gửi")
       {
         setSnackbarMessage('Gửi đơn thuốc thành công!');
@@ -144,7 +147,6 @@ const Prescription = () => {
         setOpenSnackbar(true);
       }
   
-
      
     } catch (error) {
       setSnackbarMessage('Tạo PDF thất bại!');
@@ -156,7 +158,6 @@ const Prescription = () => {
     setOpenPdf(false);
     setPdfUrl('');
   };
-
 
   // Thêm handler cho kết quả khám
   const handleResultChange = (e) => {

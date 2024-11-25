@@ -1,20 +1,19 @@
 import axiosClient from "./axios-instance";
 
 const appointApi = {
-  getAppointmentById(id,currentPage) {
-    return axiosClient.get(`appointment/doctor-appointments?doctorId=${id}&page=${currentPage}`);
+  getAppointmentById(id,currentPage,name) {
+    let url = `appointment/doctor-appointments?doctorId=${id}&page=${currentPage}`;
+    if (name !== null) {
+      url += `&name=${name}`;
+    }
+    return axiosClient.get(url);
   },
   //--------------doctor_appointment--------------------
 
-  findAppointmentByDoctor() {
-    return axiosClient.get(
-      "/appointment/doctor-appointments?doctorId=f053016f-15b6-4a36-8a4b-1b422492d9c0"
-    );
-  },
 
-  filterAppointment(id,date) {
+  filterAppointment(id,date,page,status) {
     return axiosClient.get(
-      `/appointment/doctor-appointments?doctorId=${id}&date=${date}`
+      `/appointment/doctor-appointments?doctorId=${id}&date=${date}&page=${page}`
     );
   },
 

@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import {
   Dialog,
   DialogTitle,
@@ -25,41 +25,39 @@ const CancelScheduleDialog = ({
 }) => {
   const handleCancelSchedule = async () => {
     try {
-      const cancelSchedule = async () => {
-        // Thực hiện xử lý để lọc lại timeActiveDoctor
-        const slotsToCancel = timeActiveDoctor.filter((slot) =>
-          selectedSlots.some(
-            (selectedSlot) =>
-              selectedSlot.start === slot.start && selectedSlot.end === slot.end
-          )
-        );
+      // Thực hiện xử lý để lọc lại timeActiveDoctor
+      const slotsToCancel = timeActiveDoctor.filter((slot) =>
+        selectedSlots.some(
+          (selectedSlot) =>
+            selectedSlot.start === slot.start && selectedSlot.end === slot.end
+        )
+      );
 
-        // Xóa trường date khỏi các phần tử trong slotsToCancel
-        const slotsToCancelWithIdOnly = slotsToCancel.map(({ id }) => ({ id }));
-
-        console.log(slotsToCancelWithIdOnly);
-
-        try {
-          const response = await schedule.deleteSchedule(
-            doctorId,
-            slotsToCancelWithIdOnly
-          );
-          console.log(response);
-          if (response.code === 1000) {
-            toast.success("Xóa lịch khám thành công!");
-            onScheduleCancelled();
-            onClose();
-          } else {
-            toast.error("Có lỗi xảy ra khi xóa lịch khám.");
-          }
-        } catch (error) {
-          console.log(error);
-          toast.error("Có lỗi xảy ra khi xóa lịch khám.");
-        }
+      // Xóa trường date khỏi các phần tử trong slotsToCancel
+      const slotsToCancelWithIdOnly = slotsToCancel.map(({ id }) => ({ id }));
+      
+      // Tạo object deleteScheduleData trực tiếp
+      const deleteScheduleData = {
+        scheduleList: slotsToCancelWithIdOnly,
+        note: cancelReason
       };
-      await cancelSchedule();
-    } catch (err) {
-      console.error("Error canceling schedule:", err);
+
+      // Gọi API với deleteScheduleData
+      const response = await schedule.deleteSchedule(
+        doctorId,
+        deleteScheduleData
+      );
+      
+      if (response.code === 1000) {
+        toast.success("Xóa lịch khám thành công!");
+        onScheduleCancelled();
+        onClose();
+      } else {
+        toast.error("Có lỗi xảy ra khi xóa lịch khám.");
+      }
+    } catch (error) {
+      console.log(error);
+      toast.error("Có lỗi xảy ra khi xóa lịch khám.");
     }
   };
 

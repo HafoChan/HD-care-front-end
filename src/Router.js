@@ -15,6 +15,7 @@ import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
 import EvaluateForm from "./components/patient/evaluateForm";
 import Layout from "./components/doctor/Layout";
+import { ToastContainer } from 'react-toastify';
 
 const AppRouter = () => {
   return (

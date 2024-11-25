@@ -1,10 +1,5 @@
 import axios from "axios";
-// import { get, set } from "@/hooks/use-local-storage";
-import { Router } from "react-router-dom";
-import {
-  getAccessToken,
-  getRefreshToken,
-} from "../service/otherService/localStorage";
+import { notification } from 'antd';
 const axiosClient = axios.create({
   baseURL: "http://localhost:8082/api/v1/",
   headers: {
@@ -38,49 +33,60 @@ axiosClient.interceptors.response.use(
     return config.data;
   },
   async function (error) {
-    // Return the response data for both 404 and 200 status codes
     console.log("Axios error");
-
     const { response } = error;
     console.log("response : ", response);
 
-    if (
-      response?.status === 401 &&
-      response?.data?.result === "No authenticated"
-    ) {
+    if (response?.status === 401 && response?.data?.result === "No authenticated") {
       const originalRequest = error.config;
-
       const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken || originalRequest._retry) {
-        localStorage.setItem("refreshToken", "");
-        window.location.href = "/login";
-        return Promise.reject(error);
+      
+      if (refreshToken) {
+        try {
+          const result = await axios.post("http://localhost:8082/api/v1/auth/refreshToken", {
+            refreshToken: refreshToken
+          });
+          
+          const data = result.data.data;
+          const newAccessToken = data.accessToken;
+          
+          localStorage.setItem("accessToken", newAccessToken);
+          
+          originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+          return axiosClient(originalRequest);
+        } catch (refreshError) {
+          console.error("Refresh token failed:", refreshError);
+          
+          // Kiểm tra nếu refresh token thất bại do token hết hạn
+          if (refreshError.response?.status === 401 && 
+              (refreshError.response?.data?.result === "Token expired" || 
+               refreshError.response?.data?.code === 1026)) {
+            
+            // Xóa toàn bộ localStorage
+            localStorage.clear();
+            
+            // Hiển thị thông báo và chuyển hướng sang trang login
+            notification.error({
+              message: 'Phiên đăng nhập hết hạn',
+              description: 'Vui lòng đăng nhập lại.',
+              duration: 3
+            });
+            
+            // Chuyển hướng sang trang login sau 3 giây
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 3000);
+          }
+          
+          return Promise.reject(refreshError);
+        }
       }
-      try {
-        const result = await axiosClient.post("/auth/refreshToken", {
-          refreshToken,
-        });
-
-        const data = result.result;
-        const newAccessToken = data.accessToken;
-
-        localStorage.setItem("accessToken", newAccessToken);
-        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-        return axiosClient(originalRequest);
-      } catch (refreshError) {
-        console.error("Refresh token failed:", refreshError);
-        localStorage.setItem("accessToken", "");
-        Router.push("/login");
-        return Promise.reject(refreshError);
-      }
-    } else if (response?.status === 401 && response?.code === 1026) {
-      localStorage.setItem("accessToken", "");
-      localStorage.setItem("refreshToken", "");
-      localStorage.setItem("img", "");
-    } else {
+  }
+  else {
       // Update the styling for self.bangtinh.text()
-      console.log(error.response.data);
-      return Promise.resolve(error.response.data); // Return the data for 404 errors
+      console.log(error.response?.data);
+      console.log("a")
+      return Promise.resolve(error.response?.data); // Return the data for 404 errors
     }
     return Promise.reject(error);
   }

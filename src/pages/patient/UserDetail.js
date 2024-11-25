@@ -31,7 +31,7 @@ function UserDetail() {
   const [userInfo, setUserInfo] = useState({
     name: "",
     phone: "",
-    gender: "nam",
+    gender: "",
     address: "",
     img: getImg(),
     dob: "",
@@ -69,8 +69,28 @@ function UserDetail() {
   };
 
   const getInfo = async () => {
-    const response = await patientApi.getInfo();
-    setUserInfo(response.result);
+    try {
+      const response = await patientApi.getInfo();
+      if (response && response.result) {
+        console.log("User info:", response.result);
+        setUserInfo(response.result);
+      } else {
+        // Xử lý trường hợp response không có dữ liệu
+        showError("Không thể tải thông tin người dùng");
+      }
+    } catch (error) {
+      console.log("loi: " + error)
+      // Xử lý các lỗi khác nhau
+      if (error.response && error.response.status === 401) {
+        // Lỗi unauthorized - có thể do refreshToken không hợp lệ
+        showError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+        // Có thể thêm logic chuyển hướng đến trang đăng nhập
+      } else {
+        // Các lỗi khác
+        showError(error.message || "Đã có lỗi xảy ra khi tải thông tin");
+      }
+      console.error("Error fetching user info:", error);
+    }
   };
 
   const handleTabClick = (tab) => {
@@ -201,7 +221,7 @@ function UserDetail() {
               <RadioGroup
                 row
                 name="gender"
-                value={userInfo.gender || "Nam"} // Sử dụng giá trị mặc định nếu là undefined
+                value={userInfo?.gender || "Nam"} // Sử dụng giá trị mặc định nếu là undefined
                 onChange={handleInputChange}
                 disabled={!isEditing}
               >

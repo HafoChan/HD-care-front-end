@@ -27,40 +27,78 @@ import KeyboardArrowLeftIcon from '@mui/icons-material/KeyboardArrowLeft';
 import KeyboardArrowRightIcon from '@mui/icons-material/KeyboardArrowRight';
 import appointApi from '../../api/appointApi';
 import { doctor } from '../../api/doctor';
+import { appointment } from '../../api/appointment';
 
 
 const ManageAppointmentHistory = () => {
   const navigate = useNavigate();
-  const [searchTerm, setSearchTerm] = useState('');
-  const [dateFilter, setDateFilter] = useState('all');
+  const [filters, setFilters] = useState({
+    dateFilter: 'all',
+    searchTerm: '',
+    currentPage: 1
+  });
   const [selected, setSelected] = useState([]);
   const [medicalRecords,setMedicalRecords] = useState({})
-  const [currentPage, setCurrentPage] = useState(1);
   const [pageMax, setPageMax] = useState(1);
+  const [userInfo,setUserInfo] = useState({})
 
+  const getData = async (doctorId) => {
+    const today = new Date().toISOString().split('T')[0];
+    let response;
 
-  const getData = async (id,currentPage) =>{
-        const list = await appointApi.getAppointmentById(id,currentPage)
-        setMedicalRecords(list.result?.content)
-        setPageMax(list.result?.totalPages)
+    try {
+      switch (filters.dateFilter) {
+        case 'today':
+          response = await appointment.filterByToday(doctorId, null, today, filters.currentPage, filters.searchTerm);
+          break;
+        case 'week':
+          response = await appointment.filterByWeekAndMonth(doctorId, today, null, null, filters.currentPage, filters.searchTerm);
+          break;
+        case 'month':
+          response = await appointment.filterByWeekAndMonth(doctorId, null, today, null, filters.currentPage, filters.searchTerm);
+          break;
+        default:
+          response = await appointApi.getAppointmentById(doctorId, filters.currentPage, filters.searchTerm);
+      }
+
+      setMedicalRecords(response.result?.content);
+      setPageMax(response.result?.totalPages);
+    } catch (error) {
+      console.error('Error fetching data:', error);
     }
-    
-  const getInfoDoctor = (currentPage) =>{
-    console.log("getInfoDoctor called"); // Thêm dòng này để kiểm tra
-
-      doctor.getInfo()
-      .then((response) =>{
-        getData(response.result.id,currentPage)
-      });
-    }
-  
-  const handlePageChange = (event, newPage) => {
-    setCurrentPage(newPage);
   };
-    
+
+  const handleDateFilter = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      dateFilter: value,
+      currentPage: 1 // Reset về trang 1 khi thay đổi bộ lọc
+    }));
+  };
+
+  const handleSearch = (value) => {
+    setFilters(prev => ({
+      ...prev,
+      searchTerm: value,
+      currentPage: 1 // Reset về trang 1 khi tìm kiếm
+    }));
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setFilters(prev => ({
+      ...prev,
+      currentPage: newPage
+    }));
+  };
+
   useEffect(() => {
-      getInfoDoctor(currentPage)
-    }, [currentPage]);
+    doctor.getInfo()
+      .then((response) => {
+        setUserInfo(response.result);
+        getData(response.result.id);
+      })
+      .catch(error => console.error('Error getting doctor info:', error));
+  }, [filters]); // Chạy lại effect khi filters thay đổi
 
   const handleSelect = (id) => {
     // Nếu id đã được chọn thì bỏ chọn
@@ -108,31 +146,6 @@ const ManageAppointmentHistory = () => {
     );
   };
 
-  const handleDateFilter = async (e) => {
-    setDateFilter(e.target.value)
-    const today = new Date().toISOString().split('T')[0];
-    if(e.target.value === 'today'){
-      const newMedicalRecords = await appointApi.filterAppointment(today)
-      console.log(today)
-      setMedicalRecords(newMedicalRecords.result)
-    }
-    else if(e.target.value === 'week'){
-      const newMedicalRecords = await appointApi.filterAppointmentByTime(today,null)
-      console.log(today)
-      setMedicalRecords(newMedicalRecords.result)
-    }
-    else if(e.target.value === 'month'){
-      const newMedicalRecords = await appointApi.filterAppointmentByTime(null,today)
-      console.log(today)
-      setMedicalRecords(newMedicalRecords.result)
-    }
-    else{
-      const list = await appointApi.findAppointmentByDoctor()
-      console.log(list.result)
-      setMedicalRecords(list.result)
-    }
-  }
-
   return (
     <Box sx={{ p: 3 }}>
       <Typography variant="h4" gutterBottom sx={{ color: '#1976d2', fontWeight: 500 }}>
@@ -143,8 +156,8 @@ const ManageAppointmentHistory = () => {
         <TextField
           placeholder="Tìm kiếm theo tên..."
           size="small"
-          value={searchTerm}
-          onChange={(e) => setSearchTerm(e.target.value)}
+          value={filters.searchTerm}
+          onChange={(e) => handleSearch(e.target.value)}
           InputProps={{
             startAdornment: (
               <InputAdornment position="start">
@@ -157,8 +170,8 @@ const ManageAppointmentHistory = () => {
         
         <Select
           size="small"
-          value={dateFilter}
-          onChange={(e) => handleDateFilter(e)}
+          value={filters.dateFilter}
+          onChange={(e) => handleDateFilter(e.target.value)}
           sx={{ width: 150 }}
         >
           <MenuItem value="all">Tất cả ngày</MenuItem>
@@ -229,7 +242,7 @@ const ManageAppointmentHistory = () => {
       <Box display="flex" justifyContent="center" marginTop={3}>
           <Pagination
             count={pageMax}
-            page={currentPage}
+            page={filters.currentPage}
             onChange={handlePageChange}
             color="primary"
           />
