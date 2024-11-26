@@ -181,7 +181,6 @@ function OtherDoctorsSection() {
 }
 
 function DoctorDetail() {
-  const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [doctorInfo, setDoctorInfo] = useState();
   const [doctorSchedule, setDoctorSchedule] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -238,10 +237,7 @@ function DoctorDetail() {
   return (
     <Box width={"100%"} align="center">
       <Box maxWidth={"1200px"}>
-        <HeaderComponent
-          selectedTab={selectedTab}
-          handleTabClick={setSelectedTab}
-        />
+        <HeaderComponent />
       </Box>
 
       <Box width={"100%"} backgroundColor="#1d8be4">

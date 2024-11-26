@@ -28,7 +28,6 @@ import axios from "axios";
 
 const TeamOfDoctors = () => {
   const navigate = useNavigate();
-  const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const { provinceSlug, districtSlug } = useParams(); // Lấy tham số từ URL
   const [doctors, setDoctors] = useState([]);
   const [doctorSelected, setDoctorSelected] = useState();
@@ -71,7 +70,7 @@ const TeamOfDoctors = () => {
         );
         setDoctors(data.result?.typeResponse);
         setPageMax(data.result?.pageMax); // Cập nhật tổng số trang
-        console.log(pageMax)
+        console.log(pageMax);
 
         // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
         const initialSelectedDates = {};
@@ -87,7 +86,7 @@ const TeamOfDoctors = () => {
     };
     getAllDoctor();
     getCity();
-  }, [currentPage,fullname]);
+  }, [currentPage, fullname]);
 
   const handleSortChange = (event) => {
     const order = event.target.value;
@@ -164,7 +163,7 @@ const TeamOfDoctors = () => {
       selectedProvince && selectedProvince.Name,
       sortOrder && sortOrder
     );
-    setCurrentPage(1)
+    setCurrentPage(1);
     setDoctors(data.result.typeResponse);
     setPageMax(data.result?.pageMax); // Cập nhật tổng số trang
     // navigate(url);
@@ -182,10 +181,7 @@ const TeamOfDoctors = () => {
       sx={{ minHeight: "100vh", paddingBottom: 8 }}
     >
       {/* Header */}
-      <HeaderComponent
-        selectedTab={selectedTab}
-        handleTabClick={setSelectedTab}
-      />
+      <HeaderComponent />
 
       <Box container maxWidth={"1200px"}>
         <Box
@@ -197,12 +193,13 @@ const TeamOfDoctors = () => {
           maxWidth={"1200px"}
           paddingX={"24px"}
           marginY={"24px"}
-          marginBottom={"0px"}
+          marginBottom={2}
           alignItems={"center"}
         >
           <Grid container spacing={2} alignItems="center">
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Autocomplete
+                size="small"
                 value={selectedProvince}
                 onChange={(event, newValue) =>
                   handleSelectChange("province", newValue)
@@ -213,14 +210,15 @@ const TeamOfDoctors = () => {
                   <TextField
                     {...params}
                     label="Tỉnh thành"
-                    sx={{ backgroundColor: "white" }}
+                    sx={{ backgroundColor: "white", borderRadius: "4px" }}
                   />
                 )}
                 style={{ width: "100%" }}
               />
             </Grid>
-            <Grid item xs={4}>
+            <Grid item xs={3}>
               <Autocomplete
+                size="small"
                 value={selectedDistrict}
                 onChange={(event, newValue) =>
                   handleSelectChange("district", newValue)
@@ -231,12 +229,54 @@ const TeamOfDoctors = () => {
                   <TextField
                     {...params}
                     label="Huyện"
-                    sx={{ backgroundColor: "white" }}
+                    sx={{ backgroundColor: "white", borderRadius: "4px" }}
                   />
                 )}
                 style={{ width: "100%" }}
               />
             </Grid>
+
+            <Grid item xs={2}>
+              <FormControl
+                component="fieldset"
+                sx={{
+                  width: "100%",
+                  backgroundColor: "white",
+                  borderRadius: "4px",
+                }}
+              >
+                <Autocomplete
+                  size="small"
+                  options={[
+                    { label: "Giá tăng dần", value: "asc" },
+                    { label: "Giá giảm dần", value: "desc" },
+                  ]}
+                  getOptionLabel={(option) => option.label}
+                  value={
+                    sortOrder
+                      ? {
+                          label:
+                            sortOrder === "asc"
+                              ? "Giá tăng dần"
+                              : "Giá giảm dần",
+                          value: sortOrder,
+                        }
+                      : null
+                  }
+                  onChange={(event, newValue) => {
+                    if (newValue) {
+                      handleSortChange({ target: { value: newValue.value } });
+                    }
+                  }}
+                  renderInput={(params) => (
+                    <TextField {...params} label="Sắp xếp giá" />
+                  )}
+                  disableClearable
+                  sx={{ width: "100%" }}
+                />
+              </FormControl>
+            </Grid>
+
             <Grid item xs={4}>
               <TextField
                 sx={{
@@ -245,7 +285,10 @@ const TeamOfDoctors = () => {
                   flexGrow: 1,
                   backgroundColor: "white",
                   borderRadius: "4px",
+                  height: 40,
+                  width: "100%",
                 }}
+                size="small"
                 variant="outlined"
                 placeholder="Search"
                 onChange={(e) => setFullName(e.target.value)}
@@ -253,7 +296,6 @@ const TeamOfDoctors = () => {
                   startAdornment: (
                     <Box
                       style={{
-                        marginRight: "20px",
                         alignItems: "center",
                         display: "flex",
                       }}
@@ -266,30 +308,17 @@ const TeamOfDoctors = () => {
               />
             </Grid>
           </Grid>
-          <FormControl component="fieldset" sx={{ marginLeft: 2 }}>
-            <RadioGroup row value={sortOrder} onChange={handleSortChange}>
-              <FormControlLabel
-                value="asc"
-                control={<Radio />}
-                label="Giá tăng dần"
-              />
-              <FormControlLabel
-                value="desc"
-                control={<Radio />}
-                label="Giá giảm dần"
-              />
-            </RadioGroup>
-          </FormControl>
         </Box>
 
         {/* Di chuyển nút lọc xuống dưới tỉnh thành và huyện */}
-        <Box display={"flex"} justifyContent="center" marginY={2}>
+        <Box display={"flex"} justifyContent="flex-end" sx={{ mx: 3, mb: 2 }}>
           <Button
             variant="contained"
             color="primary"
             onClick={() => {
               handleSubmit();
             }}
+            sx={{ width: "20%" }}
           >
             Lọc
           </Button>

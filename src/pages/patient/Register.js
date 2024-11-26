@@ -94,7 +94,12 @@ const Register = () => {
   return (
     <div
       className="login-container bg-login-register"
-      style={{ display: "flex", height: "100vh" }}
+      style={{
+        display: "flex",
+        height: "100vh",
+        paddingTop: "60px",
+        paddingBottom: "60px",
+      }}
     >
       <Snackbar
         open={snackBarOpen}
@@ -123,13 +128,19 @@ const Register = () => {
       >
         <Paper
           elevation={3}
-          style={{ padding: "20px", boxShadow: "none", borderRadius: 0 }}
+          style={{
+            padding: "20px",
+            boxShadow: "none",
+            borderRadius: 0,
+            maxWidth: "900px",
+            borderRadius: 10,
+          }}
         >
           <Typography variant="h4" gutterBottom align="center">
             Đăng ký tài khoản
           </Typography>
           <form onSubmit={handleSubmit}>
-          <TextField
+            <TextField
               label="Tên người dùng"
               variant="outlined"
               fullWidth
@@ -219,7 +230,7 @@ const Register = () => {
               color="primary"
               type="submit"
               fullWidth
-              sx={{ mt: 3 }}
+              sx={{ mt: 3, mb: 2 }}
             >
               Đăng ký
             </Button>

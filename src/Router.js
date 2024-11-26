@@ -15,7 +15,7 @@ import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
 import EvaluateForm from "./components/patient/evaluateForm";
 import Layout from "./components/doctor/Layout";
-import { ToastContainer } from 'react-toastify';
+import { ToastContainer } from "react-toastify";
 
 const AppRouter = () => {
   return (
@@ -29,18 +29,34 @@ const AppRouter = () => {
       <Route path="/profile" element={<Profile />} />
       <Route path="/user-detail" element={<UserDetail />} />
 
-      <Route path="/doctor/manage-appointment-history" element={<ManageAppointmentHistory />} />
-      <Route path="/doctor/prescription-management" element={<PrescriptionManagement />} />
+      <Route
+        path="/doctor/manage-appointment-history"
+        element={<ManageAppointmentHistory />}
+      />
+      <Route
+        path="/doctor/prescription-management"
+        element={<PrescriptionManagement />}
+      />
 
-      <Route element={<Layout />}>  {/* Không cần path="/" ở đây */}
+      <Route element={<Layout />}>
+        {" "}
+        {/* Không cần path="/" ở đây */}
         <Route path="/appointment-history" element={<AppointmentHistory />} />
-        <Route path="/doctor/schedule-management" element={<ScheduleManagement />} />
-        <Route path="/doctor/patient-management" element={<PatientManagement />} />
-        <Route path="/doctor/appointment-management" element={<AppointmentManagement />} />
+        <Route
+          path="/doctor/schedule-management"
+          element={<ScheduleManagement />}
+        />
+        <Route
+          path="/doctor/patient-management"
+          element={<PatientManagement />}
+        />
+        <Route
+          path="/doctor/appointment-management"
+          element={<AppointmentManagement />}
+        />
       </Route>
-
     </Routes>
   );
 };
 
-export default AppRouter; 
+export default AppRouter;

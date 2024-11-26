@@ -1,42 +1,48 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { Box, Typography, TextField, Button, Pagination } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import Sidebar from "../../components/doctor/Sidebar";
 import PatientTable from "../../components/doctor/PatientTable";
+import { doctor } from "../../api/doctor";
 
 const PatientManagement = () => {
-  const [selectedDate, setSelectedDate] = useState("");
+  const [selectedDate, setSelectedDate] = useState(
+    new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
+      .toISOString()
+      .split("T")[0]
+  );
+  const [doctorId, setDoctorId] = useState();
+  const [patients, setPatients] = useState();
 
-  // Mock data - thay thế bằng dữ liệu thực tế
-  const patients = [
-    {
-      id: 1,
-      name: "Nguyễn Văn A",
-      birthDate: "1990-01-01",
-      examDate: "2024-03-20",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
-      email: "nguyenvana@email.com",
-      visitCount: 3,
-    },
-    {
-      id: 2,
-      name: "Nguyễn Văn A",
-      birthDate: "1990-01-01",
-      examDate: "2024-03-20",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
-      email: "nguyenvana@email.com",
-      visitCount: 4,
-    },
-    {
-      id: 3,
-      name: "Nguyễn Văn A",
-      birthDate: "1990-01-01",
-      examDate: "2024-03-20",
-      address: "123 Đường ABC, Quận 1, TP.HCM",
-      email: "nguyenvana@email.com",
-      visitCount: 3,
-    },
-  ];
+  useEffect(() => {
+    const fetchDoctorInfo = async () => {
+      try {
+        const response = await doctor.getInfo();
+        setDoctorId(response.result.id);
+      } catch (error) {
+        console.error("Error getting doctor info:", error);
+      }
+    };
+
+    fetchDoctorInfo();
+  }, []);
+
+  // Thêm lọc thì sẽ thêm điều kiện để useEffect load
+  useEffect(() => {
+    fetchData();
+  }, [selectedDate, doctorId]);
+
+  const fetchData = async () => {
+    try {
+      console.log(doctorId);
+      const response = await doctor.getPatient(doctorId);
+      if (response?.code === 1000) {
+        setPatients(response?.result);
+      }
+    } catch (error) {
+      console.error("Error fetching patient data:", error);
+    }
+  };
 
   return (
     <Box
@@ -56,7 +62,7 @@ const PatientManagement = () => {
         sx={{
           display: "flex",
           flexDirection: "column",
-          width: "70%",
+          width: "100%",
           margin: "0 auto",
         }}
       >

@@ -10,13 +10,13 @@ export const doctor = {
     }
   },
 
-  filterDoctor(page, name, district, city,sorted) {
+  filterDoctor(page, name, district, city, sorted) {
     try {
       const query = [
         city ? `city=${city}` : "",
         name ? `name=${name}` : "",
         district ? `district=${district}` : "",
-        sorted ? `order=${sorted}` : ""
+        sorted ? `order=${sorted}` : "",
       ]
         .filter(Boolean)
         .join("&");
@@ -24,7 +24,7 @@ export const doctor = {
       const endpoint = query
         ? `/doctor?${query}&page=${page}`
         : `/doctor?page=${page}`;
-      
+
       return axiosClient.get(endpoint);
     } catch (error) {
       console.error("Error:", error);
@@ -52,6 +52,18 @@ export const doctor = {
   getInfo() {
     try {
       const response = axiosClient.get("/doctor/my-info");
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
+
+  getPatient(id) {
+    try {
+      const response = axiosClient.get(
+        `/appointment/doctor-appointment/manage-patient?doctorId=${id}`
+      );
+      console.log(response);
       return response;
     } catch (error) {
       console.error("Error:", error);

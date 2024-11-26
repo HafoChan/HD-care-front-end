@@ -10,7 +10,7 @@ import { toast } from "react-toastify";
 const DoctorSchedule = ({ type }) => {
   const [timeActiveDoctor, setTimeActiveDoctor] = useState(); // schedule của doctor
   const [filteredSlots, setFilteredSlots] = useState(); // dữ liệu sau khi filter thời gian vs schedule của doctor
-  const [doctorInfo, setDoctorInfo] = useState();
+  const [doctorId, setDoctorId] = useState();
 
   const [selectedSlots, setSelectedSlots] = useState([]);
 
@@ -70,10 +70,9 @@ const DoctorSchedule = ({ type }) => {
   const getTimeActiveDoctor = async (doctorId, selectedDate) => {
     try {
       const response = await schedule.getScheduleByDoctorAndDate(
-        "2ca3e6e9-08d9-44ad-8518-0bf13e05f15d", // doctorId
+        doctorId, // doctorId
         selectedDate
       );
-      console.log(response);
       if (response.code === 1000) {
         setTimeActiveDoctor(response.result);
 
@@ -91,30 +90,31 @@ const DoctorSchedule = ({ type }) => {
   };
 
   useEffect(() => {
-    const getDoctorInfo = async () => {
-      try {
-        const data = await doctor.getInfo();
-        setDoctorInfo(data.result);
-        console.log(data);
-      } catch (error) {
-        console.log(error);
-      }
-    };
-    getDoctorInfo();
-    getTimeActiveDoctor(doctorInfo?.id, selectedDate);
+    getTimeActiveDoctor(doctorId, selectedDate);
   }, [selectedDate]);
+
+  useEffect(() => {
+    doctor
+      .getInfo()
+      .then((response) => {
+        setDoctorId(response.result.id);
+      })
+      .catch((error) => console.error("Error getting doctor info:", error));
+
+    getTimeActiveDoctor(doctorId, selectedDate);
+  }, []);
 
   const handleConfirm = () => {
     setOpenConfirm(true);
   };
 
   const handleScheduleCreated = () => {
-    getTimeActiveDoctor(doctorInfo?.id, selectedDate);
+    getTimeActiveDoctor(doctorId, selectedDate);
     setSelectedSlots([]);
   };
 
   const handleScheduleCancelled = () => {
-    getTimeActiveDoctor(doctorInfo?.id, selectedDate);
+    getTimeActiveDoctor(doctorId, selectedDate);
     setSelectedSlots([]);
   };
 
@@ -201,7 +201,7 @@ const DoctorSchedule = ({ type }) => {
         selectedDate={selectedDate}
         onDateChange={(e) => setSelectedDate(e.target.value)}
         selectedSlots={selectedSlots}
-        doctorId="2ca3e6e9-08d9-44ad-8518-0bf13e05f15d"
+        doctorId={doctorId}
         onScheduleCreated={handleScheduleCreated}
       />
 
@@ -215,7 +215,7 @@ const DoctorSchedule = ({ type }) => {
         selectedSlots={selectedSlots}
         timeActiveDoctor={timeActiveDoctor}
         onScheduleCancelled={handleScheduleCancelled}
-        doctorId="2ca3e6e9-08d9-44ad-8518-0bf13e05f15d"
+        doctorId={doctorId}
       />
     </Box>
   );
