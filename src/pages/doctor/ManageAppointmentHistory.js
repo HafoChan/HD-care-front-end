@@ -49,7 +49,7 @@ const ManageAppointmentHistory = () => {
         case "today":
           response = await appointment.filterByToday(
             doctorId,
-            null,
+            "COMPLETED",
             today,
             filters.currentPage,
             filters.searchTerm
@@ -60,7 +60,7 @@ const ManageAppointmentHistory = () => {
             doctorId,
             today,
             null,
-            null,
+            "COMPLETED",
             filters.currentPage,
             filters.searchTerm
           );
@@ -70,7 +70,7 @@ const ManageAppointmentHistory = () => {
             doctorId,
             null,
             today,
-            null,
+            "COMPLETED",
             filters.currentPage,
             filters.searchTerm
           );
@@ -79,7 +79,8 @@ const ManageAppointmentHistory = () => {
           response = await appointApi.getAppointmentById(
             doctorId,
             filters.currentPage,
-            filters.searchTerm
+            filters.searchTerm,
+            "COMPLETED"
           );
       }
 
@@ -266,13 +267,13 @@ const ManageAppointmentHistory = () => {
                         label={record.status}
                         color={getStatusColor(record.status)}
                         size="small"
-                        onClick={(e) => {
-                          e.stopPropagation(); // Ngăn sự kiện click lan ra TableRow
-                          handleStatusChange(
-                            record.id,
-                            getNextStatus(record.status)
-                          );
-                        }}
+                        // onClick={(e) => {
+                        //   e.stopPropagation(); // Ngăn sự kiện click lan ra TableRow
+                        //   handleStatusChange(
+                        //     record.id,
+                        //     getNextStatus(record.status)
+                        //   );
+                        // }}
                       />
                     </TableCell>
                   </TableRow>

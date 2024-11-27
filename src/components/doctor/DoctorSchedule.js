@@ -91,7 +91,7 @@ const DoctorSchedule = ({ type }) => {
 
   useEffect(() => {
     getTimeActiveDoctor(doctorId, selectedDate);
-  }, [selectedDate]);
+  }, [selectedDate, doctorId]);
 
   useEffect(() => {
     doctor

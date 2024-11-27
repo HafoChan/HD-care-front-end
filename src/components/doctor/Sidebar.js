@@ -8,9 +8,16 @@ import DescriptionIcon from "@mui/icons-material/Description";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryIcon from "@mui/icons-material/History";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import { remove } from "../../service/otherService/localStorage";
 
 function Sidebar() {
   const location = useLocation();
+
+  const handleLogout = () => {
+    console.log("Đang thực hiện đăng xuất...");
+    remove();
+    window.location.href = "/login";
+  };
 
   return (
     <Box
@@ -48,32 +55,7 @@ function Sidebar() {
           <Typography>Trang chủ</Typography>
         </Button>
       </Link>
-      <Link to="/doctor/patient-management" style={{ textDecoration: "none" }}>
-        <Button
-          sx={{
-            width: "100%",
-            justifyContent: "flex-start",
-            paddingLeft: 4,
-            height: "60px",
-            textTransform: "none",
-            color:
-              location.pathname === "/doctor/patient-management"
-                ? "#1976d2"
-                : "#464646",
-            fontWeight:
-              location.pathname === "/doctor/patient-management"
-                ? "bold"
-                : "normal",
-            backgroundColor:
-              location.pathname === "/doctor/patient-management"
-                ? "#cee2f5"
-                : "transparent",
-          }}
-        >
-          <GroupIcon sx={{ marginRight: 2 }} />
-          <Typography>Quản lý bệnh nhân</Typography>
-        </Button>
-      </Link>
+
       <Link to="/doctor/schedule-management" style={{ textDecoration: "none" }}>
         <Button
           sx={{
@@ -98,6 +80,33 @@ function Sidebar() {
         >
           <CalendarTodayIcon sx={{ marginRight: 2 }} />
           <Typography>Quản lý lịch khám</Typography>
+        </Button>
+      </Link>
+
+      <Link to="/doctor/patient-management" style={{ textDecoration: "none" }}>
+        <Button
+          sx={{
+            width: "100%",
+            justifyContent: "flex-start",
+            paddingLeft: 4,
+            height: "60px",
+            textTransform: "none",
+            color:
+              location.pathname === "/doctor/patient-management"
+                ? "#1976d2"
+                : "#464646",
+            fontWeight:
+              location.pathname === "/doctor/patient-management"
+                ? "bold"
+                : "normal",
+            backgroundColor:
+              location.pathname === "/doctor/patient-management"
+                ? "#cee2f5"
+                : "transparent",
+          }}
+        >
+          <GroupIcon sx={{ marginRight: 2 }} />
+          <Typography>Quản lý bệnh nhân</Typography>
         </Button>
       </Link>
       <Link
@@ -189,6 +198,7 @@ function Sidebar() {
           textTransform: "none",
           color: "#464646",
         }}
+        onClick={handleLogout}
       >
         <ExitToAppIcon sx={{ marginRight: 2 }} />
         <Typography>Đăng xuất</Typography>

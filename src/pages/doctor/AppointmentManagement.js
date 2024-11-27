@@ -61,6 +61,7 @@ const AppointmentManagement = () => {
   const [currentPage, setCurrentPage] = useState(1);
 
   const [doctorId, setDoctorId] = useState();
+  const [keyword, setKeyword] = useState("");
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -83,7 +84,8 @@ const AppointmentManagement = () => {
           doctorId,
           status,
           selectedDate,
-          page
+          page,
+          keyword
         );
       } else {
         const week = dateFilter === "week" ? selectedDate : null;
@@ -94,7 +96,8 @@ const AppointmentManagement = () => {
           week,
           month,
           status,
-          page
+          page,
+          keyword
         );
       }
 
@@ -111,7 +114,7 @@ const AppointmentManagement = () => {
 
   useEffect(() => {
     fetchData(value, currentPage);
-  }, [value, dateFilter, selectedDate, currentPage, doctorId]);
+  }, [value, dateFilter, selectedDate, currentPage, doctorId, keyword]);
 
   useEffect(() => {
     doctor
@@ -132,6 +135,10 @@ const AppointmentManagement = () => {
   const handleChangePage = (event, newPage) => {
     setCurrentPage(newPage);
     fetchData(value, newPage);
+  };
+
+  const handleChangeSearch = (e) => {
+    setKeyword(e.target.value);
   };
 
   return (
@@ -174,6 +181,8 @@ const AppointmentManagement = () => {
                 fullWidth
                 size="small"
                 placeholder="Search"
+                onChange={handleChangeSearch}
+                value={keyword}
                 InputProps={{
                   startAdornment: (
                     <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />

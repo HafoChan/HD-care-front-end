@@ -74,12 +74,13 @@ export const appointment = {
 
   // ______________________________
 
-  async getAppointmentByDoctor(doctorId, status, date, page) {
+  async getAppointmentByDoctor(doctorId, status, date, page, name) {
     const query = [
       doctorId ? `doctorId=${doctorId}` : "",
       date ? `date=${date}` : "",
       status ? `status=${status}` : "",
       page ? `page=${page}` : "",
+      name ? `name=${name}` : "",
     ]
       .filter(Boolean)
       .join("&");
@@ -95,13 +96,14 @@ export const appointment = {
     }
   },
 
-  async getAppointmentFilter(doctorId, week, month, status, page) {
+  async getAppointmentFilter(doctorId, week, month, status, page, name) {
     const query = [
       doctorId ? `doctorId=${doctorId}` : "",
       status ? `status=${status}` : "",
       page ? `page=${page}` : "",
       week ? `week=${week}` : "",
       month ? `month=${month}` : "",
+      name ? `name=${name}` : "",
     ]
       .filter(Boolean)
       .join("&");

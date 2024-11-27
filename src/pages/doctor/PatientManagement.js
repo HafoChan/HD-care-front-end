@@ -97,13 +97,13 @@ const PatientManagement = () => {
             />
           </Box>
 
-          <Button
+          {/* <Button
             variant="contained"
             color="primary"
             sx={{ width: 150, textTransform: "none" }}
           >
             Kê đơn thuốc
-          </Button>
+          </Button> */}
 
           <Button
             variant="contained"

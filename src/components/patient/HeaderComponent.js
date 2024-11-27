@@ -108,15 +108,16 @@ const HeaderComponent = ({ userInfo }) => {
                 Đội ngũ bác sĩ
               </Button>
             </Link>
-            <Link to="/profile" style={{ textDecoration: "none" }}>
+            <Link to="/user-detail" style={{ textDecoration: "none" }}>
               <Button
                 sx={{
                   fontWeight: "bold",
                   backgroundColor:
-                    location.pathname === "/profile"
+                    location.pathname === "/user-detail"
                       ? "#FAC41C"
                       : "transparent", // Active background color
-                  color: location.pathname === "/profile" ? "white" : "black", // Active text color
+                  color:
+                    location.pathname === "/user-detail" ? "white" : "black", // Active text color
                   "&:hover": {
                     backgroundColor: "#FAC41C",
                     color: "white",
@@ -126,7 +127,7 @@ const HeaderComponent = ({ userInfo }) => {
                 Trang cá nhân
               </Button>
             </Link>
-            <Link to="/articles" style={{ textDecoration: "none" }}>
+            <Link to="/home" style={{ textDecoration: "none" }}>
               <Button
                 sx={{
                   fontWeight: "bold",
