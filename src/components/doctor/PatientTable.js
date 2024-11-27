@@ -9,7 +9,7 @@ import {
   Paper,
 } from "@mui/material";
 
-const PatientTable = ({ patients }) => {
+const PatientTable = ({ patients, selectedPatientId, onPatientSelect }) => {
   return (
     <TableContainer component={Paper}>
       <Table>
@@ -30,10 +30,18 @@ const PatientTable = ({ patients }) => {
           </TableRow>
         </TableHead>
         <TableBody>
-          {patients?.map((patient, index) => (
+          {patients?.map((patient) => (
             <TableRow
               key={patient.id}
-              sx={{ "&:nth-of-type(odd)": { backgroundColor: "#fafafa" } }}
+              onClick={() => onPatientSelect(patient.id)}
+              sx={{
+                cursor: "pointer",
+                backgroundColor:
+                  selectedPatientId === patient.id ? "#edf4fc" : "inherit",
+                "&:hover": {
+                  backgroundColor: "#f5f5f5",
+                },
+              }}
             >
               <TableCell sx={{ width: 80 }}>{patient.id}</TableCell>
               <TableCell sx={{ width: 120 }}>{patient.name}</TableCell>

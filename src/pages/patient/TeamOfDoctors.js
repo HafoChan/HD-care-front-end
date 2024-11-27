@@ -419,20 +419,29 @@ const TeamOfDoctors = () => {
                       marginY: 2,
                     }}
                   >
-                    <LocationOnIcon fontSize="small" />
-                    <Typography
-                      variant="body2"
-                      fontWeight={"bold"}
-                      style={{ margin: "2px 0" }}
-                    >
-                      {doctor.district} - {doctor.city}
-                    </Typography>
+                    <LocationOnIcon fontSize="medium" sx={{ mr: 2 }} />
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        fontWeight={"bold"}
+                        sx={{ margin: "2px 0", mb: 0.5 }}
+                      >
+                        {doctor.district}
+                      </Typography>
+                      <Typography
+                        variant="body2"
+                        fontWeight={"bold"}
+                        style={{ margin: "2px 0" }}
+                      >
+                        {doctor.city}
+                      </Typography>
+                    </Box>
                   </Box>
                   <Typography
                     variant="body2"
                     color="#ff9c00"
                     fontWeight={"bold"}
-                    style={{ margin: "2px 4px" }}
+                    style={{ margin: "2px 4px", fontSize: 18 }}
                   >
                     <span style={{ color: "#000000" }}>Giá khám:</span>{" "}
                     {doctor.price}

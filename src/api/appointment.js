@@ -130,4 +130,14 @@ export const appointment = {
       throw error;
     }
   },
+
+  async getAppointmentById(id) {
+    try {
+      const response = await axiosInstance.get(`/appointment/${id}`);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  },
 };

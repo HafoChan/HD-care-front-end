@@ -16,6 +16,8 @@ import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
 import EvaluateForm from "./components/patient/evaluateForm";
 import Layout from "./components/doctor/Layout";
 import { ToastContainer } from "react-toastify";
+import PatientDetail from "./pages/doctor/PatientDetail";
+import AppointmentDetail from "./pages/doctor/AppointmentDetail";
 
 const AppRouter = () => {
   return (
@@ -53,6 +55,14 @@ const AppRouter = () => {
         <Route
           path="/doctor/appointment-management"
           element={<AppointmentManagement />}
+        />
+        <Route
+          path="/doctor/patient-management/:id"
+          element={<PatientDetail />}
+        />
+        <Route
+          path="/doctor/appointment-management/:id"
+          element={<AppointmentDetail />}
         />
       </Route>
     </Routes>

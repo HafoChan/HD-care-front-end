@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from "react";
+import { useNavigate } from "react-router-dom";
 import {
   Table,
   TableBody,
@@ -14,8 +15,14 @@ import {
 import { toast } from "react-toastify";
 import { appointment } from "../../api/appointment";
 
-const AppointmentTable = ({ appointments, doctorId }) => {
-  const [selectedRow, setSelectedRow] = useState(null);
+const AppointmentTable = ({
+  appointments,
+  doctorId,
+  selectedRow,
+  setSelectedRow,
+}) => {
+  const navigate = useNavigate();
+
   const [anchorEl, setAnchorEl] = useState(null);
   const [rowStatuses, setRowStatuses] = useState({}); // Trạng thái ban đầu trống
 

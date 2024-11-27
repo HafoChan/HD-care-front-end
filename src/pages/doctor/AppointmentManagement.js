@@ -18,6 +18,7 @@ import Sidebar from "../../components/doctor/Sidebar";
 import AppointmentTable from "../../components/doctor/AppointmentTable";
 import { appointment } from "../../api/appointment";
 import { doctor } from "../../api/doctor";
+import { useNavigate } from "react-router-dom";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -62,6 +63,9 @@ const AppointmentManagement = () => {
 
   const [doctorId, setDoctorId] = useState();
   const [keyword, setKeyword] = useState("");
+
+  const navigate = useNavigate();
+  const [selectedRow, setSelectedRow] = useState(null);
 
   const handleChange = (event, newValue) => {
     setValue(newValue);
@@ -141,6 +145,14 @@ const AppointmentManagement = () => {
     setKeyword(e.target.value);
   };
 
+  const handleViewDetail = () => {
+    if (selectedRow) {
+      navigate(`/doctor/appointment-management/${selectedRow}`);
+    } else {
+      alert("Vui lòng chọn cuộc hẹn để xem chi tiết");
+    }
+  };
+
   return (
     <Box
       sx={{
@@ -156,7 +168,7 @@ const AppointmentManagement = () => {
           flexDirection: "column",
           width: "80%",
           margin: "0 auto",
-          marginLeft: "250px", // Đảm bảo nội dung không bị che
+          marginLeft: "250px",
           paddingBottom: 8,
         }}
       >
@@ -229,6 +241,8 @@ const AppointmentManagement = () => {
               variant="contained"
               color="info"
               sx={{ width: 150, textTransform: "none" }}
+              onClick={handleViewDetail}
+              disabled={!selectedRow}
             >
               Xem chi tiết
             </Button>
@@ -286,19 +300,39 @@ const AppointmentManagement = () => {
           {/* Thay appointment ở trong để điều chỉnh giữa các tab */}
 
           <CustomTabPanel value={value} index={0}>
-            <AppointmentTable appointments={appointments} doctorId={doctorId} />
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
+            />
           </CustomTabPanel>
 
           <CustomTabPanel value={value} index={1}>
-            <AppointmentTable appointments={appointments} doctorId={doctorId} />
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
+            />
           </CustomTabPanel>
 
           <CustomTabPanel value={value} index={2}>
-            <AppointmentTable appointments={appointments} doctorId={doctorId} />
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
+            />
           </CustomTabPanel>
 
           <CustomTabPanel value={value} index={3}>
-            <AppointmentTable appointments={appointments} doctorId={doctorId} />
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
+            />
           </CustomTabPanel>
 
           <Box display="flex" justifyContent="center" mt={3}>

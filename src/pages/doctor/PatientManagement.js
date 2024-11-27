@@ -4,8 +4,10 @@ import SearchIcon from "@mui/icons-material/Search";
 import Sidebar from "../../components/doctor/Sidebar";
 import PatientTable from "../../components/doctor/PatientTable";
 import { doctor } from "../../api/doctor";
+import { useNavigate } from "react-router-dom";
 
 const PatientManagement = () => {
+  const navigate = useNavigate();
   const [selectedDate, setSelectedDate] = useState(
     new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
       .toISOString()
@@ -13,6 +15,7 @@ const PatientManagement = () => {
   );
   const [doctorId, setDoctorId] = useState();
   const [patients, setPatients] = useState();
+  const [selectedPatientId, setSelectedPatientId] = useState(null);
 
   useEffect(() => {
     const fetchDoctorInfo = async () => {
@@ -44,60 +47,74 @@ const PatientManagement = () => {
     }
   };
 
+  const handlePatientSelect = (patientId) => {
+    setSelectedPatientId(patientId);
+  };
+
+  const handleViewDetail = () => {
+    if (selectedPatientId) {
+      navigate(`/doctor/patient-management/${selectedPatientId}`);
+    } else {
+      // Có thể hiển thị thông báo yêu cầu chọn bệnh nhân
+      alert("Vui lòng chọn bệnh nhân để xem chi tiết");
+    }
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: "80%",
-        margin: "0 auto",
-        marginLeft: "250px", // Đảm bảo nội dung không bị che
-        paddingBottom: 8,
-      }}
-    >
-      <Box maxWidth={200}>
-        <Sidebar />
-      </Box>
+    <Box sx={{ backgroundColor: "white", height: "100%" }}>
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          width: "100%",
+          width: "80%",
           margin: "0 auto",
+          marginLeft: "250px", // Đảm bảo nội dung không bị che
+          paddingBottom: 8,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
-          Quản Lý Bệnh Nhân
-        </Typography>
+        <Box maxWidth={200}>
+          <Sidebar />
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            margin: "0 auto",
+          }}
+        >
+          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
+            Quản Lý Bệnh Nhân
+          </Typography>
 
-        <Box display="flex" gap={2} mb={3}>
-          <Box display="flex" alignItems="center" sx={{ flex: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search"
-              InputProps={{
-                startAdornment: (
-                  <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
-                ),
-              }}
-            />
-          </Box>
+          <Box display="flex" gap={2} mb={3}>
+            <Box display="flex" alignItems="center" sx={{ flex: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Search"
+                InputProps={{
+                  startAdornment: (
+                    <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
+                  ),
+                }}
+              />
+            </Box>
 
-          <Box display="flex" alignItems="center" sx={{ width: 200 }}>
-            <TextField
-              fullWidth
-              size="small"
-              type="date" // Thay đổi type thành "date"
-              value={selectedDate} // Liên kết với trạng thái
-              onChange={(e) => setSelectedDate(e.target.value)} // Cập nhật trạng thái khi chọn ngày
-              InputLabelProps={{
-                shrink: true, // Đảm bảo nhãn không bị ẩn khi có giá trị
-              }}
-            />
-          </Box>
+            <Box display="flex" alignItems="center" sx={{ width: 200 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="date" // Thay đổi type thành "date"
+                value={selectedDate} // Liên kết với trạng thái
+                onChange={(e) => setSelectedDate(e.target.value)} // Cập nhật trạng thái khi chọn ngày
+                InputLabelProps={{
+                  shrink: true, // Đảm bảo nhãn không bị ẩn khi có giá trị
+                }}
+              />
+            </Box>
 
-          {/* <Button
+            {/* <Button
             variant="contained"
             color="primary"
             sx={{ width: 150, textTransform: "none" }}
@@ -105,19 +122,26 @@ const PatientManagement = () => {
             Kê đơn thuốc
           </Button> */}
 
-          <Button
-            variant="contained"
-            color="info"
-            sx={{ width: 150, textTransform: "none" }}
-          >
-            Xem chi tiết
-          </Button>
-        </Box>
+            <Button
+              variant="contained"
+              color="info"
+              sx={{ width: 150, textTransform: "none" }}
+              onClick={handleViewDetail}
+              disabled={!selectedPatientId}
+            >
+              Xem chi tiết
+            </Button>
+          </Box>
 
-        <PatientTable patients={patients} />
+          <PatientTable
+            patients={patients}
+            selectedPatientId={selectedPatientId}
+            onPatientSelect={handlePatientSelect}
+          />
 
-        <Box display="flex" justifyContent="center" mt={3}>
-          <Pagination count={15} color="primary" />
+          <Box display="flex" justifyContent="center" mt={3}>
+            <Pagination count={15} color="primary" />
+          </Box>
         </Box>
       </Box>
     </Box>
