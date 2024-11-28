@@ -18,6 +18,7 @@ import Layout from "./components/doctor/Layout";
 import { ToastContainer } from "react-toastify";
 import PatientDetail from "./pages/doctor/PatientDetail";
 import AppointmentDetail from "./pages/doctor/AppointmentDetail";
+import AppointmentList from "./pages/patient/AppointmentList";
 
 const AppRouter = () => {
   return (
@@ -30,6 +31,7 @@ const AppRouter = () => {
       <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/user-detail" element={<UserDetail />} />
+      <Route path="/appointment-list" element={<AppointmentList />} />
 
       <Route
         path="/doctor/manage-appointment-history"
