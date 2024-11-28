@@ -19,9 +19,10 @@ import HeaderComponent from "../../components/patient/HeaderComponent";
 import patientApi from "../../api/patient";
 import UploadFiles from "../../components/patient/uploadFile";
 import { getImg, setImg } from "../../service/otherService/localStorage";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function UserDetail() {
-  const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [isEditing, setIsEditing] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [snackBarOpen, setSnackBarOpen] = useState(false);
@@ -31,7 +32,7 @@ function UserDetail() {
   const [userInfo, setUserInfo] = useState({
     name: "",
     phone: "",
-    gender: "nam",
+    gender: "",
     address: "",
     img: getImg(),
     dob: "",
@@ -42,15 +43,11 @@ function UserDetail() {
   };
 
   const showError = (message) => {
-    setSnackType("error");
-    setSnackBarMessage(message);
-    setSnackBarOpen(true);
+    toast.error(message);
   };
 
   const showSuccess = (message) => {
-    setSnackType("success");
-    setSnackBarMessage(message);
-    setSnackBarOpen(true);
+    toast.success(message);
   };
 
   const handleSubmit = () => {
@@ -69,13 +66,30 @@ function UserDetail() {
   };
 
   const getInfo = async () => {
-    const response = await patientApi.getInfo();
-    setUserInfo(response.result);
+    try {
+      const response = await patientApi.getInfo();
+      if (response && response.result) {
+        console.log("User info:", response.result);
+        setUserInfo(response.result);
+      } else {
+        // Xử lý trường hợp response không có dữ liệu
+        showError("Không thể tải thông tin người dùng");
+      }
+    } catch (error) {
+      console.log("loi: " + error);
+      // Xử lý các lỗi khác nhau
+      if (error.response && error.response.status === 401) {
+        // Lỗi unauthorized - có thể do refreshToken không hợp lệ
+        showError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
+        // Có thể thêm logic chuyển hướng đến trang đăng nhập
+      } else {
+        // Các lỗi khác
+        showError(error.message || "Đã có lỗi xảy ra khi tải thông tin");
+      }
+      console.error("Error fetching user info:", error);
+    }
   };
 
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-  };
   useEffect(() => {
     console.log("innn");
     getInfo();
@@ -103,11 +117,7 @@ function UserDetail() {
 
   return (
     <Box align={"center"}>
-      <HeaderComponent
-        selectedTab={selectedTab}
-        handleTabClick={handleTabClick}
-        userInfo={userInfo}
-      />
+      <HeaderComponent userInfo={userInfo} />
 
       <Divider
         orientation="horizontal"
@@ -123,21 +133,17 @@ function UserDetail() {
           margin: "0 auto",
         }}
       >
-        <Snackbar
-          open={snackBarOpen}
-          onClose={handleCloseSnackBar}
-          autoHideDuration={6000}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert
-            onClose={handleCloseSnackBar}
-            severity={snackType}
-            variant="filled"
-            sx={{ width: "100%" }}
-          >
-            {snackBarMessage}
-          </Alert>
-        </Snackbar>
+        <ToastContainer
+          position="top-right"
+          autoClose={6000}
+          hideProgressBar={false}
+          newestOnTop={false}
+          closeOnClick
+          rtl={false}
+          pauseOnFocusLoss
+          draggable
+          pauseOnHover
+        />
         <Card
           sx={{
             display: "flex",
@@ -187,7 +193,7 @@ function UserDetail() {
               label="Birthday"
               type="date"
               name="dob"
-              value={userInfo?.dob ? userInfo.dob : ""}
+              value={userInfo?.dob || ""}
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
@@ -201,12 +207,19 @@ function UserDetail() {
               <RadioGroup
                 row
                 name="gender"
-                value={userInfo.gender || "Nam"} // Sử dụng giá trị mặc định nếu là undefined
+                value={userInfo?.gender || "Nam"}
                 onChange={handleInputChange}
-                disabled={!isEditing}
               >
-                <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
-                <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
+                <FormControlLabel
+                  value="Nam"
+                  control={<Radio disabled={!isEditing} />}
+                  label="Nam"
+                />
+                <FormControlLabel
+                  value="Nữ"
+                  control={<Radio disabled={!isEditing} />}
+                  label="Nữ"
+                />
               </RadioGroup>
             </Box>
           </Box>
@@ -238,22 +251,40 @@ function UserDetail() {
           width={"100%"}
           sx={{ display: "flex", gap: 2, justifyContent: "end" }}
         >
-          <Button
-            variant="contained"
-            color="warning"
-            startIcon={<EditIcon />}
-            onClick={handleEditClick}
-          >
-            Chỉnh sửa thông tin
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            startIcon={<SaveIcon />}
-            onClick={handleSubmit}
-          >
-            Lưu
-          </Button>
+          {!isEditing ? (
+            <Button
+              variant="contained"
+              color="warning"
+              startIcon={<EditIcon />}
+              onClick={() => setIsEditing(true)}
+            >
+              Chỉnh sửa thông tin
+            </Button>
+          ) : (
+            <>
+              <Button
+                variant="contained"
+                color="primary"
+                startIcon={<SaveIcon />}
+                onClick={() => {
+                  handleSubmit(); // Lưu thông tin
+                  setIsEditing(false); // Thoát chế độ chỉnh sửa
+                }}
+              >
+                Lưu
+              </Button>
+              <Button
+                variant="outlined"
+                color="error"
+                onClick={() => {
+                  setIsEditing(false); // Quay về trạng thái ban đầu
+                  setRefresh((prev) => !prev); // Làm mới dữ liệu nếu cần
+                }}
+              >
+                Hủy
+              </Button>
+            </>
+          )}
         </Box>
       </Container>
     </Box>

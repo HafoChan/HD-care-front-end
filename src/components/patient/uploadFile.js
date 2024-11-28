@@ -130,7 +130,7 @@ export default class UploadFiles extends Component {
               value={progress}
               style={{ width: 180 }}
             />
-            <div style={{ marginLeft: -175 }}>{progress}%</div>
+            <div style={{ marginLeft: -120 }}>{progress}%</div>
           </div>
         )}
       </div>

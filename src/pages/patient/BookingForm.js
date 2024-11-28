@@ -27,10 +27,6 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
   const [description, setDescription] = useState("");
   const [title, setTitle] = useState("");
 
-  {
-    /* idPatient, name, gender, dateOfAppointment, address, description, title, nameDoctor, startTime, endTime, dob, scheduleId, email */
-  }
-
   const data = {
     idPatient: id,
     name: nameForm,

@@ -1,298 +1,407 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from 'react';
+import { useLocation, useNavigate } from 'react-router-dom';
+import prescriptionApi from '../../api/prescriptionApi';
 import {
+  Container,
+  Paper,
   Typography,
-  Grid,
   TextField,
   Select,
   MenuItem,
   Button,
-  Box,
-} from "@mui/material";
-import Sidebar from "../../components/doctor/Sidebar";
-import PrescriptionTable from "../../components/doctor/PrescriptionTable";
-import SendRoundedIcon from "@mui/icons-material/SendRounded";
-import FileCopyRoundedIcon from "@mui/icons-material/FileCopyRounded";
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Grid,
+  Snackbar,
+  Alert,
+  Dialog,
+  DialogContent,
+} from '@mui/material';
 
-const PrescriptionManagement = () => {
-  const [patientInfo, setPatientInfo] = useState({
-    name: "",
-    gender: "Nữ",
-    birthDate: "",
-    reason: "",
-    examDate: "",
-  });
+const Prescription = () => {
+  const location = useLocation();
+  const navigate = useNavigate();
+  
+  // Khởi tạo state với dữ liệu từ navigation nếu có
+  const [patientInfo, setPatientInfo] = useState({});
+  const [appointment, setAppointment] = useState({});
+  const [prescriptionList, setPrescriptionList] = useState([]);
+  const [editIndex, setEditIndex] = useState(null); // New state to track the index of the medicine being edited
+
+  // Thêm state mới cho kết quả khám
+
+  useEffect(() => {
+    const getInfoPatient = async () => {
+      try {
+        if (location.state?.appointment?.idPatient) {
+          const response = await prescriptionApi.getInfoPatient(location.state.appointment.idPatient);
+
+          const listmedicine = await prescriptionApi.getListMedicine(location.state.appointment.prescriptionId)
+
+          setPrescriptionList(listmedicine.result)
+          setPatientInfo(response.result);
+          setAppointment(location.state.appointment)
+        }
+      } catch (error) {
+        console.error('Error fetching patient info:', error);
+      }
+    };
+    getInfoPatient();
+  }, [location.state]);
 
   const [medicine, setMedicine] = useState({
-    name: "",
-    type: "Tuýt",
-    quantity: "",
-    instruction: "",
-    note: "",
+    name: '',
+    medicineType: '',
+    instruction: '',
+    quantity: '',
+    note: '',
   });
 
-  const [medicineList, setMedicineList] = useState([]);
-
-  const handleAddMedicine = () => {
-    setMedicineList([...medicineList, { ...medicine, id: Date.now() }]);
-    setMedicine({
-      name: "",
-      type: "Tuýt",
-      quantity: "",
-      instruction: "",
-      note: "",
+  const handlePatientInfoChange = (e) => {
+    setPatientInfo({
+      ...patientInfo,
+      [e.target.name]: e.target.value,
     });
   };
 
+  const handleMedicineChange = (e) => {
+    setMedicine((prevMedicine) => ({
+      ...prevMedicine,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+
+  const handleMedicineSelect = (index) => {
+    setEditIndex(index);
+    setMedicine(prescriptionList[index]);
+  };
+
+  const handleAddMedicine = async () => {
+    if (editIndex !== null) {
+      const updatedList = [...prescriptionList];
+      updatedList[editIndex] = medicine;
+      await prescriptionApi.updateMedicine(prescriptionList[editIndex].id, medicine)
+      setPrescriptionList(updatedList);
+      setEditIndex(null);
+    } else {
+      // Add new medicine
+      const data = await prescriptionApi.createMedicine(appointment.prescriptionId, medicine);
+      setPrescriptionList([
+        ...prescriptionList,
+        { ...data.result },
+      ]);
+    }
+    setMedicine({
+      name: '',
+      medicineType: 'tuýp',
+      instruction: '',
+      quantity: '',
+      note: '',
+    });
+  };
+
+  const [pdfUrl, setPdfUrl] = useState('');
+  const [openPdf, setOpenPdf] = useState(false);
+
+  const handleExport = async (e) => {
+    try {
+      const prescription = await prescriptionApi.createPrescription(appointment.prescriptionId, {
+        result: appointment?.result,
+      });
+
+      setAppointment((appointment)=>({...appointment,[e.target.name] : prescription.result.result}))
+
+      const response = await fetch(`http://localhost:8082/api/v1/appointment/pdf?status=${e.target.textContent}`, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(appointment),
+      });
+
+      if (e.target.textContent === "Gửi")
+      {
+        setSnackbarMessage('Gửi đơn thuốc thành công!');
+        setOpenSnackbar(true);
+        setTimeout(() => {
+          navigate('/doctor/manage-appointment-history');
+        }, 1000);
+      }
+      else
+      {
+        const contentType = response.headers.get("content-type");
+        if (contentType && contentType.includes("application/pdf")) {
+          const blob = await response.blob();
+          const url = window.URL.createObjectURL(blob);
+          setPdfUrl(url); // Set the PDF URL
+          setOpenPdf(true); // Open the PDF modal
+        } else {
+          throw new Error("Không nhận được file PDF từ server");
+        }
+        setSnackbarMessage('Tạo PDF thành công!');
+        setOpenSnackbar(true);
+      }
+  
+     
+    } catch (error) {
+      setSnackbarMessage('Tạo PDF thất bại!');
+      setOpenSnackbar(true);
+    }
+  };
+
+  const handleClosePdf = () => {
+    setOpenPdf(false);
+    setPdfUrl('');
+  };
+
+  // Thêm handler cho kết quả khám
+  const handleResultChange = (e) => {
+    setAppointment((appointment) => ({
+      ...appointment,
+      [e.target.name]: e.target.value,
+    }));
+  };
+
+  // Thêm state cho thông báo
+  const [openSnackbar, setOpenSnackbar] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState('');
+
+  // Hàm đóng thông báo
+  const handleCloseSnackbar = (event, reason) => {
+    if (reason === 'clickaway') {
+      return;
+    }
+    setOpenSnackbar(false);
+  };
+
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: "80%",
-        margin: "0 auto",
-        marginLeft: "250px", // Đảm bảo nội dung không bị che
-        paddingBottom: 8,
-      }}
-    >
-      <Box maxWidth={200}>
-        <Sidebar />
-      </Box>
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          width: "70%",
-          margin: "0 auto",
-        }}
-      >
-        <Box>
-          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 2, mt: 4 }}>
-            Kê Đơn Thuốc
-          </Typography>
+    <Container maxWidth="lg" sx={{ py: 4 }}>
+      <Paper elevation={3} sx={{ p: 3 }}>
+        <Typography variant="h5" gutterBottom>
+          Kê Đơn Thuốc
+        </Typography>
 
-          {/* Thông tin bệnh nhân */}
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 2 }}
-          >
-            Thông tin bệnh nhân
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={7}>
-              <TextField
-                fullWidth
-                label="Tên bệnh nhân"
-                value={patientInfo.name}
-                size="small"
-                onChange={(e) =>
-                  setPatientInfo({ ...patientInfo, name: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <Select
-                fullWidth
-                value={patientInfo.gender}
-                size="small"
-                onChange={(e) =>
-                  setPatientInfo({ ...patientInfo, gender: e.target.value })
-                }
-              >
-                <MenuItem value="Nam">Nam</MenuItem>
-                <MenuItem value="Nữ">Nữ</MenuItem>
-              </Select>
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Ngày sinh"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={patientInfo.birthDate}
-                onChange={(e) =>
-                  setPatientInfo({ ...patientInfo, birthDate: e.target.value })
-                }
-              />
-            </Grid>
-          </Grid>
-          <Grid container spacing={3} sx={{ mt: 0 }}>
-            <Grid item xs={12} sm={9}>
-              <TextField
-                fullWidth
-                label="Lý do khám"
-                value={patientInfo.reason}
-                size="small"
-                onChange={(e) =>
-                  setPatientInfo({ ...patientInfo, reason: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <TextField
-                fullWidth
-                type="date"
-                label="Ngày khám"
-                size="small"
-                InputLabelProps={{ shrink: true }}
-                value={patientInfo.examDate}
-                onChange={(e) =>
-                  setPatientInfo({ ...patientInfo, examDate: e.target.value })
-                }
-              />
-            </Grid>
-          </Grid>
-
-          {/* Nhập thông tin thuốc */}
-          <Typography
-            variant="h6"
-            gutterBottom
-            sx={{ fontWeight: "bold", mt: 3, mb: 2 }}
-          >
-            Nhập thông tin thuốc
-          </Typography>
-          <Grid container spacing={3}>
-            <Grid item xs={12} sm={7}>
-              <TextField
-                fullWidth
-                label="Nhập tên thuốc"
-                value={medicine.name}
-                size="small"
-                onChange={(e) =>
-                  setMedicine({ ...medicine, name: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={2}>
-              <TextField
-                fullWidth
-                label="Số lượng"
-                type="number"
-                size="small"
-                value={medicine.quantity}
-                onChange={(e) =>
-                  setMedicine({ ...medicine, quantity: e.target.value })
-                }
-              />
-            </Grid>
-            <Grid item xs={12} sm={3}>
-              <Select
-                fullWidth
-                value={medicine.type}
-                size="small"
-                onChange={(e) =>
-                  setMedicine({ ...medicine, type: e.target.value })
-                }
-              >
-                <MenuItem value="Tuýt">Tuýt</MenuItem>
-                <MenuItem value="Viên">Viên</MenuItem>
-                <MenuItem value="Gói">Gói</MenuItem>
-              </Select>
-            </Grid>
-          </Grid>
-
-          <Box sx={{ mt: 3 }}>
+        {/* Patient Information */}
+        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
+          Thông tin bệnh nhân
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6}>
             <TextField
               fullWidth
-              label="Hướng dẫn sử dụng"
-              multiline
-              id="outlined-multiline-static"
-              rows={3}
-              size="large"
-              value={medicine.instruction}
-              onChange={(e) =>
-                setMedicine({ ...medicine, instruction: e.target.value })
-              }
+              label="Tên bệnh nhân"
+              name="name"
+              value={patientInfo?.name || ''}
+              onChange={handlePatientInfoChange}
+              disabled
             />
-          </Box>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Select
+              fullWidth
+              label="Giới tính"
+              name="gender"
+              value={patientInfo?.gender || ''}
+              onChange={handlePatientInfoChange}
+              disabled
+            >
+              <MenuItem value="nam">Nam</MenuItem>
+              <MenuItem value="nu">Nữ</MenuItem>
+            </Select>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="date"
+              label="Ngày sinh"
+              name="dateOfBirth"
+              value={patientInfo?.dob || ''}
+              onChange={handlePatientInfoChange}
+              InputLabelProps={{ shrink: true }}
+              disabled
+            />
+          </Grid>
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              label="Lý do khám"
+              name="reason"
+              value={appointment?.title || ''}
+              onChange={handlePatientInfoChange}
+              disabled
+            />
+          </Grid>
 
-          <Box sx={{ marginY: 3 }}>
+          {/* Thêm trường Kết quả khám */}
+          <Grid item xs={12}>
+            <TextField
+              fullWidth
+              multiline
+              rows={4}
+              label="Kết quả khám"
+              name="result"
+              value={appointment?.result || ''}
+              onChange={handleResultChange}
+              placeholder="Nhập kết quả khám..."
+            />
+          </Grid>
+        </Grid>
+
+        {/* Medicine Input */}
+        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
+          Nhập thông tin thuốc
+        </Typography>
+        <Grid container spacing={3}>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Nhập tên thuốc"
+              name="name"
+              value={medicine.name}
+              onChange={handleMedicineChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <Select
+              fullWidth
+              label="Dạng thuốc"
+              name="medicineType"
+              value={medicine.medicineType || ''}
+              onChange={handleMedicineChange}
+            >
+              <MenuItem value="tuýp">Tuýp</MenuItem>
+              <MenuItem value="viên">Viên</MenuItem>
+              <MenuItem value="chai">Chai</MenuItem>
+            </Select>
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              label="Hướng dẫn"
+              name="instruction"
+              value={medicine.instruction}
+              onChange={handleMedicineChange}
+            />
+          </Grid>
+          <Grid item xs={12} sm={6}>
+            <TextField
+              fullWidth
+              type="number"
+              label="Số lượng"
+              name="quantity"
+              value={medicine.quantity}
+              onChange={handleMedicineChange}
+            />
+          </Grid>
+          <Grid item xs={12}>
             <TextField
               fullWidth
               label="Lưu ý"
-              multiline
-              id="outlined-multiline-static"
-              rows={3}
-              size="large"
+              name="note"
               value={medicine.note}
-              onChange={(e) =>
-                setMedicine({ ...medicine, note: e.target.value })
-              }
+              onChange={handleMedicineChange}
             />
-          </Box>
-
-          <Box
-            sx={{ width: "100%", display: "flex", justifyContent: "flex-end" }}
-          >
-            <Button
-              variant="contained"
-              fullWidth
-              onClick={handleAddMedicine}
-              sx={{ width: 200 }}
-            >
-              Thêm thuốc
+          </Grid>
+          <Grid item xs={12}>
+            <Button variant="contained" color="primary" onClick={handleAddMedicine}>
+              {editIndex !== null ? 'Cập nhật' : 'Thêm thuốc'}
             </Button>
-          </Box>
+          </Grid>
+        </Grid>
 
-          {/* Bảng danh sách thuốc */}
+        {/* Prescription Table */}
+        <TableContainer component={Paper} sx={{ mt: 4 }}>
+          <Table>
+            <TableHead>
+              <TableRow>
+                <TableCell>STT</TableCell>
+                <TableCell>Tên thuốc</TableCell>
+                <TableCell>Dạng thuốc</TableCell>
+                <TableCell>Số lượng</TableCell>
+                <TableCell>Hướng dẫn</TableCell>
+                <TableCell>Lưu ý</TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {prescriptionList.map((item, index) => (
+                <TableRow 
+                  key={item.id} 
+                  onClick={() => handleMedicineSelect(index)}
+                  sx={{ 
+                    cursor: 'pointer',
+                    '&:hover': {
+                      backgroundColor: '#f5f5f5'
+                    }
+                  }}
+                >
+                  <TableCell>{index + 1}</TableCell>
+                  <TableCell>{item.name}</TableCell>
+                  <TableCell>{item.medicineType}</TableCell>
+                  <TableCell>{item.quantity}</TableCell>
+                  <TableCell>{item.instruction}</TableCell>
+                  <TableCell>{item.note}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
 
-          <Typography variant="h6" sx={{ fontWeight: "bold" }}>
-            Đơn thuốc
-          </Typography>
-
-          <PrescriptionTable medicineList={medicineList} />
-
-          {/* Buttons */}
-          <Box sx={{ display: "flex", justifyContent: "flex-end" }}>
-            <Box
-              container
-              display="flex"
-              sx={{ mt: 3, width: "35%", justifyContent: "flex-end" }}
+        {/* Action Buttons */}
+        <Grid container spacing={2} sx={{ mt: 4 }} justifyContent="flex-end">
+          <Grid item>
+            <Button variant="contained" color="primary" onClick={handleExport}>
+              Xem PDF
+            </Button>
+          </Grid>
+          <Grid item>
+            <Button 
+              variant="contained" 
+              color="primary" 
+              onClick={handleExport}
+              // Disable nút Gửi nếu chưa có kết quả khám
+              disabled={!appointment?.result}
             >
-              <Button
-                variant="contained"
-                fullWidth
-                color="warning"
-                sx={{
-                  mr: 2,
-                  paddingTop: 1,
-                  alignItems: "center",
-                  textTransform: "none",
-                  width: 400,
-                }}
-              >
-                <FileCopyRoundedIcon
-                  fontSize="small"
-                  sx={{
-                    color: "white",
-                    mr: 1,
-                  }}
-                />
-                Xuất PDF
-              </Button>
-              <Button
-                variant="contained"
-                fullWidth
-                sx={{ alignItems: "center", paddingTop: 1 }}
-              >
-                <SendRoundedIcon
-                  fontSize="small"
-                  sx={{
-                    color: "white",
-                    mr: 1,
-                    marginBottom: 1,
-                    transform: "rotate(-35deg)",
-                  }}
-                />
-                Gửi
-              </Button>
-            </Box>
-          </Box>
-        </Box>
-      </Box>
-    </Box>
+              Gửi
+            </Button>
+          </Grid>
+        </Grid>
+
+        {/* Cập nhật Snackbar */}
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={2000}
+          onClose={handleCloseSnackbar}
+          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+        >
+          <Alert
+            onClose={handleCloseSnackbar}
+            severity="success"
+            variant="filled"
+            sx={{ width: '100%' }}
+          >
+            {snackbarMessage}
+          </Alert>
+        </Snackbar>
+
+        {/* PDF Modal */}
+        <Dialog open={openPdf} onClose={handleClosePdf} fullWidth maxWidth="md">
+          <DialogContent>
+            <iframe
+              src={pdfUrl}
+              width="100%"
+              height="600px"
+              title="Prescription PDF"
+            />
+          </DialogContent>
+        </Dialog>
+      </Paper>
+    </Container>
   );
 };
 
-export default PrescriptionManagement;
+export default Prescription;

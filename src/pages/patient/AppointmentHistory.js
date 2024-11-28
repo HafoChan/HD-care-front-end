@@ -17,18 +17,9 @@ import HistoryIcon from "@mui/icons-material/History";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 
 function AppointmentHistory() {
-  const [selectedTab, setSelectedTab] = useState("Trang chủ");
-
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-  };
-
   return (
     <Box align={"center"}>
-      <HeaderComponent
-        selectedTab={selectedTab}
-        handleTabClick={handleTabClick}
-      />
+      <HeaderComponent />
 
       <Divider
         orientation="horizontal"

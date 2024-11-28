@@ -1,7 +1,5 @@
 import axios from "axios";
-// import { get, set } from "@/hooks/use-local-storage";
-import { Router } from "react-router-dom";
-import { getAccessToken, getRefreshToken } from "../service/otherService/localStorage";
+import { notification } from "antd";
 const axiosClient = axios.create({
   baseURL: "http://localhost:8082/api/v1/",
   headers: {
@@ -14,12 +12,11 @@ axiosClient.interceptors.request.use(
     console.log("Axios request!");
     const accessToken = localStorage.getItem("accessToken");
     const language = localStorage.getItem("language") || "vi";
-    
+
     // Check if the role is doctor
     if (accessToken) {
-
-        config.headers.Authorization = `Bearer ${accessToken}`;
-        config.headers["Accept-Language"] = language; 
+      config.headers.Authorization = `Bearer ${accessToken}`;
+      config.headers["Accept-Language"] = language;
     }
     return config;
   },
@@ -28,19 +25,15 @@ axiosClient.interceptors.request.use(
 // Add a response interceptor
 axiosClient.interceptors.response.use(
   function (config) {
-    if(config.data.result.role === "DOCTOR")
-    {
-      console.log("doctor")
+    if (config.data?.result?.roles === "DOCTOR") {
+      console.log("doctor");
       window.location.href = "doctor/schedule-management"; // Redirect if role is doctor
-    }
-    else if(config.data.result.role === "PATIENT")
-      window.location.href = "/home"
-    return config.data
+    } else if (config.data?.result?.roles === "PATIENT")
+      window.location.href = "/home";
+    return config.data;
   },
   async function (error) {
-    // Return the response data for both 404 and 200 status codes
     console.log("Axios error");
-
     const { response } = error;
     console.log("response : ", response);
 
@@ -49,40 +42,54 @@ axiosClient.interceptors.response.use(
       response?.data?.result === "No authenticated"
     ) {
       const originalRequest = error.config;
-
       const refreshToken = localStorage.getItem("refreshToken");
-      if (!refreshToken || originalRequest._retry) {
-        localStorage.setItem("refreshToken", "");
-        window.location.href = "/login";
-        return Promise.reject(error);
+
+      if (refreshToken) {
+        try {
+          const result = await axios.post(
+            "http://localhost:8082/api/v1/auth/refreshToken",
+            {
+              refreshToken: refreshToken,
+            }
+          );
+
+          const data = result.data.data;
+          const newAccessToken = data.accessToken;
+
+          localStorage.setItem("accessToken", newAccessToken);
+
+          originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
+          return axiosClient(originalRequest);
+        } catch (refreshError) {
+          console.error("Refresh token failed:", refreshError);
+
+          // Kiểm tra nếu refresh token thất bại do token hết hạn
+          if (
+            refreshError.response?.status === 401 &&
+            (refreshError.response?.data?.result === "Token expired" ||
+              refreshError.response?.data?.code === 1026)
+          ) {
+            // Xóa toàn bộ localStorage
+            localStorage.clear();
+
+            // Hiển thị thông báo và chuyển hướng sang trang login
+            notification.error({
+              message: "Phiên đăng nhập hết hạn",
+              description: "Vui lòng đăng nhập lại.",
+              duration: 3,
+            });
+
+            // Chuyển hướng sang trang login sau 3 giây
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 3000);
+          }
+
+          return Promise.reject(refreshError);
+        }
       }
-      try {
-        const result = await axiosClient.post("/auth/refreshToken", {
-          refreshToken,
-        });
-
-        const data = result.result;
-        const newAccessToken = data.accessToken;
-
-        localStorage.setItem("accessToken", newAccessToken);
-        originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-        return axiosClient(originalRequest);
-      } catch (refreshError) {
-        console.error("Refresh token failed:", refreshError);
-        localStorage.setItem("accessToken", "");
-        Router.push("/login");
-        return Promise.reject(refreshError);
-      }
-    } else if (response?.status === 401 && response?.code === 1026) {
-      localStorage.setItem("accessToken", "");
-      localStorage.setItem("refreshToken", "");
-      localStorage.setItem("img", "");
-    }
-
-    else {
-      // Update the styling for self.bangtinh.text()
-      console.log(error.response.data);
-      return Promise.resolve(error.response.data); // Return the data for 404 errors
+    } else {
+      return Promise.resolve(error.response?.data); // Return the data for 404 errors
     }
     return Promise.reject(error);
   }

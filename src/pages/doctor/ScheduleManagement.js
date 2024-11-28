@@ -4,42 +4,6 @@ import { Box, Typography, Tabs, Tab } from "@mui/material";
 import Sidebar from "../../components/doctor/Sidebar";
 import DoctorSchedule from "../../components/doctor/DoctorSchedule";
 
-const timeActiveSlots = [
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "deleted" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-];
-
-const timeUnActiveSlots = [
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "unavailable" },
-  { time: "07:00 - 08:00", status: "available" },
-  { time: "07:00 - 08:00", status: "available" },
-];
-
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
 
@@ -123,7 +87,7 @@ function ScheduleManagement() {
                   textTransform: "none",
                   fontWeight: value === 0 ? "bold" : "normal",
                 }}
-                label="Đã thiết lập"
+                label="Chưa thiết lập"
                 {...a11yProps(0)}
               />
               <Tab
@@ -131,16 +95,16 @@ function ScheduleManagement() {
                   textTransform: "none",
                   fontWeight: value === 1 ? "bold" : "normal",
                 }}
-                label="Chưa thiết lập"
+                label="Đã thiết lập"
                 {...a11yProps(1)}
               />
             </Tabs>
           </Box>
-          <CustomTabPanel value={value} index={0}>
-            <DoctorSchedule times={timeActiveSlots} />
-          </CustomTabPanel>
           <CustomTabPanel value={value} index={1}>
-            <DoctorSchedule times={timeUnActiveSlots} type={"add"} />
+            <DoctorSchedule />
+          </CustomTabPanel>
+          <CustomTabPanel value={value} index={0}>
+            <DoctorSchedule type={"add"} />
           </CustomTabPanel>
         </Box>
       </Box>
