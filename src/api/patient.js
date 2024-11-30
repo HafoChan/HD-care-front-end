@@ -21,14 +21,18 @@ import axiosInstance from "./axios-instance";
 //   };
 // };
 const patientApi = {
-  create(data){ 
-      return axiosInstance.post("/patient",data)
+  create(data) {
+    return axiosInstance.post("/patient", data);
   },
-  updatePatient(data){
-      return axiosInstance.put(`/patient`,data)
+  updatePatient(data) {
+    return axiosInstance.put(`/patient`, data);
   },
-  getInfo(){
-    return axiosInstance.get("/patient/my-info")
-  }
-}
-export default patientApi
+  getInfo() {
+    return axiosInstance.get("/patient/my-info");
+  },
+
+  getById(id) {
+    return axiosInstance.get(`/patient/${id}`);
+  },
+};
+export default patientApi;

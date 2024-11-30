@@ -16,11 +16,12 @@ import HeaderComponent from "../../components/patient/HeaderComponent";
 import BookingForm from "./BookingForm";
 import axiosClient from "../../api/axios-instance";
 import EvaluateForm from "../../components/patient/evaluateForm";
+import { useNavigate } from "react-router-dom"; // Import useNavigate
 
 const HomePage = () => {
-  const [selectedTab, setSelectedTab] = useState("Trang chủ");
   const [isBookingFormOpen, setBookingFormOpen] = useState(false); // State to handle form visibility
   const [isEvaluateFormOpen, setEvaluateFormOpen] = useState(false); // State to handle evaluate form visibility
+  const navigate = useNavigate(); // Initialize useNavigate
 
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
@@ -29,12 +30,8 @@ const HomePage = () => {
     }
   }, []); // Run once on component mount
 
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-  };
-
   const handleBookingClick = () => {
-    setBookingFormOpen(true);
+    navigate("/team-of-doctors"); // Navigate to the Team of Doctors page
   };
 
   const handleFormClose = () => {
@@ -51,12 +48,9 @@ const HomePage = () => {
   };
 
   return (
-    <Box sx={{ backgroundColor: "#e0f7fa" }}>
+    <Box sx={{ backgroundColor: "#e0f7fa", height: "100vh" }}>
       {/* Header */}
-      <HeaderComponent
-        selectedTab={selectedTab}
-        handleTabClick={handleTabClick}
-      />
+      <HeaderComponent />
 
       {/* Main Content */}
       <Container sx={{ py: 5 }}>

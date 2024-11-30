@@ -14,7 +14,8 @@ import "../../css/user/login_register.css";
 import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
 import axiosClient from "../../api/axios-instance";
-import {setItem} from "../../service/otherService/localStorage"
+import { setItem } from "../../service/otherService/localStorage";
+import { BorderLeft, BorderLeftOutlined } from "@mui/icons-material";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -57,17 +58,20 @@ const Login = () => {
         throw new Error(data.message);
       }
       showSuccess(data.message);
-      setItem(data.result.accessToken,data.result.refreshToken,data.result.userResponse.img)
+      setItem(
+        data.result.accessToken,
+        data.result.refreshToken,
+        data.result.userResponse.img
+      );
       // navigate("/home");
     } catch (error) {
       showError(error.message);
     }
-  
   };
 
   return (
     <div className="login-container bg-login-register">
-       <Snackbar
+      <Snackbar
         open={snackBarOpen}
         onClose={handleCloseSnackBar}
         autoHideDuration={6000}
@@ -91,10 +95,27 @@ const Login = () => {
           justifyContent: "center",
         }}
       >
-        <img src={images.login_img} alt="Side" className="side-image" />
+        <img
+          src={images.login_img}
+          alt="Side"
+          className="side-image"
+          style={{
+            borderTopRightRadius: 0,
+            borderBottomRightRadius: 0,
+            borderBottomLeftRadius: 10,
+            borderTopLeftRadius: 10,
+          }}
+        />
         <Paper
           elevation={3}
-          style={{ padding: "20px", boxShadow: "none", borderRadius: 0 }}
+          style={{
+            padding: "20px",
+            boxShadow: "none",
+            borderTopRightRadius: 10,
+            borderBottomRightRadius: 10,
+            borderBottomLeftRadius: 0,
+            borderTopLeftRadius: 0,
+          }}
         >
           <Typography variant="h5" align="center">
             Welcome to our professional skincare service!
@@ -139,7 +160,12 @@ const Login = () => {
           <Box display="flex" justifyContent="flex-end">
             <Box style={{ marginTop: "15px" }}>
               <Link to="/" style={{ textDecoration: "none" }}>
-                <Button color="primary">Don't have an account? Sign up</Button>
+                <Button
+                  color="primary"
+                  sx={{ textTransform: "none", fontSize: 15 }}
+                >
+                  Don't have an account? Sign up
+                </Button>
               </Link>
             </Box>
           </Box>

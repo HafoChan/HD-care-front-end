@@ -14,18 +14,9 @@ import HeaderComponent from "../../components/patient/HeaderComponent";
 import images from "../../constants/images";
 
 function Profile() {
-  const [selectedTab, setSelectedTab] = useState("Trang chủ");
-
-  const handleTabClick = (tab) => {
-    setSelectedTab(tab);
-  };
-
   return (
     <Box sx={{ backgroundColor: "white", minHeight: "100vh" }}>
-      <HeaderComponent
-        selectedTab={selectedTab}
-        handleTabClick={handleTabClick}
-      />
+      <HeaderComponent />
       <Box
         sx={{
           backgroundColor: "#cfe8fc",

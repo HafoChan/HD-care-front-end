@@ -17,6 +17,8 @@ import SearchIcon from "@mui/icons-material/Search";
 import Sidebar from "../../components/doctor/Sidebar";
 import AppointmentTable from "../../components/doctor/AppointmentTable";
 import { appointment } from "../../api/appointment";
+import { doctor } from "../../api/doctor";
+import { useNavigate } from "react-router-dom";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -59,6 +61,12 @@ const AppointmentManagement = () => {
   const [dateFilter, setDateFilter] = useState("today");
   const [currentPage, setCurrentPage] = useState(1);
 
+  const [doctorId, setDoctorId] = useState();
+  const [keyword, setKeyword] = useState("");
+
+  const navigate = useNavigate();
+  const [selectedRow, setSelectedRow] = useState(null);
+
   const handleChange = (event, newValue) => {
     setValue(newValue);
     setCurrentPage(1);
@@ -77,21 +85,23 @@ const AppointmentManagement = () => {
     try {
       if (dateFilter === "today" || dateFilter === "cancel") {
         response = await appointment.getAppointmentByDoctor(
-          "f053016f-15b6-4a36-8a4b-1b422492d9c0",
+          doctorId,
           status,
           selectedDate,
-          page
+          page,
+          keyword
         );
       } else {
         const week = dateFilter === "week" ? selectedDate : null;
         const month = dateFilter === "month" ? selectedDate : null;
 
         response = await appointment.getAppointmentFilter(
-          "f053016f-15b6-4a36-8a4b-1b422492d9c0",
+          doctorId,
           week,
           month,
           status,
-          page
+          page,
+          keyword
         );
       }
 
@@ -108,12 +118,21 @@ const AppointmentManagement = () => {
 
   useEffect(() => {
     fetchData(value, currentPage);
-  }, [value, dateFilter, selectedDate, currentPage]);
+  }, [value, dateFilter, selectedDate, currentPage, doctorId, keyword]);
+
+  useEffect(() => {
+    doctor
+      .getInfo()
+      .then((response) => {
+        setDoctorId(response?.result.id);
+      })
+      .catch((error) => console.error("Error getting doctor info:", error));
+  }, []);
 
   const filterAppointment = (value) => {
-    if (value == 0) return "CONFIRMED";
-    else if (value == 1) return "PENDING";
-    else if (value == 2) return "COMPLETED";
+    if (value === 0) return "CONFIRMED";
+    else if (value === 1) return "PENDING";
+    else if (value === 2) return "COMPLETED";
     else return "CANCELLED";
   };
 
@@ -122,163 +141,208 @@ const AppointmentManagement = () => {
     fetchData(value, newPage);
   };
 
+  const handleChangeSearch = (e) => {
+    setKeyword(e.target.value);
+  };
+
+  const handleViewDetail = () => {
+    if (selectedRow) {
+      navigate(`/doctor/appointment-management/${selectedRow}`);
+    } else {
+      alert("Vui lòng chọn cuộc hẹn để xem chi tiết");
+    }
+  };
+
   return (
     <Box
       sx={{
         display: "flex",
-        flexDirection: "column",
-        width: "80%",
-        margin: "0 auto",
-        marginLeft: "250px", // Đảm bảo nội dung không bị che
-        paddingBottom: 8,
+        backgroundColor: "white",
+        width: "100%",
+        height: "100%",
       }}
     >
-      <Box maxWidth={200}>
-        <Sidebar />
-      </Box>
       <Box
         sx={{
           display: "flex",
           flexDirection: "column",
-          width: "90%",
+          width: "80%",
           margin: "0 auto",
+          marginLeft: "250px",
+          paddingBottom: 8,
         }}
       >
-        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
-          Quản Lý Lịch Hẹn
-        </Typography>
-
-        <Box display="flex" gap={2} mb={3}>
-          <Box display="flex" alignItems="center" sx={{ flex: 1 }}>
-            <TextField
-              fullWidth
-              size="small"
-              placeholder="Search"
-              InputProps={{
-                startAdornment: (
-                  <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
-                ),
-              }}
-            />
-          </Box>
-
-          <Box display="flex" alignItems="center" sx={{ width: 200 }}>
-            <TextField
-              fullWidth
-              size="small"
-              type="date" // Thay đổi type thành "date"
-              value={selectedDate} // Liên kết với trạng thái
-              onChange={(e) => setSelectedDate(e.target.value)} // Cập nhật trạng thái khi chọn ngày
-              InputLabelProps={{
-                shrink: true, // Đảm bảo nhãn khôn g bị ẩn khi có giá trị
-              }}
-            />
-          </Box>
-
-          <Box>
-            <FormControl sx={{ width: 200 }}>
-              <InputLabel id="demo-simple-select-label" size="small">
-                Lọc
-              </InputLabel>
-              <Select
-                labelId="demo-simple-select-label"
-                size="small"
-                value={dateFilter}
-                onChange={(e) => handleDateFilter(e)}
-                label="Lọc"
-              >
-                <MenuItem value="cancel">Bỏ lọc</MenuItem>
-                <MenuItem value="all">Tất cả ngày</MenuItem>
-                <MenuItem value="today">Hôm nay</MenuItem>
-                <MenuItem value="week">Tuần này</MenuItem>
-                <MenuItem value="month">Tháng này</MenuItem>
-              </Select>
-            </FormControl>
-          </Box>
-
-          <Button
-            variant="contained"
-            color="info"
-            sx={{ width: 150, textTransform: "none" }}
-          >
-            Xem chi tiết
-          </Button>
+        <Box maxWidth={200}>
+          <Sidebar />
         </Box>
-
         <Box
           sx={{
-            borderBottom: 1,
-            borderColor: "divider",
-            width: "100%",
             display: "flex",
-            justifyContent: "flex-start",
+            flexDirection: "column",
+            width: "100%",
+            margin: "0 auto",
           }}
         >
-          <Tabs
-            value={value}
-            onChange={handleChange}
-            aria-label="basic tabs example"
+          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
+            Quản Lý Lịch Hẹn
+          </Typography>
+
+          <Box display="flex" gap={2} mb={3}>
+            <Box display="flex" alignItems="center" sx={{ flex: 1 }}>
+              <TextField
+                fullWidth
+                size="small"
+                placeholder="Search"
+                onChange={handleChangeSearch}
+                value={keyword}
+                InputProps={{
+                  startAdornment: (
+                    <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
+                  ),
+                }}
+              />
+            </Box>
+
+            <Box display="flex" alignItems="center" sx={{ width: 200 }}>
+              <TextField
+                fullWidth
+                size="small"
+                type="date" // Thay đổi type thành "date"
+                value={selectedDate} // Liên kết với trạng thái
+                onChange={(e) => setSelectedDate(e.target.value)} // Cập nhật trạng thái khi chọn ngày
+                InputLabelProps={{
+                  shrink: true, // Đảm bảo nhãn khôn g bị ẩn khi có giá trị
+                }}
+              />
+            </Box>
+
+            <Box>
+              <FormControl sx={{ width: 200 }}>
+                <InputLabel id="demo-simple-select-label" size="small">
+                  Lọc
+                </InputLabel>
+                <Select
+                  labelId="demo-simple-select-label"
+                  size="small"
+                  value={dateFilter}
+                  onChange={(e) => handleDateFilter(e)}
+                  label="Lọc"
+                >
+                  <MenuItem value="cancel">Bỏ lọc</MenuItem>
+                  <MenuItem value="all">Tất cả ngày</MenuItem>
+                  <MenuItem value="today">Hôm nay</MenuItem>
+                  <MenuItem value="week">Tuần này</MenuItem>
+                  <MenuItem value="month">Tháng này</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+
+            <Button
+              variant="contained"
+              color="info"
+              sx={{ width: 150, textTransform: "none" }}
+              onClick={handleViewDetail}
+              disabled={!selectedRow}
+            >
+              Xem chi tiết
+            </Button>
+          </Box>
+
+          <Box
+            sx={{
+              borderBottom: 1,
+              borderColor: "divider",
+              width: "100%",
+              display: "flex",
+              justifyContent: "flex-start",
+            }}
           >
-            <Tab
-              sx={{
-                textTransform: "none",
-                fontWeight: value === 0 ? "bold" : "normal",
-              }}
-              label="Đã xác nhận"
-              {...a11yProps(0)}
+            <Tabs
+              value={value}
+              onChange={handleChange}
+              aria-label="basic tabs example"
+            >
+              <Tab
+                sx={{
+                  textTransform: "none",
+                  fontWeight: value === 0 ? "bold" : "normal",
+                }}
+                label="Đã xác nhận"
+                {...a11yProps(0)}
+              />
+              <Tab
+                sx={{
+                  textTransform: "none",
+                  fontWeight: value === 1 ? "bold" : "normal",
+                }}
+                label="Chưa xác nhận"
+                {...a11yProps(1)}
+              />
+              <Tab
+                sx={{
+                  textTransform: "none",
+                  fontWeight: value === 2 ? "bold" : "normal",
+                }}
+                label="Đã hoàn tất"
+                {...a11yProps(2)}
+              />
+              <Tab
+                sx={{
+                  textTransform: "none",
+                  fontWeight: value === 3 ? "bold" : "normal",
+                }}
+                label="Đã hủy"
+                {...a11yProps(3)}
+              />
+            </Tabs>
+          </Box>
+
+          {/* Thay appointment ở trong để điều chỉnh giữa các tab */}
+
+          <CustomTabPanel value={value} index={0}>
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
             />
-            <Tab
-              sx={{
-                textTransform: "none",
-                fontWeight: value === 1 ? "bold" : "normal",
-              }}
-              label="Chưa xác nhận"
-              {...a11yProps(1)}
+          </CustomTabPanel>
+
+          <CustomTabPanel value={value} index={1}>
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
             />
-            <Tab
-              sx={{
-                textTransform: "none",
-                fontWeight: value === 2 ? "bold" : "normal",
-              }}
-              label="Đã hoàn tất"
-              {...a11yProps(2)}
+          </CustomTabPanel>
+
+          <CustomTabPanel value={value} index={2}>
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
             />
-            <Tab
-              sx={{
-                textTransform: "none",
-                fontWeight: value === 3 ? "bold" : "normal",
-              }}
-              label="Đã hủy"
-              {...a11yProps(3)}
+          </CustomTabPanel>
+
+          <CustomTabPanel value={value} index={3}>
+            <AppointmentTable
+              appointments={appointments}
+              doctorId={doctorId}
+              selectedRow={selectedRow}
+              setSelectedRow={setSelectedRow}
             />
-          </Tabs>
-        </Box>
+          </CustomTabPanel>
 
-        {/* Thay appointment ở trong để điều chỉnh giữa các tab */}
-
-        <CustomTabPanel value={value} index={0}>
-          <AppointmentTable appointments={appointments} />
-        </CustomTabPanel>
-
-        <CustomTabPanel value={value} index={1}>
-          <AppointmentTable appointments={appointments} />
-        </CustomTabPanel>
-
-        <CustomTabPanel value={value} index={2}>
-          <AppointmentTable appointments={appointments} />
-        </CustomTabPanel>
-
-        <CustomTabPanel value={value} index={3}>
-          <AppointmentTable appointments={appointments} />
-        </CustomTabPanel>
-
-        <Box display="flex" justifyContent="center" mt={3}>
-          <Pagination
-            count={appointments ? appointments.totalPages : 0}
-            page={currentPage}
-            onChange={handleChangePage}
-            color="primary"
-          />
+          <Box display="flex" justifyContent="center" mt={3}>
+            <Pagination
+              count={appointments ? appointments.totalPages : 0}
+              page={currentPage}
+              onChange={handleChangePage}
+              color="primary"
+            />
+          </Box>
         </Box>
       </Box>
     </Box>

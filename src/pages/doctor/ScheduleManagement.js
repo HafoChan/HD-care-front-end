@@ -87,7 +87,7 @@ function ScheduleManagement() {
                   textTransform: "none",
                   fontWeight: value === 0 ? "bold" : "normal",
                 }}
-                label="Đã thiết lập"
+                label="Chưa thiết lập"
                 {...a11yProps(0)}
               />
               <Tab
@@ -95,15 +95,15 @@ function ScheduleManagement() {
                   textTransform: "none",
                   fontWeight: value === 1 ? "bold" : "normal",
                 }}
-                label="Chưa thiết lập"
+                label="Đã thiết lập"
                 {...a11yProps(1)}
               />
             </Tabs>
           </Box>
-          <CustomTabPanel value={value} index={0}>
+          <CustomTabPanel value={value} index={1}>
             <DoctorSchedule />
           </CustomTabPanel>
-          <CustomTabPanel value={value} index={1}>
+          <CustomTabPanel value={value} index={0}>
             <DoctorSchedule type={"add"} />
           </CustomTabPanel>
         </Box>
