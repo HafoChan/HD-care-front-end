@@ -79,7 +79,7 @@ function UserDetail() {
         showError("Không thể tải thông tin người dùng");
       }
     } catch (error) {
-      console.log("loi: " + error)
+      console.log("loi: " )
       // Xử lý các lỗi khác nhau
       if (error.response && error.response.status === 401) {
         // Lỗi unauthorized - có thể do refreshToken không hợp lệ
