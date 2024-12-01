@@ -11,6 +11,11 @@ import {
   Button,
   MenuItem,
   Menu,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
+  TextField,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import { appointment } from "../../api/appointment";
@@ -25,6 +30,9 @@ const AppointmentTable = ({
 
   const [anchorEl, setAnchorEl] = useState(null);
   const [rowStatuses, setRowStatuses] = useState({}); // Trạng thái ban đầu trống
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [statusToChange, setStatusToChange] = useState(null);
 
   // Đồng bộ hóa rowStatuses với appointments khi appointments thay đổi
   useEffect(() => {
@@ -112,77 +120,183 @@ const AppointmentTable = ({
     setSelectedRow(null);
   };
 
+  const handleStatusClick = (status) => {
+    if (status === "CANCELLED") {
+      setStatusToChange(status);
+      setOpenCancelDialog(true);
+    } else {
+      handleStatusChange(status);
+    }
+  };
+
+  const handleCancelSubmit = async () => {
+    if (!cancelReason.trim()) {
+      toast.error("Vui lòng nhập lý do hủy lịch hẹn");
+      return;
+    }
+
+    const data = {
+      idDoctor: doctorId,
+      status: statusToChange,
+      note: cancelReason,
+    };
+
+    try {
+      await changeStatusFetchApi(selectedRow, data);
+
+      setRowStatuses((prevStatuses) => ({
+        ...prevStatuses,
+        [selectedRow]: statusToChange,
+      }));
+
+      toast.success("Đã hủy lịch hẹn thành công");
+      handleCloseCancelDialog();
+    } catch (error) {
+      toast.error("Không thể cập nhật trạng thái. Vui lòng thử lại.");
+      console.error("Error updating status:", error);
+    }
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
+    setCancelReason("");
+    setStatusToChange(null);
+    handleMenuClose();
+  };
+
   return (
-    <TableContainer component={Paper}>
-      <Table>
-        <TableHead>
-          <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-            <TableCell sx={{ fontWeight: "bold" }}>ID bệnh nhân</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Họ và tên</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Ngày khám</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Thời gian</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Tiêu đề</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Email LH</TableCell>
-            <TableCell sx={{ fontWeight: "bold" }}>Trạng thái</TableCell>
-          </TableRow>
-        </TableHead>
-        <TableBody>
-          {appointments?.content?.map((appointment) => (
-            <TableRow
-              key={appointment.id}
-              sx={{
-                cursor: "pointer",
-                fontWeight: selectedRow === appointment.id ? "bold" : "normal",
-                backgroundColor:
-                  selectedRow === appointment.id
-                    ? "#edf4fc !important"
-                    : "transparent",
-                "&:hover": {
-                  backgroundColor: "#f0f0f0 !important",
-                  fontWeight: "bold",
-                },
-              }}
-              onClick={() => handleRowClick(appointment)}
-            >
-              <TableCell>{appointment.id}</TableCell>
-              <TableCell>{appointment.name}</TableCell>
-              <TableCell>{appointment.start.split(" ")[0]}</TableCell>
-              <TableCell>
-                {appointment.start.split(" ")[1]} -{" "}
-                {appointment.end.split(" ")[1]}
-              </TableCell>
-              <TableCell>{appointment.title}</TableCell>
-              <TableCell>{appointment.email}</TableCell>
-              <TableCell>
-                <Button
-                  variant="contained"
-                  color={getStatusColor(rowStatuses[appointment.id])}
-                  onClick={(e) => handleMenuClick(e, appointment.id)}
-                >
-                  {rowStatuses[appointment.id] || appointment.status}
-                </Button>
-                <Menu
-                  anchorEl={anchorEl}
-                  open={Boolean(anchorEl && selectedRow === appointment.id)}
-                  onClose={handleMenuClose}
-                >
-                  {["PENDING", "CONFIRMED", "COMPLETED", "CANCELLED"].map(
-                    (status) => (
-                      <MenuItem
-                        key={status}
-                        onClick={() => handleStatusChange(status)}
-                      >
-                        {status}
-                      </MenuItem>
-                    )
-                  )}
-                </Menu>
-              </TableCell>
+    <>
+      <TableContainer component={Paper}>
+        <Table>
+          <TableHead>
+            <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
+              <TableCell sx={{ fontWeight: "bold" }}>ID bệnh nhân</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Họ và tên</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Ngày khám</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Thời gian</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Tiêu đề</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Email LH</TableCell>
+              <TableCell sx={{ fontWeight: "bold" }}>Trạng thái</TableCell>
             </TableRow>
-          ))}
-        </TableBody>
-      </Table>
-    </TableContainer>
+          </TableHead>
+          <TableBody>
+            {appointments?.content?.map((appointment) => (
+              <TableRow
+                key={appointment.id}
+                sx={{
+                  cursor: "pointer",
+                  fontWeight:
+                    selectedRow === appointment.id ? "bold" : "normal",
+                  backgroundColor:
+                    selectedRow === appointment.id
+                      ? "#edf4fc !important"
+                      : "transparent",
+                  "&:hover": {
+                    backgroundColor: "#f0f0f0 !important",
+                    fontWeight: "bold",
+                  },
+                }}
+                onClick={() => handleRowClick(appointment)}
+              >
+                <TableCell>{appointment.id}</TableCell>
+                <TableCell>{appointment.name}</TableCell>
+                <TableCell>{appointment.start.split(" ")[0]}</TableCell>
+                <TableCell>
+                  {appointment.start.split(" ")[1]} -{" "}
+                  {appointment.end.split(" ")[1]}
+                </TableCell>
+                <TableCell>{appointment.title}</TableCell>
+                <TableCell>{appointment.email}</TableCell>
+                <TableCell>
+                  <Button
+                    variant="contained"
+                    color={getStatusColor(rowStatuses[appointment.id])}
+                    onClick={(e) =>
+                      // Chỉ mở menu nếu trạng thái không phải COMPLETED hoặc CANCELLED
+                      ["PENDING", "CONFIRMED"].includes(
+                        rowStatuses[appointment.id]
+                      ) && handleMenuClick(e, appointment.id)
+                    }
+                  >
+                    {rowStatuses[appointment.id] || appointment.status}
+                  </Button>
+                  {/* Ẩn menu nếu trạng thái là COMPLETED hoặc CANCELLED */}
+                  {["COMPLETED", "CANCELLED"].includes(
+                    rowStatuses[appointment.id]
+                  ) ? null : (
+                    <Menu
+                      anchorEl={anchorEl}
+                      open={Boolean(anchorEl && selectedRow === appointment.id)}
+                      onClose={handleMenuClose}
+                    >
+                      {(() => {
+                        const currentStatus = rowStatuses[appointment.id];
+                        let allowedStatuses = [];
+
+                        switch (currentStatus) {
+                          case "PENDING":
+                            allowedStatuses = ["CONFIRMED", "CANCELLED"];
+                            break;
+                          case "CONFIRMED":
+                            allowedStatuses = ["COMPLETED", "CANCELLED"];
+                            break;
+                          default:
+                            allowedStatuses = [];
+                        }
+
+                        return allowedStatuses.map((status) => (
+                          <MenuItem
+                            key={status}
+                            onClick={() => handleStatusClick(status)}
+                          >
+                            {status}
+                          </MenuItem>
+                        ));
+                      })()}
+                    </Menu>
+                  )}
+                </TableCell>
+              </TableRow>
+            ))}
+          </TableBody>
+        </Table>
+      </TableContainer>
+
+      {/* Dialog xác nhận hủy lịch */}
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        maxWidth="sm"
+        fullWidth
+      >
+        <DialogTitle>Xác nhận hủy lịch hẹn</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Lý do hủy"
+            fullWidth
+            multiline
+            rows={4}
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            required
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseCancelDialog} color="primary">
+            Hủy bỏ
+          </Button>
+          <Button
+            onClick={handleCancelSubmit}
+            color="error"
+            variant="contained"
+          >
+            Xác nhận hủy
+          </Button>
+        </DialogActions>
+      </Dialog>
+    </>
   );
 };
 

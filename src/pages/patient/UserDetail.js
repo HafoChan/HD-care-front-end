@@ -47,7 +47,7 @@ function UserDetail() {
   };
 
   const showSuccess = (message) => {
-    toast.success(message);
+    toast.success("Cập nhật thông tin người dùng thành công");
   };
 
   const handleSubmit = () => {
@@ -55,7 +55,6 @@ function UserDetail() {
       .updatePatient(userInfo)
       .then((response) => {
         if (response.code == 1000) {
-          console.log("in success");
           showSuccess(response.message);
           setRefresh((prev) => !prev);
         } else throw Error(response.message);
@@ -91,7 +90,6 @@ function UserDetail() {
   };
 
   useEffect(() => {
-    console.log("innn");
     getInfo();
     setImg(userInfo.img);
   }, [refresh]);
