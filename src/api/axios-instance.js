@@ -13,7 +13,7 @@ axiosClient.interceptors.request.use(
     const accessToken = localStorage.getItem("accessToken");
     const language = localStorage.getItem("language") || "vi";
 
-    // Check if the role is doctor
+    // Chèn token ở mỗi request
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
       config.headers["Accept-Language"] = language;
@@ -22,18 +22,19 @@ axiosClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
 // Add a response interceptor
 axiosClient.interceptors.response.use(
   function (config) {
     if (config.data?.result?.roles === "DOCTOR") {
-      console.log("doctor");
-      window.location.href = "doctor/schedule-management"; // Redirect if role is doctor
+      window.location.href = "doctor/schedule-management";
     } else if (config.data?.result?.roles === "PATIENT")
       window.location.href = "/home";
+
     return config.data;
   },
+
   async function (error) {
-    console.log("Axios error");
     const { response } = error;
     console.log("response : ", response);
 
@@ -53,8 +54,7 @@ axiosClient.interceptors.response.use(
             }
           );
 
-          const data = result.data.data;
-          const newAccessToken = data.accessToken;
+          const newAccessToken = result.data.result.accessToken;
 
           localStorage.setItem("accessToken", newAccessToken);
 

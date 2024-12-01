@@ -70,6 +70,7 @@ const ConfirmScheduleDialog = ({
             InputLabelProps={{
               shrink: true,
             }}
+            disabled={true}
             sx={{ mt: 2, mb: 4 }}
           />
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>

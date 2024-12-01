@@ -41,74 +41,71 @@ function ScheduleManagement() {
   };
 
   return (
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column",
-        width: "80%",
-        margin: "0 auto",
-        marginLeft: "250px", // Đảm bảo nội dung không bị che
-        paddingBottom: 8,
-      }}
-    >
-      <Box maxWidth={200}>
-        <Sidebar />
-      </Box>
+    <div style={{ backgroundColor: "white", height: "100%" }}>
+      <Box sx={{ marginLeft: "230px", backgroundColor: "white" }}>
+        <Box maxWidth={200}>
+          <Sidebar />
+        </Box>
 
-      <Box
-        sx={{
-          display: "flex",
-          flexDirection: "column",
-          width: "60%",
-          margin: "0 auto",
-        }}
-      >
-        <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
-          Quản Lý Lịch Khám
-        </Typography>
-
-        <Box sx={{ width: "100%" }}>
-          <Box
-            sx={{
-              borderBottom: 1,
-              borderColor: "divider",
-              width: "100%",
-              display: "flex",
-              justifyContent: "flex-start",
-            }}
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            width: "100%",
+            margin: "0 auto",
+          }}
+        >
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ color: "#1976d2", fontWeight: 500, mb: 4, mt: 4 }}
           >
-            <Tabs
-              value={value}
-              onChange={handleChange}
-              aria-label="basic tabs example"
+            Quản Lý Lịch Khám
+          </Typography>
+
+          <Box sx={{ width: "100%" }}>
+            <Box
+              sx={{
+                borderBottom: 1,
+                borderColor: "divider",
+                width: "100%",
+                display: "flex",
+                justifyContent: "flex-start",
+              }}
             >
-              <Tab
-                sx={{
-                  textTransform: "none",
-                  fontWeight: value === 0 ? "bold" : "normal",
-                }}
-                label="Chưa thiết lập"
-                {...a11yProps(0)}
-              />
-              <Tab
-                sx={{
-                  textTransform: "none",
-                  fontWeight: value === 1 ? "bold" : "normal",
-                }}
-                label="Đã thiết lập"
-                {...a11yProps(1)}
-              />
-            </Tabs>
+              <Tabs
+                value={value}
+                onChange={handleChange}
+                aria-label="basic tabs example"
+              >
+                <Tab
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: value === 0 ? "bold" : "normal",
+                  }}
+                  label="Chưa thiết lập"
+                  {...a11yProps(0)}
+                />
+                <Tab
+                  sx={{
+                    textTransform: "none",
+                    fontWeight: value === 1 ? "bold" : "normal",
+                  }}
+                  label="Đã thiết lập"
+                  {...a11yProps(1)}
+                />
+              </Tabs>
+            </Box>
+            <CustomTabPanel value={value} index={1}>
+              <DoctorSchedule />
+            </CustomTabPanel>
+            <CustomTabPanel value={value} index={0}>
+              <DoctorSchedule type={"add"} />
+            </CustomTabPanel>
           </Box>
-          <CustomTabPanel value={value} index={1}>
-            <DoctorSchedule />
-          </CustomTabPanel>
-          <CustomTabPanel value={value} index={0}>
-            <DoctorSchedule type={"add"} />
-          </CustomTabPanel>
         </Box>
       </Box>
-    </Box>
+    </div>
   );
 }
 

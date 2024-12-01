@@ -24,15 +24,19 @@ const DoctorSchedule = ({ type }) => {
   const [openCancel, setOpenCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
+  const today = new Date().toISOString().split("T")[0];
+  const maxDate = new Date();
+  maxDate.setDate(new Date().getDate() + 7);
+
   const timeActiveSlots = (selectedDate) => {
     const slots = [];
-    const today = new Date().toISOString().split("T")[0]; // Ngày hiện tại
     const startTime = new Date();
 
     if (selectedDate === today) {
       // Nếu chọn ngày hiện tại, khung giờ từ giờ hiện tại đến 10h
       startTime.setMinutes(0);
       startTime.setSeconds(0);
+      startTime.setHours(startTime.getHours() + 1);
       if (startTime.getHours() >= 20) return slots; // Không còn giờ nào nếu đã quá 20h
 
       if (startTime.getHours() < 7) startTime.setHours(7, 0, 0, 0);
@@ -158,6 +162,11 @@ const DoctorSchedule = ({ type }) => {
           onChange={handleChangeDate}
           InputLabelProps={{
             shrink: true,
+          }}
+          inputProps={{
+            shrink: true,
+            min: today,
+            max: maxDate.toISOString().split("T")[0],
           }}
         />
       </Box>

@@ -16,6 +16,9 @@ const PatientManagement = () => {
   const [doctorId, setDoctorId] = useState();
   const [patients, setPatients] = useState();
   const [selectedPatientId, setSelectedPatientId] = useState(null);
+  const [keyword, setKeyword] = useState();
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(0);
 
   useEffect(() => {
     const fetchDoctorInfo = async () => {
@@ -32,15 +35,16 @@ const PatientManagement = () => {
 
   // Thêm lọc thì sẽ thêm điều kiện để useEffect load
   useEffect(() => {
-    fetchData();
-  }, [selectedDate, doctorId]);
+    fetchData(currentPage);
+  }, [selectedDate, doctorId, currentPage, keyword]);
 
-  const fetchData = async () => {
+  const fetchData = async (page) => {
     try {
       console.log(doctorId);
-      const response = await doctor.getPatient(doctorId);
+      const response = await doctor.getPatient(doctorId, page, keyword);
       if (response?.code === 1000) {
-        setPatients(response?.result);
+        setPatients(response?.result?.content);
+        setTotalPages(response?.result?.totalPages);
       }
     } catch (error) {
       console.error("Error fetching patient data:", error);
@@ -60,6 +64,11 @@ const PatientManagement = () => {
     }
   };
 
+  const handleChangePage = (event, newPage) => {
+    setCurrentPage(newPage);
+    fetchData(newPage);
+  };
+
   return (
     <Box sx={{ backgroundColor: "white", height: "100%" }}>
       <Box
@@ -68,7 +77,7 @@ const PatientManagement = () => {
           flexDirection: "column",
           width: "80%",
           margin: "0 auto",
-          marginLeft: "250px", // Đảm bảo nội dung không bị che
+          marginLeft: "230px", // Đảm bảo nội dung không bị che
           paddingBottom: 8,
         }}
       >
@@ -83,7 +92,11 @@ const PatientManagement = () => {
             margin: "0 auto",
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ color: "#1976d2", fontWeight: 500, mb: 4, mt: 4 }}
+          >
             Quản Lý Bệnh Nhân
           </Typography>
 
@@ -93,6 +106,8 @@ const PatientManagement = () => {
                 fullWidth
                 size="small"
                 placeholder="Search"
+                value={keyword}
+                onChange={(e) => setKeyword(e.target.value)}
                 InputProps={{
                   startAdornment: (
                     <SearchIcon sx={{ color: "text.secondary", mr: 1 }} />
@@ -140,7 +155,12 @@ const PatientManagement = () => {
           />
 
           <Box display="flex" justifyContent="center" mt={3}>
-            <Pagination count={15} color="primary" />
+            <Pagination
+              count={patients ? totalPages : 0}
+              page={currentPage}
+              onChange={handleChangePage}
+              color="primary"
+            />
           </Box>
         </Box>
       </Box>
