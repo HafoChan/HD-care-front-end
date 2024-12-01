@@ -140,4 +140,46 @@ export const appointment = {
       throw error;
     }
   },
+
+  async getAppointmentByPatientId(patientId, date, week, month, status, page) {
+    const query = [
+      patientId ? `patientId=${patientId}` : "",
+      date ? `date=${date}` : "",
+      week ? `week=${week}` : "",
+      month ? `month=${month}` : "",
+      status ? `status=${status}` : "",
+      page ? `page=${page}` : "",
+    ]
+      .filter(Boolean)
+      .join("&");
+    try {
+      const response = await axiosInstance.get(
+        `/appointment/patient-appointment?${query}`
+      );
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  },
+
+  async getPrescription(id, status) {
+    try {
+      const response = await axiosInstance.get(`/appointment/pdf/${id}`, {
+        params: status ? { status } : {},
+        headers: {
+          "Content-Type": "application/json",
+        },
+      });
+
+      console.log(id);
+
+      // Trả về trực tiếp response
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+      throw error;
+    }
+  },
 };

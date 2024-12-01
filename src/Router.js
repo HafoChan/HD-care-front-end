@@ -18,6 +18,8 @@ import Layout from "./components/doctor/Layout";
 import { ToastContainer } from "react-toastify";
 import PatientDetail from "./pages/doctor/PatientDetail";
 import AppointmentDetail from "./pages/doctor/AppointmentDetail";
+import AppointmentList from "./pages/patient/AppointmentList";
+import AppointmentDetailPatient from "./pages/patient/AppointmentDetailPatient";
 
 const AppRouter = () => {
   return (
@@ -30,6 +32,12 @@ const AppRouter = () => {
       <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/user-detail" element={<UserDetail />} />
+      <Route path="/appointment-list" element={<AppointmentList />} />
+      <Route
+        path="/appointment-list/:id"
+        element={<AppointmentDetailPatient />}
+      />
+      <Route path="/appointment-history" element={<AppointmentHistory />} />
 
       <Route
         path="/doctor/manage-appointment-history"
@@ -41,9 +49,6 @@ const AppRouter = () => {
       />
 
       <Route element={<Layout />}>
-        {" "}
-        {/* Không cần path="/" ở đây */}
-        <Route path="/appointment-history" element={<AppointmentHistory />} />
         <Route
           path="/doctor/schedule-management"
           element={<ScheduleManagement />}
