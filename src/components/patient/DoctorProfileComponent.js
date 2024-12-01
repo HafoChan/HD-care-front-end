@@ -20,9 +20,6 @@ function DoctorProfileComponent({ doctorInfo }) {
           {doctorInfo?.name}
         </Typography>
         <Typography variant="h6">{doctorInfo?.specialization}</Typography>
-        <Typography variant="body2" fontSize={"16px"} sx={{ my: 2 }}>
-          {doctorInfo?.experience}
-        </Typography>
         <Button variant="contained" color="warning" sx={{ width: "200px" }}>
           Đặt Lịch Ngay
         </Button>
@@ -36,7 +33,7 @@ function DoctorProfileComponent({ doctorInfo }) {
           height: "250px",
           borderRadius: "10%",
         }}
-        objectFit="cover"
+        objectFit = "cover"
       />
     </Card>
   );

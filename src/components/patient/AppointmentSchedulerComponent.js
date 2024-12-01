@@ -4,6 +4,7 @@ import BookingForm from "../../pages/patient/BookingForm";
 import { UserProvider } from "../../context/UserContext";
 
 const AppointmentSchedulerComponent = ({
+  doctorInfo,
   doctorId,
   selectedDate,
   setSelectedDate,
@@ -63,9 +64,9 @@ const AppointmentSchedulerComponent = ({
             ĐỊA CHỈ KHÁM
           </Typography>
           <Typography fontWeight={"bold"}>
-            Hệ thống Y tế Thu Cúc cơ sở Thụy Khuê
+            {doctorInfo?.address}
           </Typography>
-          <Typography>286 Thụy Khuê, quận Tây Hồ, Hà Nội</Typography>
+          <Typography>{doctorInfo?.district}, {doctorInfo?.city}</Typography>
           <Typography fontWeight={"bold"} display={"flex"}>
             GIÁ KHÁM:
             <Typography
@@ -73,7 +74,7 @@ const AppointmentSchedulerComponent = ({
               fontWeight={"bold"}
               sx={{ marginLeft: "8px" }}
             >
-              150.000đ
+              {doctorInfo?.price}đ
             </Typography>
           </Typography>
         </Box>

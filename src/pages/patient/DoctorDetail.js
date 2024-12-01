@@ -12,29 +12,10 @@ import {
   Button,
   Avatar,
   Rating,
+  Pagination
 } from "@mui/material";
 import { schedule } from "../../api/schedule";
-
-const reviews = [
-  {
-    name: "Nguyễn Trần Tuấn Đạt",
-    rating: 4.5,
-    comment:
-      "Bác sĩ tư vấn và chăm sóc nhiệt tình, trị triệt để mụn của mình sau 6 tháng",
-  },
-  {
-    name: "Nguyễn Trần Tuấn Đạt",
-    rating: 4.2,
-    comment:
-      "Bác sĩ tư vấn và chăm sóc nhiệt tình, trị triệt để mụn của mình sau 6 tháng",
-  },
-  {
-    name: "Nguyễn Trần Tuấn Đạt",
-    rating: 4,
-    comment:
-      "Bác sĩ Đoàn tư vấn rất tốt và cẩn thận. Bác chỉ ra được nguyên nhân gây mụn và hướng dẫn các bước chăm sóc da kỹ càng...",
-  },
-];
+import reviewApi from "../../api/reviewApi";
 
 const doctors = [
   { name: "BS CKII Lê Thị Thanh Thảo" },
@@ -44,66 +25,204 @@ const doctors = [
 ];
 
 function ReviewSection() {
+  const [reviews, setReviews] = useState([]);
+  const [totalPages, setTotalPages] = useState(1);
+  const [filter, setFilter] = useState({
+    sortBy: null,
+    rating: null
+  });
+  const [page, setPage] = useState(1);
+
+  const getReview = async () => {
+    const response = await reviewApi.getReview(
+      "f053016f-15b6-4a36-8a4b-1b422492d9c0", filter.sortBy,filter.rating,page
+    );
+    setReviews(response?.result);
+    setTotalPages(response?.result?.pageMax);
+  };
+
+  useEffect(() => {
+    getReview();
+  }, [filter, page]);
+
+  const handleSort = (type) => {
+    setFilter(prev => ({...prev, sortBy: type}));
+  };
+
+  const handleRatingFilter = (rating) => {
+    const newRating = rating === filter.rating ? null : rating;
+    setFilter(prev => ({...prev, rating: newRating}));
+  };
+
+
+  const handlePageChange = (event, value) => {
+    setPage(value);
+  };
+
+  const getStarCount = (star) => {
+    const ratingEntry = reviews?.countRating?.find(([rating]) => rating === star);
+    return ratingEntry ? ratingEntry[1] : 0;
+  };
+
+
   return (
     <Box paddingX={"24px"} sx={{ bgcolor: "#1d8be4", color: "white", py: 4 }}>
-      <Typography
-        variant="h5"
-        fontWeight={"bold"}
-        mb={4}
-        mt={2}
-        align="center"
-        gutterBottom
-      >
+      <Typography variant="h5" fontWeight={"bold"} mb={4} mt={2} align="center">
         Đánh giá của bệnh nhân
       </Typography>
 
-      <Grid container justifyContent="center" spacing={2}>
-        <Grid item xs={12} sm={8}>
-          {reviews.map((review, index) => (
-            <Card key={index} sx={{ mb: 2 }}>
-              <CardContent sx={{ display: "flex", alignItems: "center" }}>
-                <Avatar sx={{ mr: 2 }}>N</Avatar>
-                <Box sx={{ flexGrow: 1 }}>
-                  <Typography variant="subtitle1" fontWeight="bold">
-                    {review.name}
+      <Grid container spacing={2}>
+        <Grid item xs={12} md={4}>
+          <Box sx={{ textAlign: 'center', mb: 3 }}>
+            <Typography variant="h3">{reviews.countAvg}</Typography>
+            <Rating value={parseFloat(reviews.countAvg)} precision={0.1} readOnly size="large" />
+            <Typography>({reviews.countReview} đánh giá)</Typography>
+          </Box>
+          
+          {[5, 4, 3, 2, 1, 0].map((star) => (
+            <Box 
+              key={star} 
+              sx={{ 
+                display: 'flex', 
+                alignItems: 'center', 
+                mb: 1,
+                cursor: 'pointer',
+                '&:hover': {
+                  bgcolor: 'rgba(255, 255, 255, 0.1)',
+                }
+              }}
+              onClick={() => handleRatingFilter(star)}
+            >
+              <Typography 
+                sx={{ 
+                  minWidth: '60px',
+                  color: filter.rating === star ? '#FFD700' : 'white'
+                }}
+              >
+                {star} sao
+              </Typography>
+              <Box sx={{ 
+                flex: 1, 
+                mx: 1, 
+                height: 8, 
+                bgcolor: 'rgba(255, 255, 255, 0.2)',
+                borderRadius: 1,
+                overflow: 'hidden'
+              }}>
+                <Box sx={{ 
+                  width: `${(getStarCount(star) / reviews.countReview) * 100}%`,
+                  height: '100%',
+                  bgcolor: filter.rating === star ? '#FFD700' : 'white'
+                }} />
+              </Box>
+              <Typography sx={{ minWidth: '40px' }}>{getStarCount(star)}</Typography>
+            </Box>
+          ))}
+        </Grid>
+
+        <Grid item xs={12} md={8}>
+          <Box sx={{ mb: 2 }}>
+            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
+              <select 
+                style={{ 
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid white',
+                  backgroundColor: 'transparent',
+                  color: 'white'
+                }}
+                onChange={(e) => handleSort(e.target.value)}
+                value={filter.sortBy || ''}
+              >
+                <option value="" style={{ backgroundColor: '#077CDB', color: 'white' }}>Sắp xếp theo</option>
+                <option value="desc" style={{ backgroundColor: '#077CDB', color: 'white' }}>Mới nhất</option>
+                <option value="asc" style={{ backgroundColor: '#077CDB', color: 'white' }}>Cũ nhất</option>
+              </select>
+
+              <select
+                style={{ 
+                  padding: '8px',
+                  borderRadius: '4px',
+                  border: '1px solid white',
+                  backgroundColor: 'transparent',
+                  color: 'white'
+                }}
+                onChange={(e) => handleRatingFilter(Number(e.target.value))}
+                value={filter.rating !== null ? filter.rating : ''}
+              >
+                <option value="" style={{ backgroundColor: '#077CDB', color: 'white' }}>Tất cả sao</option>
+                {[5, 4, 3, 2, 1, 0].map(star => (
+                  <option key={star} value={star} style={{ backgroundColor: '#077CDB', color: 'white' }}>
+                    {star} sao
+                  </option>
+                ))}
+              </select>
+            </Box>
+          </Box>
+
+          {reviews?.reviewList?.map((review, index) => (
+            <Card key={index} sx={{ mb: 2, bgcolor: 'white' }}>
+              <CardContent>
+                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
+                  <Typography variant="subtitle1" color="text.primary" fontWeight="bold">
+                    {review.patient.name}
                   </Typography>
-                  <Rating value={review.rating} readOnly />
-                  <Typography variant="body2">{review.comment}</Typography>
+                  <Typography variant="caption" color="text.secondary">
+                    {new Date(review.date).toLocaleString('vi-VN', {
+                      hour: '2-digit',
+                      minute: '2-digit',
+                      day: '2-digit',
+                      month: '2-digit', 
+                      year: 'numeric'
+                    })}
+                  </Typography>
                 </Box>
+                <Rating value={parseFloat(review.rating)} precision={0.1} readOnly size="small" />
+                <Typography color="text.primary" sx={{ mt: 1 }}>
+                  {review.content}
+                </Typography>
+                {review?.img && review?.img?.length > 0 && (
+                  <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+                    {review?.img?.map((image, imgIndex) => (
+                      <Box
+                        key={imgIndex}
+                        component="img"
+                        src={image}
+                        alt={`Review image ${imgIndex + 1}`}
+                        sx={{
+                          width: 100,
+                          height: 100,
+                          objectFit: 'cover',
+                          borderRadius: 1,
+                          cursor: 'pointer'
+                        }}
+                      />
+                    ))}
+                  </Box>
+                )}
               </CardContent>
             </Card>
           ))}
-        </Grid>
-        <Grid
-          item
-          xs={12}
-          sm={4}
-          sx={{
-            textAlign: "center",
-            display: "flex",
-            flexDirection: "column",
-            alignItems: "center",
-            justifyContent: "center",
-          }}
-        >
-          <Typography variant="h3">4.5</Typography>
-          <Rating value={4.5} precision={0.1} readOnly />
-          <Typography variant="body2">20 bài review</Typography>
+
+          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
+            <Pagination 
+              count={totalPages}
+              page={page}
+              onChange={handlePageChange}
+              color="primary"
+              sx={{
+                '& .MuiPaginationItem-root': {
+                  color: 'white',
+                  borderColor: 'white',
+                },
+                '& .Mui-selected': {
+                  backgroundColor: 'rgba(255, 255, 255, 0.2) !important',
+                }
+              }}
+            />
+          </Box>
         </Grid>
       </Grid>
-
-      <Box display="flex" justifyContent="center" mt={2} mb={2}>
-        <Button
-          variant="contained"
-          sx={{
-            bgcolor: "white",
-            color: "#1d8be4",
-            width: "150px",
-          }}
-        >
-          Xem tất cả
-        </Button>
-      </Box>
     </Box>
   );
 }
@@ -165,6 +284,7 @@ function OtherDoctorsSection() {
 
       <Box display="flex" justifyContent="center" mt={2}>
         <Button
+          
           variant="contained"
           sx={{
             bgcolor: "#077CDB",
@@ -227,7 +347,7 @@ function DoctorDetail() {
       );
 
       if (response.code === 1000) {
-        setAvailableTimes(response.result); // Cập nhật lịch khả dụng
+        setAvailableTimes(response.result); // Cp nhật lịch khả dụng
       }
     } catch (error) {
       console.error("Error fetching available times:", error);
@@ -249,6 +369,7 @@ function DoctorDetail() {
       <Box width={"100%"} backgroundColor="white">
         <Box maxWidth={"1200px"} align="left">
           <AppointmentSchedulerComponent
+            doctorInfo={doctorInfo}
             doctorId={doctorId}
             selectedDate={selectedDate}
             setSelectedDate={setSelectedDate}
@@ -272,46 +393,31 @@ function DoctorDetail() {
             }}
           >
             <CardContent sx={{ padding: "0px", color: "white" }}>
-              <Typography variant="h5" fontWeight={"bold"} mb={4} mt={2}>
+              <Typography 
+                variant="h5" 
+                fontWeight={"bold"} 
+                mb={4} 
+                mt={2} 
+                align="center"
+              >
                 {doctorInfo?.specialization}
               </Typography>
               <Box display={"flex"} gap={6} marginX={6}>
-                <Box
-                  sx={{
-                    border: "2px solid white",
-                    borderRadius: "10px",
-                    padding: "10px 20px",
-                    justifyContent: "center",
-                  }}
-                >
-                  <Typography fontSize={"18px"} textAlign={"center"}>
-                    {doctorInfo?.experience}
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    border: "2px solid white",
-                    borderRadius: "10px",
-                    padding: "10px 20px",
-                  }}
-                >
-                  <Typography fontSize={"18px"} textAlign={"center"}>
-                    Tốt nghiệp Bác sĩ nội trú Chuyên khoa da liễu - Đại học Y
-                    Dược TP.HCM
-                  </Typography>
-                </Box>
-                <Box
-                  sx={{
-                    border: "2px solid white",
-                    borderRadius: "10px",
-                    padding: "10px 20px",
-                  }}
-                >
-                  <Typography fontSize={"18px"} textAlign={"center"}>
-                    Tốt nghiệp Bác sĩ nội trú Chuyên khoa da liễu - Đại học Y
-                    Dược TP.HCM
-                  </Typography>
-                </Box>
+                {doctorInfo?.experience?.split('.').map((exp, index) => (
+                  <Box
+                    key={index}
+                    sx={{
+                      border: "2px solid white",
+                      borderRadius: "10px",
+                      padding: "10px 20px",
+                      justifyContent: "center",
+                    }}
+                  >
+                    <Typography fontSize={"18px"} textAlign={"center"}>
+                      {exp.trim()}
+                    </Typography>
+                  </Box>
+                ))}
               </Box>
             </CardContent>
           </Card>
@@ -323,105 +429,38 @@ function DoctorDetail() {
           <Typography variant="h5" fontWeight={"bold"} mb={2} mt={4}>
             Mô tả
           </Typography>
-          <Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Trưởng khoa Khám bệnh, Bệnh viện Đa khoa Quốc tế Thu Cúc
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Nguyên chủ nhiệm khoa thần kinh, Bệnh viện Hữu Nghị Việt Xô
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Bác sĩ có 40 năm kinh nghiệm làm việc chuyên khoa Nội Thần kinh
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Bác sĩ khám cho người bệnh từ 16 tuổi trở lên
-            </Typography>
+          <Typography
+            component="span"
+            sx={{ display: "block", marginBottom: "8px" }}
+          >
+            {doctorInfo?.description?.split('.').map((sentence, index) => (
+              sentence.trim() && (
+                <Typography
+                  key={index}
+                  component="span"
+                  sx={{ display: "block", marginBottom: "8px" }}
+                >
+                  • {sentence.trim()}
+                </Typography>
+              )
+            ))}
           </Typography>
 
           <Typography variant="h5" fontWeight={"bold"} mb={2} mt={4}>
-            Khám và điều trị
+            Kinh nghiệm
           </Typography>
           <Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Các bệnh đau đầu: Chứng đau nửa đầu, đau đầu căn nguyên mạch
-              máu, đau đầu mạn tính hàng ngày..
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Bệnh đau vai gáy do thoái hóa cột sống cổ, thoát vị đĩa đệm cột
-              sống cổ, …
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Đau thắt lưng hông do thoái hóa, thoát vị, đau do viêm khớp cùng
-              chậu…
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Rối loạn tiền đình
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Điều trị chóng mặt do thiếu máu não
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Tư vấn và điều trị các bệnh lý rối loạn về giấc ngủ: mất ngủ cấp
-              tính hoặc mạn tính
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Liệt dây 7 ngoại vi: Viêm các dây thần kinh sọ não và các dây
-              thần kinh ngoại vi khác như hội chứng ống cổ tay, đau vai khuỷu
-              tay do chơi thể thao
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Liệt nửa người do nhồi máu não
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Các bệnh lý về sa sút trí tuệ: Suy giảm nhận thức nhẹ, suy giảm
-              trí nhớ, sa sút trí tuệ nguyên nhân mạch máu (sa sút trí tuệ sau
-              đột quỵ), Alzheimer
-            </Typography>
-            <Typography
-              component="span"
-              sx={{ display: "block", marginBottom: "8px" }}
-            >
-              • Bệnh rối loạn vận động như bệnh Parkinson
-            </Typography>
+            {doctorInfo?.experience?.split('.').map((specialty, index) => (
+              specialty.trim() && (
+                <Typography
+                  key={index}
+                  component="span"
+                  sx={{ display: "block", marginBottom: "8px" }}
+                >
+                  • {specialty.trim()}
+                </Typography>
+              )
+            ))}
           </Typography>
         </Box>
       </Box>
