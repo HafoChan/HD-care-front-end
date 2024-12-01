@@ -1,4 +1,4 @@
-import { Avatar, LinearProgress } from "@mui/material";
+import { Avatar, LinearProgress, Snackbar } from "@mui/material";
 import { Component } from "react";
 import UploadFilesService from "../../service/otherService/upload";
 import { getImg } from "../../service/otherService/localStorage";
@@ -12,15 +12,29 @@ export default class UploadFiles extends Component {
       currentFiles: [],
       progress: 0,
       message: "",
+      openSnackbar: false,
 
       fileInfos: [],
     };
   }
 
   selectFile = (event) => {
+    const files = Array.from(event.target.files);
+    
+    // Kiểm tra số lượng file
+    if (files.length > 4) {
+      this.setState({
+        message: "Bạn chỉ được chọn tối đa 4 ảnh!",
+        openSnackbar: true,
+      });
+      // Reset input file
+      this.fileInput.value = "";
+      return;
+    }
+
     this.setState(
       {
-        selectedFiles: Array.from(event.target.files),
+        selectedFiles: files,
       },
       () => {
         if (this.state.selectedFiles.length > 0) {
@@ -28,6 +42,10 @@ export default class UploadFiles extends Component {
         }
       }
     );
+  };
+
+  handleCloseSnackbar = () => {
+    this.setState({ openSnackbar: false });
   };
 
   upload = () => {
@@ -54,9 +72,12 @@ export default class UploadFiles extends Component {
         this.setState((prevState) => ({
           fileInfos: [...prevState.fileInfos, ...files],
         }));
-        if (files.length > 1) this.props.askUrl(files);
-        else this.props.askUrl(files[0]);
-
+        // if (files.length > 1) this.props.askUrl(files);
+        // else{
+        // console.log(files[0])
+        // this.props.askUrl(files[0]);
+        // }
+        this.props.askUrl(files)
         setTimeout(() => {
           this.setState({ progress: 101 });
         }, 1000);
@@ -75,7 +96,7 @@ export default class UploadFiles extends Component {
   };
 
   render() {
-    const { selectedFiles, currentFiles, progress, message, fileInfos } =
+    const { selectedFiles, currentFiles, progress, message, fileInfos, openSnackbar } =
       this.state;
     const { allowAvatarUpload } = this.props;
     return (
@@ -133,6 +154,13 @@ export default class UploadFiles extends Component {
             <div style={{ marginLeft: -120 }}>{progress}%</div>
           </div>
         )}
+
+        <Snackbar
+          open={openSnackbar}
+          autoHideDuration={6000}
+          onClose={this.handleCloseSnackbar}
+          message="Bạn chỉ được chọn tối đa 4 ảnh!"
+        />
       </div>
     );
   }

@@ -101,6 +101,7 @@ export default class EvaluateForm extends Component {
       img: [...this.state.uploadedImage],
       idAppointment: this.state.idAppointment,
     };
+    console.log(body.img)
     reviewApi
       .postReview(body)
       .then((response) => {
@@ -109,15 +110,7 @@ export default class EvaluateForm extends Component {
         } else throw new Error(response.message);
       })
       .catch((e) => this.showError(e));
-    // Handle submission logic, including the uploaded image
-    console.log(
-      "Đánh giá:",
-      this.state.rating,
-      "Nội dung:",
-      this.state.content,
-      "Ảnh đã tải lên:",
-      this.state.uploadedImage
-    );
+
   };
 
   render() {

@@ -66,11 +66,11 @@ const TeamOfDoctors = () => {
           currentPage,
           fullname,
           selectedDistrict && selectedDistrict.Name,
-          selectedProvince && selectedProvince.Name
+          selectedProvince && selectedProvince.Name,
+          sortOrder && sortOrder
         );
         setDoctors(data.result?.typeResponse);
         setPageMax(data.result?.pageMax); // Cập nhật tổng số trang
-        console.log(pageMax);
 
         // Khởi tạo selectedDates với ngày hiện tại cho tất cả bác sĩ
         const initialSelectedDates = {};
