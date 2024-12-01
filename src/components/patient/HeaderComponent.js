@@ -145,6 +145,28 @@ const HeaderComponent = ({ userInfo }) => {
                 Bài viết
               </Button>
             </Link>
+
+            <Link to="/appointment-list" style={{ textDecoration: "none" }}>
+              <Button
+                sx={{
+                  fontWeight: "bold",
+                  backgroundColor:
+                    location.pathname === "/appointment-list"
+                      ? "#FAC41C"
+                      : "transparent", // Active background color
+                  color:
+                    location.pathname === "/appointment-list"
+                      ? "white"
+                      : "black", // Active text color
+                  "&:hover": {
+                    backgroundColor: "#FAC41C",
+                    color: "white",
+                  },
+                }}
+              >
+                Xem lịch hẹn
+              </Button>
+            </Link>
           </Box>
           <Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
             <IconButton color="primary">

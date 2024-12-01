@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import {
   TextField,
+  Box,
+  Grid,
   Button,
   Container,
   Typography,
@@ -97,8 +99,6 @@ const Register = () => {
       style={{
         display: "flex",
         height: "100vh",
-        paddingTop: "60px",
-        paddingBottom: "60px",
       }}
     >
       <Snackbar
@@ -132,7 +132,8 @@ const Register = () => {
             padding: "20px",
             boxShadow: "none",
             borderRadius: 0,
-            maxWidth: "900px",
+            maxWidth: "1200px",
+            minWidth: "900px",
             borderRadius: 10,
           }}
         >
@@ -141,7 +142,7 @@ const Register = () => {
           </Typography>
           <form onSubmit={handleSubmit}>
             <TextField
-              label="Tên người dùng"
+              label="Tên đăng nhập"
               variant="outlined"
               fullWidth
               margin="normal"
@@ -150,48 +151,65 @@ const Register = () => {
               onChange={handleChange}
               required
             />
-            <TextField
-              label="Tên"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              name="name"
-              value={userInfo.name}
-              onChange={handleChange}
-              required
-            />
-            <TextField
-              label="Số điện thoại"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              name="phone"
-              value={userInfo.phone}
-              onChange={handleChange}
-              required
-            />
-            <FormControl variant="outlined" fullWidth margin="normal" required>
-              <InputLabel>Giới tính</InputLabel>
-              <Select
-                name="gender"
-                value={userInfo.gender}
-                onChange={handleChange}
-                label="Giới tính"
-              >
-                <MenuItem value="male">Nam</MenuItem>
-                <MenuItem value="female">Nữ</MenuItem>
-              </Select>
-            </FormControl>
-            <TextField
-              label="Địa chỉ"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              name="address"
-              value={userInfo.address}
-              onChange={handleChange}
-              required
-            />
+            <Grid container spacing={2}>
+              <Grid item xs={7}>
+                <TextField
+                  label="Họ và tên"
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  name="name"
+                  value={userInfo.name}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={5}>
+                <TextField
+                  label="Số điện thoại"
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  name="phone"
+                  value={userInfo.phone}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid item xs={7}>
+                <TextField
+                  label="Địa chỉ"
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  name="address"
+                  value={userInfo.address}
+                  onChange={handleChange}
+                  required
+                />
+              </Grid>
+              <Grid item xs={5}>
+                <FormControl
+                  variant="outlined"
+                  fullWidth
+                  margin="normal"
+                  required
+                >
+                  <InputLabel>Giới tính</InputLabel>
+                  <Select
+                    name="gender"
+                    value={userInfo.gender}
+                    onChange={handleChange}
+                    label="Giới tính"
+                  >
+                    <MenuItem value="male">Nam</MenuItem>
+                    <MenuItem value="female">Nữ</MenuItem>
+                  </Select>
+                </FormControl>
+              </Grid>
+            </Grid>
             <TextField
               label="Email"
               variant="outlined"

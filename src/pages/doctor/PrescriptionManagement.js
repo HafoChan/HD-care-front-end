@@ -1,6 +1,6 @@
-import React, { useState, useEffect } from 'react';
-import { useLocation, useNavigate } from 'react-router-dom';
-import prescriptionApi from '../../api/prescriptionApi';
+import React, { useState, useEffect } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+import prescriptionApi from "../../api/prescriptionApi";
 import {
   Container,
   Paper,
@@ -20,12 +20,12 @@ import {
   Alert,
   Dialog,
   DialogContent,
-} from '@mui/material';
+} from "@mui/material";
 
 const Prescription = () => {
   const location = useLocation();
   const navigate = useNavigate();
-  
+
   // Khởi tạo state với dữ liệu từ navigation nếu có
   const [patientInfo, setPatientInfo] = useState({});
   const [appointment, setAppointment] = useState({});
@@ -38,27 +38,31 @@ const Prescription = () => {
     const getInfoPatient = async () => {
       try {
         if (location.state?.appointment?.idPatient) {
-          const response = await prescriptionApi.getInfoPatient(location.state.appointment.idPatient);
+          const response = await prescriptionApi.getInfoPatient(
+            location.state.appointment.idPatient
+          );
 
-          const listmedicine = await prescriptionApi.getListMedicine(location.state.appointment.prescriptionId)
+          const listmedicine = await prescriptionApi.getListMedicine(
+            location.state.appointment.prescriptionId
+          );
 
-          setPrescriptionList(listmedicine.result)
+          setPrescriptionList(listmedicine.result);
           setPatientInfo(response.result);
-          setAppointment(location.state.appointment)
+          setAppointment(location.state.appointment);
         }
       } catch (error) {
-        console.error('Error fetching patient info:', error);
+        console.error("Error fetching patient info:", error);
       }
     };
     getInfoPatient();
   }, [location.state]);
 
   const [medicine, setMedicine] = useState({
-    name: '',
-    medicineType: '',
-    instruction: '',
-    quantity: '',
-    note: '',
+    name: "",
+    medicineType: "",
+    instruction: "",
+    quantity: "",
+    note: "",
   });
 
   const handlePatientInfoChange = (e) => {
@@ -75,7 +79,6 @@ const Prescription = () => {
     }));
   };
 
-
   const handleMedicineSelect = (index) => {
     setEditIndex(index);
     setMedicine(prescriptionList[index]);
@@ -85,55 +88,66 @@ const Prescription = () => {
     if (editIndex !== null) {
       const updatedList = [...prescriptionList];
       updatedList[editIndex] = medicine;
-      await prescriptionApi.updateMedicine(prescriptionList[editIndex].id, medicine)
+      await prescriptionApi.updateMedicine(
+        prescriptionList[editIndex].id,
+        medicine
+      );
       setPrescriptionList(updatedList);
       setEditIndex(null);
     } else {
       // Add new medicine
-      const data = await prescriptionApi.createMedicine(appointment.prescriptionId, medicine);
-      setPrescriptionList([
-        ...prescriptionList,
-        { ...data.result },
-      ]);
+      const data = await prescriptionApi.createMedicine(
+        appointment.prescriptionId,
+        medicine
+      );
+      setPrescriptionList([...prescriptionList, { ...data.result }]);
     }
     setMedicine({
-      name: '',
-      medicineType: 'tuýp',
-      instruction: '',
-      quantity: '',
-      note: '',
+      name: "",
+      medicineType: "tuýp",
+      instruction: "",
+      quantity: "",
+      note: "",
     });
   };
 
-  const [pdfUrl, setPdfUrl] = useState('');
+  const [pdfUrl, setPdfUrl] = useState("");
   const [openPdf, setOpenPdf] = useState(false);
 
   const handleExport = async (e) => {
     try {
-      const prescription = await prescriptionApi.createPrescription(appointment.prescriptionId, {
-        result: appointment?.result,
-      });
+      const prescription = await prescriptionApi.createPrescription(
+        appointment.prescriptionId,
+        {
+          result: appointment?.result,
+        }
+      );
 
-      setAppointment((appointment)=>({...appointment,[e.target.name] : prescription.result.result}))
+      setAppointment((appointment) => ({
+        ...appointment,
+        [e.target.name]: prescription.result.result,
+      }));
 
-      const response = await fetch(`http://localhost:8082/api/v1/appointment/pdf?status=${e.target.textContent}`, {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(appointment),
-      });
+      console.log(appointment);
 
-      if (e.target.textContent === "Gửi")
-      {
-        setSnackbarMessage('Gửi đơn thuốc thành công!');
+      const response = await fetch(
+        `http://localhost:8082/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
+        {
+          method: "GET",
+          headers: {
+            "Content-Type": "application/json",
+            Authorization: `Bearer ${localStorage.getItem("accessToken")}`,
+          },
+        }
+      );
+
+      if (e.target.textContent === "Gửi") {
+        setSnackbarMessage("Gửi đơn thuốc thành công!");
         setOpenSnackbar(true);
         setTimeout(() => {
-          navigate('/doctor/manage-appointment-history');
+          navigate("/doctor/manage-appointment-history");
         }, 1000);
-      }
-      else
-      {
+      } else {
         const contentType = response.headers.get("content-type");
         if (contentType && contentType.includes("application/pdf")) {
           const blob = await response.blob();
@@ -143,20 +157,18 @@ const Prescription = () => {
         } else {
           throw new Error("Không nhận được file PDF từ server");
         }
-        setSnackbarMessage('Tạo PDF thành công!');
+        setSnackbarMessage("Tạo PDF thành công!");
         setOpenSnackbar(true);
       }
-  
-     
     } catch (error) {
-      setSnackbarMessage('Tạo PDF thất bại!');
+      setSnackbarMessage("Tạo PDF thất bại!");
       setOpenSnackbar(true);
     }
   };
 
   const handleClosePdf = () => {
     setOpenPdf(false);
-    setPdfUrl('');
+    setPdfUrl("");
   };
 
   // Thêm handler cho kết quả khám
@@ -169,11 +181,11 @@ const Prescription = () => {
 
   // Thêm state cho thông báo
   const [openSnackbar, setOpenSnackbar] = useState(false);
-  const [snackbarMessage, setSnackbarMessage] = useState('');
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   // Hàm đóng thông báo
   const handleCloseSnackbar = (event, reason) => {
-    if (reason === 'clickaway') {
+    if (reason === "clickaway") {
       return;
     }
     setOpenSnackbar(false);
@@ -196,7 +208,7 @@ const Prescription = () => {
               fullWidth
               label="Tên bệnh nhân"
               name="name"
-              value={patientInfo?.name || ''}
+              value={patientInfo?.name || ""}
               onChange={handlePatientInfoChange}
               disabled
             />
@@ -206,7 +218,7 @@ const Prescription = () => {
               fullWidth
               label="Giới tính"
               name="gender"
-              value={patientInfo?.gender || ''}
+              value={patientInfo?.gender || ""}
               onChange={handlePatientInfoChange}
               disabled
             >
@@ -220,7 +232,7 @@ const Prescription = () => {
               type="date"
               label="Ngày sinh"
               name="dateOfBirth"
-              value={patientInfo?.dob || ''}
+              value={patientInfo?.dob || ""}
               onChange={handlePatientInfoChange}
               InputLabelProps={{ shrink: true }}
               disabled
@@ -231,7 +243,7 @@ const Prescription = () => {
               fullWidth
               label="Lý do khám"
               name="reason"
-              value={appointment?.title || ''}
+              value={appointment?.title || ""}
               onChange={handlePatientInfoChange}
               disabled
             />
@@ -245,7 +257,7 @@ const Prescription = () => {
               rows={4}
               label="Kết quả khám"
               name="result"
-              value={appointment?.result || ''}
+              value={appointment?.result || ""}
               onChange={handleResultChange}
               placeholder="Nhập kết quả khám..."
             />
@@ -271,7 +283,7 @@ const Prescription = () => {
               fullWidth
               label="Dạng thuốc"
               name="medicineType"
-              value={medicine.medicineType || ''}
+              value={medicine.medicineType || ""}
               onChange={handleMedicineChange}
             >
               <MenuItem value="tuýp">Tuýp</MenuItem>
@@ -308,8 +320,12 @@ const Prescription = () => {
             />
           </Grid>
           <Grid item xs={12}>
-            <Button variant="contained" color="primary" onClick={handleAddMedicine}>
-              {editIndex !== null ? 'Cập nhật' : 'Thêm thuốc'}
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleAddMedicine}
+            >
+              {editIndex !== null ? "Cập nhật" : "Thêm thuốc"}
             </Button>
           </Grid>
         </Grid>
@@ -329,14 +345,14 @@ const Prescription = () => {
             </TableHead>
             <TableBody>
               {prescriptionList.map((item, index) => (
-                <TableRow 
-                  key={item.id} 
+                <TableRow
+                  key={item.id}
                   onClick={() => handleMedicineSelect(index)}
-                  sx={{ 
-                    cursor: 'pointer',
-                    '&:hover': {
-                      backgroundColor: '#f5f5f5'
-                    }
+                  sx={{
+                    cursor: "pointer",
+                    "&:hover": {
+                      backgroundColor: "#f5f5f5",
+                    },
                   }}
                 >
                   <TableCell>{index + 1}</TableCell>
@@ -359,9 +375,9 @@ const Prescription = () => {
             </Button>
           </Grid>
           <Grid item>
-            <Button 
-              variant="contained" 
-              color="primary" 
+            <Button
+              variant="contained"
+              color="primary"
               onClick={handleExport}
               // Disable nút Gửi nếu chưa có kết quả khám
               disabled={!appointment?.result}
@@ -376,13 +392,13 @@ const Prescription = () => {
           open={openSnackbar}
           autoHideDuration={2000}
           onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: 'top', horizontal: 'right' }}
+          anchorOrigin={{ vertical: "top", horizontal: "right" }}
         >
           <Alert
             onClose={handleCloseSnackbar}
             severity="success"
             variant="filled"
-            sx={{ width: '100%' }}
+            sx={{ width: "100%" }}
           >
             {snackbarMessage}
           </Alert>
