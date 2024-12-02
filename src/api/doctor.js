@@ -24,7 +24,7 @@ export const doctor = {
       const endpoint = query
         ? `/doctor?${query}&page=${page}`
         : `/doctor?page=${page}`;
-      console.log(endpoint)
+      console.log(endpoint);
 
       return axiosClient.get(endpoint);
     } catch (error) {
@@ -59,11 +59,20 @@ export const doctor = {
     }
   },
 
-  getPatient(id) {
+  getPatient(id, page, keyword) {
     try {
+      const query = [
+        id ? `doctorId=${id}` : "",
+        page ? `page=${page}` : "",
+        keyword ? `keyword=${keyword}` : "",
+      ]
+        .filter(Boolean)
+        .join("&");
+
       const response = axiosClient.get(
-        `/appointment/doctor-appointment/manage-patient?doctorId=${id}`
+        `/appointment/doctor-appointment/manage-patient?${query}`
       );
+      console.log(`/appointment/doctor-appointment/manage-patient?${query}`);
       console.log(response);
       return response;
     } catch (error) {

@@ -35,11 +35,11 @@ const CancelScheduleDialog = ({
 
       // Xóa trường date khỏi các phần tử trong slotsToCancel
       const slotsToCancelWithIdOnly = slotsToCancel.map(({ id }) => ({ id }));
-      
+
       // Tạo object deleteScheduleData trực tiếp
       const deleteScheduleData = {
         scheduleList: slotsToCancelWithIdOnly,
-        note: cancelReason
+        note: cancelReason,
       };
 
       // Gọi API với deleteScheduleData
@@ -47,7 +47,7 @@ const CancelScheduleDialog = ({
         doctorId,
         deleteScheduleData
       );
-      
+
       if (response.code === 1000) {
         toast.success("Xóa lịch khám thành công!");
         onScheduleCancelled();
@@ -80,6 +80,7 @@ const CancelScheduleDialog = ({
             InputLabelProps={{
               shrink: true,
             }}
+            disabled={true}
             sx={{ mt: 2, mb: 4 }}
           />
           <Box sx={{ display: "flex", flexWrap: "wrap", gap: 2 }}>

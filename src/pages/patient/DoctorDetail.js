@@ -12,7 +12,7 @@ import {
   Button,
   Avatar,
   Rating,
-  Pagination
+  Pagination,
 } from "@mui/material";
 import { schedule } from "../../api/schedule";
 import reviewApi from "../../api/reviewApi";
@@ -29,7 +29,7 @@ function ReviewSection() {
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState({
     sortBy: null,
-    rating: null
+    rating: null,
   });
   const [page, setPage] = useState(1);
   const doctorId = window.location.pathname.split("/")[2];
@@ -47,24 +47,24 @@ function ReviewSection() {
   }, [filter, page]);
 
   const handleSort = (type) => {
-    setFilter(prev => ({...prev, sortBy: type}));
+    setFilter((prev) => ({ ...prev, sortBy: type }));
   };
 
   const handleRatingFilter = (rating) => {
     const newRating = rating === filter.rating ? null : rating;
-    setFilter(prev => ({...prev, rating: newRating}));
+    setFilter((prev) => ({ ...prev, rating: newRating }));
   };
-
 
   const handlePageChange = (event, value) => {
     setPage(value);
   };
 
   const getStarCount = (star) => {
-    const ratingEntry = reviews?.countRating?.find(([rating]) => rating === star);
+    const ratingEntry = reviews?.countRating?.find(
+      ([rating]) => rating === star
+    );
     return ratingEntry ? ratingEntry[1] : 0;
   };
-
 
   return (
     <Box paddingX={"24px"} sx={{ bgcolor: "#1d8be4", color: "white", py: 4 }}>
@@ -74,86 +74,123 @@ function ReviewSection() {
 
       <Grid container spacing={2}>
         <Grid item xs={12} md={4}>
-          <Box sx={{ textAlign: 'center', mb: 3 }}>
+          <Box sx={{ textAlign: "center", mb: 3 }}>
             <Typography variant="h3">{reviews.countAvg}</Typography>
-            <Rating value={parseFloat(reviews.countAvg)} precision={0.1} readOnly size="large" />
+            <Rating
+              value={parseFloat(reviews.countAvg)}
+              precision={0.1}
+              readOnly
+              size="large"
+            />
             <Typography>({reviews.countReview} đánh giá)</Typography>
           </Box>
-          
+
           {[5, 4, 3, 2, 1, 0].map((star) => (
-            <Box 
-              key={star} 
-              sx={{ 
-                display: 'flex', 
-                alignItems: 'center', 
+            <Box
+              key={star}
+              sx={{
+                display: "flex",
+                alignItems: "center",
                 mb: 1,
-                cursor: 'pointer',
-                '&:hover': {
-                  bgcolor: 'rgba(255, 255, 255, 0.1)',
-                }
+                cursor: "pointer",
+                "&:hover": {
+                  bgcolor: "rgba(255, 255, 255, 0.1)",
+                },
               }}
               onClick={() => handleRatingFilter(star)}
             >
-              <Typography 
-                sx={{ 
-                  minWidth: '60px',
-                  color: filter.rating === star ? '#FFD700' : 'white'
+              <Typography
+                sx={{
+                  minWidth: "60px",
+                  color: filter.rating === star ? "#FFD700" : "white",
                 }}
               >
                 {star} sao
               </Typography>
-              <Box sx={{ 
-                flex: 1, 
-                mx: 1, 
-                height: 8, 
-                bgcolor: 'rgba(255, 255, 255, 0.2)',
-                borderRadius: 1,
-                overflow: 'hidden'
-              }}>
-                <Box sx={{ 
-                  width: `${(getStarCount(star) / reviews.countReview) * 100}%`,
-                  height: '100%',
-                  bgcolor: filter.rating === star ? '#FFD700' : 'white'
-                }} />
+              <Box
+                sx={{
+                  flex: 1,
+                  mx: 1,
+                  height: 8,
+                  bgcolor: "rgba(255, 255, 255, 0.2)",
+                  borderRadius: 1,
+                  overflow: "hidden",
+                }}
+              >
+                <Box
+                  sx={{
+                    width: `${
+                      (getStarCount(star) / reviews.countReview) * 100
+                    }%`,
+                    height: "100%",
+                    bgcolor: filter.rating === star ? "#FFD700" : "white",
+                  }}
+                />
               </Box>
-              <Typography sx={{ minWidth: '40px' }}>{getStarCount(star)}</Typography>
+              <Typography sx={{ minWidth: "40px" }}>
+                {getStarCount(star)}
+              </Typography>
             </Box>
           ))}
         </Grid>
 
         <Grid item xs={12} md={8}>
           <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: 'flex', gap: 1, mb: 2 }}>
-              <select 
-                style={{ 
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid white',
-                  backgroundColor: 'transparent',
-                  color: 'white'
+            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
+              <select
+                style={{
+                  padding: "8px",
+                  borderRadius: "4px",
+                  border: "1px solid white",
+                  backgroundColor: "transparent",
+                  color: "white",
                 }}
                 onChange={(e) => handleSort(e.target.value)}
-                value={filter.sortBy || ''}
+                value={filter.sortBy || ""}
               >
-                <option value="" style={{ backgroundColor: '#077CDB', color: 'white' }}>Sắp xếp theo</option>
-                <option value="desc" style={{ backgroundColor: '#077CDB', color: 'white' }}>Mới nhất</option>
-                <option value="asc" style={{ backgroundColor: '#077CDB', color: 'white' }}>Cũ nhất</option>
+                <option
+                  value=""
+                  style={{ backgroundColor: "#077CDB", color: "white" }}
+                >
+                  Sắp xếp theo
+                </option>
+                <option
+                  value="desc"
+                  style={{ backgroundColor: "#077CDB", color: "white" }}
+                >
+                  Mới nhất
+                </option>
+                <option
+                  value="asc"
+                  style={{ backgroundColor: "#077CDB", color: "white" }}
+                >
+                  Cũ nhất
+                </option>
               </select>
 
               <select
-                style={{ 
-                  padding: '8px',
-                  borderRadius: '4px',
-                  border: '1px solid white',
-                  backgroundColor: 'transparent',
-                  color: 'white'
+                style={{
+                  padding: "8px",
+                  borderRadius: "4px",
+                  border: "1px solid white",
+                  backgroundColor: "transparent",
+                  color: "white",
                 }}
                 onChange={(e) => handleRatingFilter(Number(e.target.value))}
-                value={filter.rating !== null ? filter.rating : ''}
+                value={filter.rating !== null ? filter.rating : ""}
               >
-                <option value="" style={{ backgroundColor: '#077CDB', color: 'white' }}>Tất cả sao</option>
-                {[5, 4, 3, 2, 1, 0].map(star => (
-                  <option key={star} value={star} style={{ backgroundColor: '#077CDB', color: 'white' }}>
+                <option
+                  value=""
+                  style={{ backgroundColor: "#077CDB", color: "white" }}
+                >
+                  Tất cả sao
+                </option>
+                {[5, 4, 3, 2, 1, 0].map((star) => (
+                  <option
+                    key={star}
+                    value={star}
+                    style={{ backgroundColor: "#077CDB", color: "white" }}
+                  >
                     {star} sao
                   </option>
                 ))}
@@ -162,28 +199,45 @@ function ReviewSection() {
           </Box>
 
           {reviews?.reviewList?.map((review, index) => (
-            <Card key={index} sx={{ mb: 2, bgcolor: 'white' }}>
+            <Card key={index} sx={{ mb: 2, bgcolor: "white" }}>
               <CardContent>
-                <Box sx={{ display: 'flex', justifyContent: 'space-between', mb: 1 }}>
-                  <Typography variant="subtitle1" color="text.primary" fontWeight="bold">
+                <Box
+                  sx={{
+                    display: "flex",
+                    justifyContent: "space-between",
+                    mb: 1,
+                  }}
+                >
+                  <Typography
+                    variant="subtitle1"
+                    color="text.primary"
+                    fontWeight="bold"
+                  >
                     {review.patient.name}
                   </Typography>
                   <Typography variant="caption" color="text.secondary">
-                    {new Date(review.date).toLocaleString('vi-VN', {
-                      hour: '2-digit',
-                      minute: '2-digit',
-                      day: '2-digit',
-                      month: '2-digit', 
-                      year: 'numeric'
+                    {new Date(review.date).toLocaleString("vi-VN", {
+                      hour: "2-digit",
+                      minute: "2-digit",
+                      day: "2-digit",
+                      month: "2-digit",
+                      year: "numeric",
                     })}
                   </Typography>
                 </Box>
-                <Rating value={parseFloat(review.rating)} precision={0.1} readOnly size="small" />
+                <Rating
+                  value={parseFloat(review.rating)}
+                  precision={0.1}
+                  readOnly
+                  size="small"
+                />
                 <Typography color="text.primary" sx={{ mt: 1 }}>
                   {review.content}
                 </Typography>
                 {review?.img && review?.img?.length > 0 && (
-                  <Box sx={{ display: 'flex', gap: 1, mt: 2, flexWrap: 'wrap' }}>
+                  <Box
+                    sx={{ display: "flex", gap: 1, mt: 2, flexWrap: "wrap" }}
+                  >
                     {review?.img?.map((image, imgIndex) => (
                       <Box
                         key={imgIndex}
@@ -193,9 +247,9 @@ function ReviewSection() {
                         sx={{
                           width: 100,
                           height: 100,
-                          objectFit: 'cover',
+                          objectFit: "cover",
                           borderRadius: 1,
-                          cursor: 'pointer'
+                          cursor: "pointer",
                         }}
                       />
                     ))}
@@ -205,20 +259,20 @@ function ReviewSection() {
             </Card>
           ))}
 
-          <Box sx={{ display: 'flex', justifyContent: 'center', mt: 3 }}>
-            <Pagination 
+          <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
+            <Pagination
               count={totalPages}
               page={page}
               onChange={handlePageChange}
               color="primary"
               sx={{
-                '& .MuiPaginationItem-root': {
-                  color: 'white',
-                  borderColor: 'white',
+                "& .MuiPaginationItem-root": {
+                  color: "white",
+                  borderColor: "white",
                 },
-                '& .Mui-selected': {
-                  backgroundColor: 'rgba(255, 255, 255, 0.2) !important',
-                }
+                "& .Mui-selected": {
+                  backgroundColor: "rgba(255, 255, 255, 0.2) !important",
+                },
               }}
             />
           </Box>
@@ -285,7 +339,6 @@ function OtherDoctorsSection() {
 
       <Box display="flex" justifyContent="center" mt={2}>
         <Button
-          
           variant="contained"
           sx={{
             bgcolor: "#077CDB",
@@ -309,8 +362,9 @@ function DoctorDetail() {
 
   const doctorId = window.location.pathname.split("/")[2];
 
+  const today = new Date();
+
   const [formattedDate] = useState(() => {
-    const today = new Date();
     const localDate = new Date(today.getTime() + 7 * 60 * 60 * 1000);
     return localDate.toISOString().split("T")[0];
   });
@@ -394,17 +448,17 @@ function DoctorDetail() {
             }}
           >
             <CardContent sx={{ padding: "0px", color: "white" }}>
-              <Typography 
-                variant="h5" 
-                fontWeight={"bold"} 
-                mb={4} 
-                mt={2} 
+              <Typography
+                variant="h5"
+                fontWeight={"bold"}
+                mb={4}
+                mt={2}
                 align="center"
               >
                 {doctorInfo?.specialization}
               </Typography>
               <Box display={"flex"} gap={6} marginX={6}>
-                {doctorInfo?.experience?.split('.').map((exp, index) => (
+                {doctorInfo?.experience?.split(".").map((exp, index) => (
                   <Box
                     key={index}
                     sx={{
@@ -434,34 +488,36 @@ function DoctorDetail() {
             component="span"
             sx={{ display: "block", marginBottom: "8px" }}
           >
-            {doctorInfo?.description?.split('.').map((sentence, index) => (
-              sentence.trim() && (
-                <Typography
-                  key={index}
-                  component="span"
-                  sx={{ display: "block", marginBottom: "8px" }}
-                >
-                  • {sentence.trim()}
-                </Typography>
-              )
-            ))}
+            {doctorInfo?.description?.split(".").map(
+              (sentence, index) =>
+                sentence.trim() && (
+                  <Typography
+                    key={index}
+                    component="span"
+                    sx={{ display: "block", marginBottom: "8px" }}
+                  >
+                    • {sentence.trim()}
+                  </Typography>
+                )
+            )}
           </Typography>
 
           <Typography variant="h5" fontWeight={"bold"} mb={2} mt={4}>
             Kinh nghiệm
           </Typography>
           <Typography>
-            {doctorInfo?.experience?.split('.').map((specialty, index) => (
-              specialty.trim() && (
-                <Typography
-                  key={index}
-                  component="span"
-                  sx={{ display: "block", marginBottom: "8px" }}
-                >
-                  • {specialty.trim()}
-                </Typography>
-              )
-            ))}
+            {doctorInfo?.experience?.split(".").map(
+              (specialty, index) =>
+                specialty.trim() && (
+                  <Typography
+                    key={index}
+                    component="span"
+                    sx={{ display: "block", marginBottom: "8px" }}
+                  >
+                    • {specialty.trim()}
+                  </Typography>
+                )
+            )}
           </Typography>
         </Box>
       </Box>

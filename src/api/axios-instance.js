@@ -20,6 +20,7 @@ axiosClient.interceptors.request.use(
     const accessToken = localStorage.getItem("accessToken");
     const language = localStorage.getItem("language") || "vi";
 
+    // Chèn token ở mỗi request
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
       config.headers["Accept-Language"] = language;
@@ -29,16 +30,18 @@ axiosClient.interceptors.request.use(
   },
   (error) => Promise.reject(error)
 );
+
 // Add a response interceptor
 axiosClient.interceptors.response.use(
   function (config) {
     if (config.data?.result?.roles === "DOCTOR") {
-      console.log("doctor");
-      window.location.href = "doctor/schedule-management"; // Redirect if role is doctor
+      window.location.href = "doctor/schedule-management";
     } else if (config.data?.result?.roles === "PATIENT")
       window.location.href = "/home";
+
     return config.data;
   },
+
   async function (error) {
     const { response } = error;
 
@@ -52,9 +55,9 @@ axiosClient.interceptors.response.use(
             "http://localhost:8082/api/v1/auth/refreshToken",
             { refreshToken }
           );
-          console.log("result: " + result.data)
-          
-          const newAccessToken = result.data.data.accessToken;
+
+          const newAccessToken = result.data.result.accessToken;
+
           localStorage.setItem("accessToken", newAccessToken);
           originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
           

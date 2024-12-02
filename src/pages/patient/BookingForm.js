@@ -16,6 +16,7 @@ import {
 } from "@mui/material";
 import { useUserContext } from "../../context/UserContext";
 import { appointment } from "../../api/appointment";
+import { toast } from "react-toastify";
 
 const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
   const { id, name, email, address, phone, gender, dob } = useUserContext();
@@ -52,17 +53,18 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
     event.preventDefault();
 
     if (!nameForm || !emailForm || !addressForm || !title || !description) {
-      alert("Vui lòng điền đầy đủ thông tin!");
+      toast.error("Vui lòng điền đầy đủ thông tin!");
       return;
     }
 
     try {
       const response = await appointment.createAppointment(data);
-      console.log("Đặt lịch thành công:", response);
+      toast.success("Đặt lịch thành công!");
+      setTitle(null);
+      setDescription(null);
       onClose();
     } catch (error) {
-      console.error("Đặt lịch thất bại:", error);
-      console.error("Đặt lịch thất bại:", error);
+      toast.error("Đặt lịch không thành công!");
     }
   };
 
@@ -205,7 +207,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
         </Box>
       </DialogContent>
       <DialogActions>
-        <Button onClick={onClose} color="secondary">
+        <Button onClick={onClose} color="error">
           Hủy
         </Button>
         <Button variant="contained" color="primary" onClick={handleSubmit}>

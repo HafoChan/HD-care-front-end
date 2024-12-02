@@ -57,7 +57,7 @@ const AppointmentManagement = () => {
       .split("T")[0]
   );
 
-  const [value, setValue] = React.useState(3);
+  const [value, setValue] = React.useState(0);
   const [dateFilter, setDateFilter] = useState("today");
   const [currentPage, setCurrentPage] = useState(1);
 
@@ -130,8 +130,8 @@ const AppointmentManagement = () => {
   }, []);
 
   const filterAppointment = (value) => {
-    if (value === 0) return "CONFIRMED";
-    else if (value === 1) return "PENDING";
+    if (value === 0) return "PENDING";
+    else if (value === 1) return "CONFIRMED";
     else if (value === 2) return "COMPLETED";
     else return "CANCELLED";
   };
@@ -168,7 +168,7 @@ const AppointmentManagement = () => {
           flexDirection: "column",
           width: "80%",
           margin: "0 auto",
-          marginLeft: "250px",
+          marginLeft: "230px",
           paddingBottom: 8,
         }}
       >
@@ -183,7 +183,11 @@ const AppointmentManagement = () => {
             margin: "0 auto",
           }}
         >
-          <Typography variant="h5" sx={{ fontWeight: "bold", mb: 4, mt: 4 }}>
+          <Typography
+            variant="h4"
+            gutterBottom
+            sx={{ color: "#1976d2", fontWeight: 500, mb: 4, mt: 4 }}
+          >
             Quản Lý Lịch Hẹn
           </Typography>
 
@@ -267,7 +271,7 @@ const AppointmentManagement = () => {
                   textTransform: "none",
                   fontWeight: value === 0 ? "bold" : "normal",
                 }}
-                label="Đã xác nhận"
+                label="Chưa xác nhận"
                 {...a11yProps(0)}
               />
               <Tab
@@ -275,7 +279,7 @@ const AppointmentManagement = () => {
                   textTransform: "none",
                   fontWeight: value === 1 ? "bold" : "normal",
                 }}
-                label="Chưa xác nhận"
+                label="Đã xác nhận"
                 {...a11yProps(1)}
               />
               <Tab

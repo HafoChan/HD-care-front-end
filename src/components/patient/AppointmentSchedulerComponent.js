@@ -17,6 +17,10 @@ const AppointmentSchedulerComponent = ({
   const [openBookingForm, setOpenBookingForm] = useState(false); // Trạng thái để mở form
   const [selectedSchedule, setSelectedSchedule] = useState(null); // Trạng thái để lưu thông tin lịch đã chọn
 
+  const today = new Date();
+  const maxDate = new Date();
+  maxDate.setDate(today.getDate() + 7);
+
   const handleDateChange = (event) => {
     const newDate = event.target.value;
     if (newDate !== selectedDate) {
@@ -36,10 +40,14 @@ const AppointmentSchedulerComponent = ({
         label="Chọn ngày khám"
         type="date"
         InputLabelProps={{ shrink: true }}
+        inputProps={{
+          shrink: true,
+          min: today.toISOString().split("T")[0],
+          max: maxDate.toISOString().split("T")[0],
+        }}
         value={selectedDate}
         onChange={handleDateChange}
         style={{ marginTop: "20px" }}
-        inputProps={{ shrink: true }}
       />
       <Box
         container
@@ -63,10 +71,10 @@ const AppointmentSchedulerComponent = ({
           <Typography fontSize={18} fontWeight={"bold"}>
             ĐỊA CHỈ KHÁM
           </Typography>
-          <Typography fontWeight={"bold"}>
-            {doctorInfo?.address}
+          <Typography fontWeight={"bold"}>{doctorInfo?.address}</Typography>
+          <Typography>
+            {doctorInfo?.district}, {doctorInfo?.city}
           </Typography>
-          <Typography>{doctorInfo?.district}, {doctorInfo?.city}</Typography>
           <Typography fontWeight={"bold"} display={"flex"}>
             GIÁ KHÁM:
             <Typography
