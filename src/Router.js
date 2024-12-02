@@ -20,11 +20,13 @@ import PatientDetail from "./pages/doctor/PatientDetail";
 import AppointmentDetail from "./pages/doctor/AppointmentDetail";
 import AppointmentList from "./pages/patient/AppointmentList";
 import AppointmentDetailPatient from "./pages/patient/AppointmentDetailPatient";
+import Authenticate from "./pages/patient/Authentication";
 
 const AppRouter = () => {
   return (
     <Routes>
       <Route path="/evaluate" element={<EvaluateForm />} />
+      <Route path="/authenticate" element = {<Authenticate/>} />
       <Route path="/home" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route index element={<Register />} />

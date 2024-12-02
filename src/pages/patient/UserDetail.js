@@ -12,6 +12,10 @@ import {
   Container,
   Alert,
   Divider,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
 import SaveIcon from "@mui/icons-material/Save";
@@ -28,6 +32,10 @@ function UserDetail() {
   const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [snackBarMessage, setSnackBarMessage] = useState("");
   const [snackType, setSnackType] = useState("error");
+  const [openPasswordDialog, setOpenPasswordDialog] = useState(false);
+  const [newPassword, setNewPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [noPassword, setNoPassword] = useState(false);
 
   const [userInfo, setUserInfo] = useState({
     name: "",
@@ -71,22 +79,34 @@ function UserDetail() {
       if (response && response.result) {
         console.log("User info:", response.result);
         setUserInfo(response.result);
+        setNoPassword(response.result.noPassword);
       } else {
-        // Xử lý trường hợp response không có dữ liệu
         showError("Không thể tải thông tin người dùng");
       }
     } catch (error) {
-      console.log("loi: " + error);
-      // Xử lý các lỗi khác nhau
-      if (error.response && error.response.status === 401) {
-        // Lỗi unauthorized - có thể do refreshToken không hợp lệ
-        showError("Phiên đăng nhập hết hạn. Vui lòng đăng nhập lại");
-        // Có thể thêm logic chuyển hướng đến trang đăng nhập
-      } else {
-        // Các lỗi khác
-        showError(error.message || "Đã có lỗi xảy ra khi tải thông tin");
+      if (error.response && error.response.status !== 401) {
+        showError("Đã có lỗi xảy ra khi tải thông tin");
       }
-      console.error("Error fetching user info:", error);
+    }
+  };
+
+  const handlePasswordUpdate = async () => {
+    if (newPassword !== confirmPassword) {
+      showError("Mật khẩu không khớp!");
+      return;
+    }
+    try {
+      console.log(newPassword)
+      const response = await patientApi.updatePassword(newPassword);
+      if (response.code === 1000) {
+        showSuccess("Cập nhật mật khẩu thành công!");
+        setOpenPasswordDialog(false);
+        setNoPassword(false);
+      } else {
+        throw Error(response.message);
+      }
+    } catch (error) {
+      showError(error.message);
     }
   };
 
@@ -111,7 +131,7 @@ function UserDetail() {
   const handleFileUpload = (fileInfo) => {
     setUserInfo((prevUserInfo) => ({
       ...prevUserInfo,
-      img: fileInfo,
+      img: fileInfo[0],
     })); // You can update the state or perform any action with the uploaded file info here
   };
 
@@ -252,14 +272,25 @@ function UserDetail() {
           sx={{ display: "flex", gap: 2, justifyContent: "end" }}
         >
           {!isEditing ? (
-            <Button
-              variant="contained"
-              color="warning"
-              startIcon={<EditIcon />}
-              onClick={() => setIsEditing(true)}
-            >
-              Chỉnh sửa thông tin
-            </Button>
+            <>
+              <Button
+                variant="contained"
+                color="warning"
+                startIcon={<EditIcon />}
+                onClick={() => setIsEditing(true)}
+              >
+                Chỉnh sửa thông tin
+              </Button>
+              {noPassword && (
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={() => setOpenPasswordDialog(true)}
+                >
+                  Tạo mật khẩu
+                </Button>
+              )}
+            </>
           ) : (
             <>
               <Button
@@ -287,6 +318,37 @@ function UserDetail() {
           )}
         </Box>
       </Container>
+
+      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+        <DialogTitle>Tạo mật khẩu mới</DialogTitle>
+        <DialogContent>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Mật khẩu mới"
+            type="password"
+            fullWidth
+            value={newPassword}
+            onChange={(e) => setNewPassword(e.target.value)}
+          />
+          <TextField
+            margin="dense"
+            label="Xác nhận mật khẩu"
+            type="password"
+            fullWidth
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setOpenPasswordDialog(false)} color="error">
+            Hủy
+          </Button>
+          <Button onClick={handlePasswordUpdate} color="primary">
+            Lưu
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 }

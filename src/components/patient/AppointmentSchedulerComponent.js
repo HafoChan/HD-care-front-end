@@ -81,15 +81,17 @@ const AppointmentSchedulerComponent = ({
       </Box>
 
       {/* Hiển thị BookingForm khi openBookingForm là true */}
-      <UserProvider>
-        <BookingForm
-          open={openBookingForm}
+      {openBookingForm && (
+        <UserProvider>
+          <BookingForm
+            open={openBookingForm}
           onClose={() => setOpenBookingForm(false)} // Đóng form
           selectedDate={selectedDate}
           doctor={doctorId} // Truyền thông tin bác sĩ
           schedule={selectedSchedule} // Truyền thông tin lịch đã chọn
-        />
-      </UserProvider>
+          />
+        </UserProvider>
+      )}
     </Box>
   );
 };

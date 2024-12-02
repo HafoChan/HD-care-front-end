@@ -32,10 +32,11 @@ function ReviewSection() {
     rating: null
   });
   const [page, setPage] = useState(1);
+  const doctorId = window.location.pathname.split("/")[2];
 
   const getReview = async () => {
     const response = await reviewApi.getReview(
-      "f053016f-15b6-4a36-8a4b-1b422492d9c0", filter.sortBy,filter.rating,page
+      doctorId, filter.sortBy,filter.rating,page
     );
     setReviews(response?.result);
     setTotalPages(response?.result?.pageMax);
