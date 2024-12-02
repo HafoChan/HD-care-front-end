@@ -22,7 +22,6 @@ const HomePage = () => {
   const [isBookingFormOpen, setBookingFormOpen] = useState(false); // State to handle form visibility
   const [isEvaluateFormOpen, setEvaluateFormOpen] = useState(false); // State to handle evaluate form visibility
   const navigate = useNavigate(); // Initialize useNavigate
-
   useEffect(() => {
     const queryParams = new URLSearchParams(window.location.search);
     if (queryParams.get("evaluate") == "1") {

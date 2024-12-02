@@ -24,3 +24,5 @@ export const remove = () => {
 export const setImg = (userImg) => {
     localStorage.setItem("userImg",userImg)
 }
+
+
