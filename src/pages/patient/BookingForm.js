@@ -41,13 +41,12 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
   };
 
   useEffect(() => {
-    setNameForm(name || "");
-    setEmailForm(email || "");
-    setAddressForm(address || "");
-    setPhoneForm(phone || "");
-    setGenderForm(gender || "Nam");
-    console.log(schedule?.id);
-  }, [schedule]);
+    setNameForm(name);
+    setEmailForm(email);
+    setAddressForm(address);
+    setPhoneForm(phone);
+    setGenderForm(gender);
+  }, [name, email, address, phone, gender, schedule]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -120,6 +119,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             label="Họ và tên"
             fullWidth
             required
+            InputLabelProps={{ shrink: true }}
             value={nameForm}
             onChange={(e) => setNameForm(e.target.value)}
           />
@@ -171,6 +171,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             label="Email xác nhận"
             fullWidth
             required
+            InputLabelProps={{ shrink: true }}
             value={emailForm}
             onChange={(e) => setEmailForm(e.target.value)}
           />
@@ -178,6 +179,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             label="Số điện thoại"
             fullWidth
             required
+            InputLabelProps={{ shrink: true }}
             value={phoneForm}
             onChange={(e) => setPhoneForm(e.target.value)}
           />
@@ -185,6 +187,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             label="Địa chỉ"
             fullWidth
             required
+            InputLabelProps={{ shrink: true }}
             value={addressForm}
             onChange={(e) => setAddressForm(e.target.value)}
           />
@@ -192,6 +195,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             label="Tiêu đề buổi khám"
             fullWidth
             required
+            InputLabelProps={{ shrink: true }}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
           />
@@ -201,6 +205,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             rows={4}
             fullWidth
             required
+            InputLabelProps={{ shrink: true }}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
           />

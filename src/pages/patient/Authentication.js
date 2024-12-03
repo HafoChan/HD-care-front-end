@@ -13,30 +13,39 @@ export default function Authenticate() {
     const authCodeRegex = /code=([^&]+)/;
     const isMatch = window.location.href.match(authCodeRegex);
 
-    if (isMatch) {
-      const authCode = isMatch[1];
-      console.log(authCode)
-      fetch(
-        `http://localhost:8082/api/v1/auth/outbound/authentication?code=${authCode}`,
-        {
-          method: "POST",
-        }
-      )
-        .then((response) => {
+    const authenticateUser = async () => {
+      if (isMatch) {
+        const authCode = isMatch[1];
+        console.log(authCode);
+
+        try {
+          const response = await fetch(
+            `http://localhost:8082/api/v1/auth/outbound/authentication?code=${authCode}`,
+            {
+              method: "POST",
+            }
+          );
+
           if (!response.ok) {
-            throw new Error('Network response was not ok');
+            throw new Error("Network response was not ok");
           }
-          return response.json();
-        })
-        .then((data) => {
+
+          const data = await response.json();
           console.log(data.result);
-          const {accessToken, refreshToken, userResponse} = data?.result
-          console.log(accessToken)
-          console.log(userResponse)
-          setItem(accessToken,refreshToken,userResponse.img);
+
+          const { accessToken, refreshToken, userResponse } = data?.result;
+          console.log(accessToken);
+          console.log(userResponse);
+
+          setItem(accessToken, refreshToken, userResponse.img);
           setIsLoggedin(true);
-        });
-    }
+        } catch (error) {
+          console.error("Error during authentication:", error);
+        }
+      }
+    };
+
+    authenticateUser();
   }, []);
 
   useEffect(() => {
