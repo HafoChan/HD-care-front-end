@@ -1,12 +1,14 @@
 import React, { createContext, useContext, useState, useEffect } from "react";
 import patientApi from "../api/patient";
+import Snackbar from '@mui/material/Snackbar';
+import MuiAlert from '@mui/material/Alert';
 
 // Tạo context
 const UserContext = createContext();
 
 // Tạo provider
 export const UserProvider = ({ children }) => {
-  const [userInfo, setUserInfo] = useState(null); // Khởi tạo userInfo trước
+  const [userInfo, setUserInfo] = useState(null);
   const [id, setId] = useState("");
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
@@ -14,20 +16,34 @@ export const UserProvider = ({ children }) => {
   const [phone, setPhone] = useState("");
   const [gender, setGender] = useState("");
   const [dob, setDob] = useState("");
+  const [snackbarOpen, setSnackbarOpen] = useState(false);
+  const [snackbarMessage, setSnackbarMessage] = useState("");
 
   const fetchUserInfo = async () => {
-    const response = await patientApi.getInfo();
-    console.log(response);
-    setUserInfo(response.result);
+    try {
+      const response = await patientApi.getInfo();
+      setUserInfo(response.result);
+    } catch (error) {
+      console.error("Error fetching user info:", error);
+      setSnackbarMessage("Vui lòng đăng nhập để đặt lịch.");
+      setSnackbarOpen(true);
+      // Redirect to login page
+      setTimeout(() => {
+        window.location.href = "/login";
+      }, 3000);
+    }
+  };
+
+  const handleCloseSnackbar = () => {
+    setSnackbarOpen(false);
   };
 
   useEffect(() => {
     fetchUserInfo();
-  }, []); // Gọi fetchUserInfo chỉ một lần khi component mount
+  }, []);
 
   useEffect(() => {
     if (userInfo) {
-      // Chỉ cập nhật state khi userInfo có dữ liệu
       setId(userInfo?.id || "");
       setName(userInfo?.name || "");
       setEmail(userInfo?.email || "");
@@ -36,7 +52,7 @@ export const UserProvider = ({ children }) => {
       setGender(userInfo?.gender || "");
       setDob(userInfo?.dob || "");
     }
-  }, [userInfo]); // Cập nhật state khi userInfo thay đổi
+  }, [userInfo]);
 
   return (
     <UserContext.Provider
@@ -56,6 +72,15 @@ export const UserProvider = ({ children }) => {
       }}
     >
       {children}
+      <Snackbar
+        open={snackbarOpen}
+        autoHideDuration={6000}
+        onClose={handleCloseSnackbar}
+      >
+        <MuiAlert onClose={handleCloseSnackbar} severity="error" sx={{ width: '100%' }}>
+          {snackbarMessage || "Vui lòng đăng nhập để đặt lịch."}
+        </MuiAlert>
+      </Snackbar>
     </UserContext.Provider>
   );
 };

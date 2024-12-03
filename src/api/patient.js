@@ -34,5 +34,11 @@ const patientApi = {
   getById(id) {
     return axiosInstance.get(`/patient/${id}`);
   },
+
+  updatePassword(password){
+    return axiosInstance.post(`/patient/create-password`, {
+        password: password
+    })
+}
 };
 export default patientApi;

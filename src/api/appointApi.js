@@ -11,6 +11,10 @@ const appointApi = {
     }
     return axiosClient.get(url);
   },
+
+  getAppointmentByAppointmentId(id) {
+    return axiosClient.get(`appointment/${id}`);
+  },
   //--------------doctor_appointment--------------------
 
   filterAppointment(id, date, page, status) {

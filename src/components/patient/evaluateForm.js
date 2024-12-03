@@ -65,7 +65,7 @@ export default class EvaluateForm extends Component {
   componentDidMount() {
     const { idAppointment } = this.state;
     appointApi
-      .getAppointmentById(idAppointment) // Gọi API để lấy thông tin bác sĩ
+      .getAppointmentByAppointmentId(idAppointment) // Gọi API để lấy thông tin bác sĩ
       .then((response) => {
         this.setState({
           doctorName: response.result?.nameDoctor, // Giả sử response có thuộc tính name
@@ -140,7 +140,7 @@ export default class EvaluateForm extends Component {
           >
             <Avatar
               src={doctorImage ? doctorImage : ""}
-              sx={{ width: 180, height: 180, margin: "0 auto" }}
+              sx={{ width: 180, height: 180, margin: "0 auto", objectFit: "cover" }}
             />
             <Snackbar
               open={snackBarOpen}

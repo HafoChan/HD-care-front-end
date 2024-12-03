@@ -28,7 +28,6 @@ import axios from "axios";
 
 const TeamOfDoctors = () => {
   const navigate = useNavigate();
-  const { provinceSlug, districtSlug } = useParams(); // Lấy tham số từ URL
   const [doctors, setDoctors] = useState([]);
   const [doctorSelected, setDoctorSelected] = useState();
   const [selectedDates, setSelectedDates] = useState({});
@@ -55,7 +54,6 @@ const TeamOfDoctors = () => {
     const data = await axios.get(
       "https://raw.githubusercontent.com/kenzouno1/DiaGioiHanhChinhVN/master/data.json"
     );
-    console.log(data.data);
     setOptions(data.data); // Set the fetched options
   };
 
@@ -463,15 +461,17 @@ const TeamOfDoctors = () => {
         </Box>
       </Box>
 
-      <UserProvider>
-        <BookingForm
-          open={isBookingFormOpen}
+      {isBookingFormOpen && (
+        <UserProvider>
+          <BookingForm
+            open={isBookingFormOpen}
           onClose={() => setIsBookingFormOpen(false)}
           doctor={doctorSelected}
           schedule={selectedSchedule}
           selectedDate={selectedDateClick}
-        />
-      </UserProvider>
+          />
+        </UserProvider>
+      )}
     </Box>
   );
 };
