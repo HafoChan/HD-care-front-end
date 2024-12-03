@@ -24,7 +24,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
   const [emailForm, setEmailForm] = useState();
   const [addressForm, setAddressForm] = useState();
   const [phoneForm, setPhoneForm] = useState();
-  const [genderForm, setGenderForm] = useState();
+  const [genderForm, setGenderForm] = useState("");
   const [description, setDescription] = useState("");
   const [title, setTitle] = useState("");
 
@@ -58,11 +58,17 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
 
     try {
       const response = await appointment.createAppointment(data);
-      toast.success("Đặt lịch thành công!");
-      setTitle(null);
-      setDescription(null);
-      onClose();
+
+      if (response.code === 1000) {
+        toast.success("Đặt lịch thành công!");
+        setTitle(null);
+        setDescription(null);
+        onClose();
+      } else {
+        throw new Error(response.message);
+      }
     } catch (error) {
+      toast.error(error.message);
       toast.error("Đặt lịch không thành công!");
     }
   };
@@ -172,6 +178,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             fullWidth
             required
             InputLabelProps={{ shrink: true }}
+            disabled={true}
             value={emailForm}
             onChange={(e) => setEmailForm(e.target.value)}
           />
@@ -180,6 +187,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             fullWidth
             required
             InputLabelProps={{ shrink: true }}
+            disabled={true}
             value={phoneForm}
             onChange={(e) => setPhoneForm(e.target.value)}
           />

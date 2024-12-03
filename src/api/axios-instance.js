@@ -14,9 +14,9 @@ axiosClient.interceptors.request.use(
   (config) => {
     // Kiểm tra nếu refresh token đã thất bại thì chặn tất cả request
     if (isRefreshTokenFailed) {
-      return Promise.reject('Token expired');
+      return Promise.reject("Token expired");
     }
-    
+
     const accessToken = localStorage.getItem("accessToken");
     const language = localStorage.getItem("language") || "vi";
 
@@ -24,7 +24,7 @@ axiosClient.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
       config.headers["Accept-Language"] = language;
-      console.log("inn")
+      console.log("inn");
     }
     return config;
   },
@@ -45,7 +45,10 @@ axiosClient.interceptors.response.use(
   async function (error) {
     const { response } = error;
 
-    if (response?.status === 401 && response?.data?.result === "No authenticated") {
+    if (
+      response?.status === 401 &&
+      response?.data?.result === "No authenticated"
+    ) {
       const originalRequest = error.config;
       const refreshToken = localStorage.getItem("refreshToken");
 
@@ -60,31 +63,33 @@ axiosClient.interceptors.response.use(
 
           localStorage.setItem("accessToken", newAccessToken);
           originalRequest.headers["Authorization"] = `Bearer ${newAccessToken}`;
-          
+
           return axiosClient(originalRequest);
         } catch (refreshError) {
-          if (refreshError.response?.status === 401 && 
-              refreshError.response?.data?.result === "Token expired") {
+          if (
+            refreshError.response?.status === 401 &&
+            refreshError.response?.data?.result === "Token expired"
+          ) {
             isRefreshTokenFailed = true;
-            console.log("loi refresh token")
             notification.error({
               message: "Phiên đăng nhập hết hạn",
               description: "Vui lòng đăng nhập lại.",
-              duration: 3
+              duration: 3,
             });
 
             // Xóa tokens khỏi localStorage
             // localStorage.removeItem("accessToken");
             // localStorage.removeItem("refreshToken");
-            
+
             // // Chuyển hướng về trang login
             // window.location.href = "/login";
             return Promise.reject(refreshError);
           }
         }
       }
+    } else {
+      return response.data;
     }
-    
     return Promise.reject(error);
   }
 );

@@ -35,10 +35,10 @@ const patientApi = {
     return axiosInstance.get(`/patient/${id}`);
   },
 
-  updatePassword(password){
+  updatePassword(password) {
     return axiosInstance.post(`/patient/create-password`, {
-        password: password
-    })
-}
+      password: password,
+    });
+  },
 };
 export default patientApi;
