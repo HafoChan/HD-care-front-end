@@ -24,8 +24,15 @@ const patientApi = {
   create(data) {
     return axiosInstance.post("/patient", data);
   },
-  updatePatient(data) {
-    return axiosInstance.put(`/patient`, data);
+  async updatePatient(data) {
+    try {
+      const response = await axiosInstance.put(`/patient`, data);
+      console.log("Update response:", response);
+      return response;
+    } catch (error) {
+      console.error("Update error:", error);
+      throw error;
+    }
   },
   getInfo() {
     return axiosInstance.get("/patient/my-info");

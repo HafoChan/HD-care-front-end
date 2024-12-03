@@ -87,7 +87,7 @@ const Register = () => {
         throw new Error(data.message);
       }
     } catch (error) {
-      toast.error(data?.message);
+      toast.error(data?.message || error.message);
     }
   };
 

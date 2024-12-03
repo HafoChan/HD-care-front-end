@@ -65,6 +65,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
         setDescription(null);
         onClose();
       } else {
+        console.log(response);
         throw new Error(response.message);
       }
     } catch (error) {
