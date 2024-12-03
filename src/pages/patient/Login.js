@@ -14,7 +14,7 @@ import "../../css/user/login_register.css";
 import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
 import axiosClient from "../../api/axios-instance";
-import { setItem } from "../../service/otherService/localStorage";
+import { setItem, setRole } from "../../service/otherService/localStorage";
 import { BorderLeft, BorderLeftOutlined } from "@mui/icons-material";
 import { OAuthConfig } from "../../configuration/configuration";
 import GoogleIcon from '@mui/icons-material/Google';
@@ -79,6 +79,7 @@ const Login = () => {
         data.result.refreshToken,
         data.result.userResponse.img
       );
+      setRole(data.result.roles);
       // navigate("/home");
     } catch (error) {
       showError(error.message);
@@ -175,7 +176,7 @@ const Login = () => {
           </form>
           <Box display="flex" justifyContent="flex-end">
             <Box style={{ marginTop: "15px" }}>
-              <Link to="/" style={{ textDecoration: "none" }}>
+              <Link to="/register" style={{ textDecoration: "none" }}>
                 <Button
                   color="primary"
                   sx={{ textTransform: "none", fontSize: 15 }}

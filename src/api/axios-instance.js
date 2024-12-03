@@ -1,5 +1,6 @@
 import axios from "axios";
 import { notification } from "antd";
+import { getAccessToken,getRefreshToken,remove } from "../service/otherService/localStorage";
 const axiosClient = axios.create({
   baseURL: "http://localhost:8082/api/v1/",
   headers: {
@@ -17,7 +18,7 @@ axiosClient.interceptors.request.use(
       return Promise.reject('Token expired');
     }
     
-    const accessToken = localStorage.getItem("accessToken");
+    const accessToken = getAccessToken();
     const language = localStorage.getItem("language") || "vi";
 
     // Chèn token ở mỗi request
@@ -44,10 +45,10 @@ axiosClient.interceptors.response.use(
 
   async function (error) {
     const { response } = error;
-
+    console.log(response)
     if (response?.status === 401 && response?.data?.result === "No authenticated") {
       const originalRequest = error.config;
-      const refreshToken = localStorage.getItem("refreshToken");
+      const refreshToken = getRefreshToken();
 
       if (refreshToken && !isRefreshTokenFailed) {
         try {
@@ -72,18 +73,31 @@ axiosClient.interceptors.response.use(
               description: "Vui lòng đăng nhập lại.",
               duration: 3
             });
-
-            // Xóa tokens khỏi localStorage
-            // localStorage.removeItem("accessToken");
-            // localStorage.removeItem("refreshToken");
+            remove()
             
-            // // Chuyển hướng về trang login
-            // window.location.href = "/login";
+            setTimeout(() => {
+              window.location.href = "/login";
+            }, 3000);
             return Promise.reject(refreshError);
           }
         }
       }
+      if (!refreshToken){
+        notification.error({
+          message: "Vui lòng đăng nhập lại",
+          description: "Chưa đăng nhập thì không thể truy cập",
+          duration: 3
+        });
+        setTimeout(() => {
+          window.location.href = "/login";
+        }, 3000);
+      }
+     
     }
+    else{
+      return response.data;
+    }
+
     
     return Promise.reject(error);
   }
