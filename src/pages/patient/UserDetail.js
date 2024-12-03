@@ -58,18 +58,20 @@ function UserDetail() {
     toast.success("Cập nhật thông tin người dùng thành công");
   };
 
-  const handleSubmit = () => {
-    patientApi
-      .updatePatient(userInfo)
-      .then((response) => {
-        if (response.code == 1000) {
-          showSuccess(response.message);
-          setRefresh((prev) => !prev);
-        } else throw Error(response.message);
-      })
-      .catch((e) => {
-        showError(e.message);
-      });
+  const handleSubmit = async () => {
+    try {
+      const response = await patientApi.updatePatient(userInfo);
+      console.log("Response from update:", response);
+
+      if (response?.code === 1000) {
+        showSuccess(response.message);
+        setRefresh(true);
+      } else {
+        throw new Error(response?.message || "Có lỗi xảy ra");
+      }
+    } catch (error) {
+      showError(error.message);
+    }
   };
 
   const getInfo = async () => {
@@ -95,7 +97,7 @@ function UserDetail() {
       return;
     }
     try {
-      console.log(newPassword)
+      console.log(newPassword);
       const response = await patientApi.updatePassword(newPassword);
       if (response.code === 1000) {
         showSuccess("Cập nhật mật khẩu thành công!");
@@ -317,7 +319,10 @@ function UserDetail() {
         </Box>
       </Container>
 
-      <Dialog open={openPasswordDialog} onClose={() => setOpenPasswordDialog(false)}>
+      <Dialog
+        open={openPasswordDialog}
+        onClose={() => setOpenPasswordDialog(false)}
+      >
         <DialogTitle>Tạo mật khẩu mới</DialogTitle>
         <DialogContent>
           <TextField

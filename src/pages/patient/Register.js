@@ -18,6 +18,7 @@ import "../../css/user/login_register.css";
 import patientApi from "../../api/patient";
 import passwordService from "../../service/patientService/passwordService";
 import { useNavigate } from "react-router-dom";
+import { toast } from "react-toastify";
 
 const Register = () => {
   const [userInfo, setUserInfo] = useState({
@@ -65,31 +66,28 @@ const Register = () => {
     setSnackBarOpen(false);
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
+    let data;
     try {
       if (
         !passwordService.validatePasswords(userInfo.password, confirmPassword)
       ) {
         throw new Error("Mật khẩu xác nhận không đúng");
       }
-      patientApi
-        .create(userInfo)
-        .then((data) => {
-          console.log(data);
-          if (data.code == 1028) {
-            showSuccess(data.message);
-            setTimeout(() => {
-              navigate("/login");
-            }, 2000);
-          } else throw new Error(data.message);
-        })
-        .catch((error) => {
-          showError(error.message);
-          return;
-        });
+
+      data = await patientApi.create(userInfo);
+
+      if (data.code === 1028) {
+        showSuccess(data.message);
+        setTimeout(() => {
+          navigate("/login");
+        }, 2000);
+      } else {
+        throw new Error(data.message);
+      }
     } catch (error) {
-      showError(error.message);
+      toast.error(data?.message || error.message);
     }
   };
 

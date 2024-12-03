@@ -17,7 +17,7 @@ import axiosClient from "../../api/axios-instance";
 import { setItem, setRole } from "../../service/otherService/localStorage";
 import { BorderLeft, BorderLeftOutlined } from "@mui/icons-material";
 import { OAuthConfig } from "../../configuration/configuration";
-import GoogleIcon from '@mui/icons-material/Google';
+import GoogleIcon from "@mui/icons-material/Google";
 
 const Login = () => {
   const [email, setEmail] = useState("");
@@ -59,7 +59,7 @@ const Login = () => {
     console.log(targetUrl);
 
     window.location.href = targetUrl;
-  }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -189,26 +189,26 @@ const Login = () => {
                 onClick={handleLoginGoogle}
                 startIcon={<GoogleIcon />}
                 sx={{
-                  textTransform: 'none',
-                  backgroundColor: '#ffffff',
-                  color: '#444444',
-                  borderColor: '#dadce0',
-                  boxShadow: '0 2px 4px 0 rgba(0,0,0,.25)',
-                  '&:hover': {
-                    backgroundColor: '#f8f9fa',
-                    boxShadow: '0 2px 8px 0 rgba(0,0,0,.25)',
-                    borderColor: '#dadce0',
+                  textTransform: "none",
+                  backgroundColor: "#ffffff",
+                  color: "#444444",
+                  borderColor: "#dadce0",
+                  boxShadow: "0 2px 4px 0 rgba(0,0,0,.25)",
+                  "&:hover": {
+                    backgroundColor: "#f8f9fa",
+                    boxShadow: "0 2px 8px 0 rgba(0,0,0,.25)",
+                    borderColor: "#dadce0",
                   },
-                  marginLeft: '10px',
+                  marginLeft: "10px",
                   fontSize: 15,
-                  padding: '8px 16px',
+                  padding: "8px 16px",
                   fontWeight: 500,
-                  '& .MuiButton-startIcon': {
-                    marginRight: '12px',
+                  "& .MuiButton-startIcon": {
+                    marginRight: "12px",
                   },
-                  '& .MuiSvgIcon-root': {
-                    color: '#4285f4', // Màu xanh của Google
-                  }
+                  "& .MuiSvgIcon-root": {
+                    color: "#4285f4", // Màu xanh của Google
+                  },
                 }}
               >
                 Sign in with Google
