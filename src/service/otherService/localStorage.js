@@ -16,13 +16,19 @@ export const getImg = () =>{
 }
 
 export const remove = () => {
-    localStorage.removeItem("accessToken")
-    localStorage.removeItem("refreshToken")
-    localStorage.removeItem("userImg")
+    localStorage.clear()
 }
 
 export const setImg = (userImg) => {
     localStorage.setItem("userImg",userImg)
+}
+
+export const setRole = (role) => {
+    localStorage.setItem("role",role)
+}
+
+export const getRole = () => {
+    return localStorage.getItem("role")
 }
 
 

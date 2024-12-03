@@ -1,5 +1,5 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
 import Home from "./pages/patient/Home";
 import Login from "./pages/patient/Login";
 import Register from "./pages/patient/Register";
@@ -21,6 +21,17 @@ import AppointmentDetail from "./pages/doctor/AppointmentDetail";
 import AppointmentList from "./pages/patient/AppointmentList";
 import AppointmentDetailPatient from "./pages/patient/AppointmentDetailPatient";
 import Authenticate from "./pages/patient/Authentication";
+import NotFound from "./pages/patient/NotFound";
+
+const PrivateRoute = ({ children }) => {
+  const user = JSON.parse(localStorage.getItem('user'));
+  
+  if (!user || user.role !== 'DOCTOR') {
+    return <Navigate to="/not-found" replace />;
+  }
+
+  return children;
+};
 
 const AppRouter = () => {
   return (
@@ -36,6 +47,7 @@ const AppRouter = () => {
       <Route path="/profile" element={<Profile />} />
       <Route path="/user-detail" element={<UserDetail />} />
       <Route path="/appointment-list" element={<AppointmentList />} />
+      <Route path="/not-found" element={<NotFound />} />
       <Route
         path="/appointment-list/:id"
         element={<AppointmentDetailPatient />}
@@ -44,14 +56,28 @@ const AppRouter = () => {
 
       <Route
         path="/doctor/manage-appointment-history"
-        element={<ManageAppointmentHistory />}
+        element={
+          <PrivateRoute>
+            <ManageAppointmentHistory />
+          </PrivateRoute>
+        }
       />
       <Route
         path="/doctor/prescription-management"
-        element={<PrescriptionManagement />}
+        element={
+          <PrivateRoute>
+            <PrescriptionManagement />
+          </PrivateRoute>
+        }
       />
 
-      <Route element={<Layout />}>
+      <Route
+        element={
+          <PrivateRoute>
+            <Layout />
+          </PrivateRoute>
+        }
+      >
         <Route
           path="/doctor/schedule-management"
           element={<ScheduleManagement />}

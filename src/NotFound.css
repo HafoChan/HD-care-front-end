@@ -1,0 +1,38 @@
+body, html {
+    margin: 0;
+    padding: 0;
+    font-family: Arial, sans-serif;
+    height: 100%;
+}
+
+.not-found-container {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+    align-items: center;
+    height: 100vh;
+    background: linear-gradient(135deg, #f06, #4a90e2);
+    color: white;
+    text-align: center;
+    padding: 20px;
+    box-sizing: border-box;
+}
+
+.not-found-container h1 {
+    font-size: 3em;
+    margin: 0;
+}
+
+.not-found-container p {
+    font-size: 1.2em;
+}
+
+.not-found-container a {
+    color: #ffcc00;
+    text-decoration: none;
+    font-weight: bold;
+}
+
+.not-found-container a:hover {
+    text-decoration: underline;
+}

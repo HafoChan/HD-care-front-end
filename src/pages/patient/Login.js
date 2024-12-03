@@ -14,7 +14,7 @@ import "../../css/user/login_register.css";
 import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
 import axiosClient from "../../api/axios-instance";
-import { setItem } from "../../service/otherService/localStorage";
+import { setItem, setRole } from "../../service/otherService/localStorage";
 import { BorderLeft, BorderLeftOutlined } from "@mui/icons-material";
 import { OAuthConfig } from "../../configuration/configuration";
 import GoogleIcon from "@mui/icons-material/Google";
@@ -79,6 +79,7 @@ const Login = () => {
         data.result.refreshToken,
         data.result.userResponse.img
       );
+      setRole(data.result.roles);
       // navigate("/home");
     } catch (error) {
       showError(error.message);
