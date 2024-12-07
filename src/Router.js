@@ -1,5 +1,10 @@
 import React from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import {
+  BrowserRouter as Router,
+  Routes,
+  Route,
+  Navigate,
+} from "react-router-dom";
 import Home from "./pages/patient/Home";
 import Login from "./pages/patient/Login";
 import Register from "./pages/patient/Register";
@@ -22,11 +27,13 @@ import AppointmentList from "./pages/patient/AppointmentList";
 import AppointmentDetailPatient from "./pages/patient/AppointmentDetailPatient";
 import Authenticate from "./pages/patient/Authentication";
 import NotFound from "./pages/patient/NotFound";
+import { getRole } from "./service/otherService/localStorage";
 
 const PrivateRoute = ({ children }) => {
-  const user = JSON.parse(localStorage.getItem('user'));
-  
-  if (!user || user.role !== 'DOCTOR') {
+  const role = getRole();
+  console.log(role);
+
+  if (!role || role !== "DOCTOR") {
     return <Navigate to="/not-found" replace />;
   }
 
