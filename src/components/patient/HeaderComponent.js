@@ -11,7 +11,7 @@ import { Link, useLocation } from "react-router-dom";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import images from "../../constants/images";
 import React, { useEffect, useState } from "react";
-import { remove, getImg } from "../../service/otherService/localStorage";
+import { remove, getImg, getAccessToken, getRefreshToken } from "../../service/otherService/localStorage";
 import { useNavigate } from "react-router-dom";
 
 const HeaderComponent = ({ userInfo }) => {
@@ -45,6 +45,10 @@ const HeaderComponent = ({ userInfo }) => {
     const storedUserInfo = getImg();
     if (storedUserInfo) {
       setImg(storedUserInfo); // Parse and set user info if it exists
+    }
+    else{
+      if (getRefreshToken())
+        setImg("https://kasfaa.com/wp-content/uploads/2023/05/Generic-Avatar.jpg")
     }
   };
 

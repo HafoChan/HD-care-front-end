@@ -137,8 +137,8 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
               value={genderForm}
               onChange={(e) => setGenderForm(e.target.value)}
             >
-              <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
-              <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
+              <FormControlLabel value="male" control={<Radio />} label="Nam" />
+              <FormControlLabel value="female" control={<Radio />} label="Nữ" />
             </RadioGroup>
           </FormControl>
           <TextField
@@ -188,7 +188,6 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             fullWidth
             required
             InputLabelProps={{ shrink: true }}
-            disabled={true}
             value={phoneForm}
             onChange={(e) => setPhoneForm(e.target.value)}
           />
@@ -201,7 +200,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
             onChange={(e) => setAddressForm(e.target.value)}
           />
           <TextField
-            label="Tiêu đề buổi khám"
+            label="Lý do khám"
             fullWidth
             required
             InputLabelProps={{ shrink: true }}

@@ -71,10 +71,8 @@ const AppointmentSchedulerComponent = ({
           <Typography fontSize={18} fontWeight={"bold"}>
             ĐỊA CHỈ KHÁM
           </Typography>
-          <Typography fontWeight={"bold"}>{doctorInfo?.address}</Typography>
-          <Typography>
-            {doctorInfo?.district}, {doctorInfo?.city}
-          </Typography>
+          <Typography fontWeight={"bold"}>{doctorInfo?.clinicName}</Typography>
+          <Typography >{doctorInfo?.address}, {doctorInfo?.district}, {doctorInfo?.city}</Typography>
           <Typography fontWeight={"bold"} display={"flex"}>
             GIÁ KHÁM:
             <Typography
