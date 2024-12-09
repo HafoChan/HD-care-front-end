@@ -3,6 +3,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import prescriptionApi from "../../api/prescriptionApi";
 import {
   Container,
+  Autocomplete,
   Paper,
   Typography,
   TextField,
@@ -102,8 +103,9 @@ const Prescription = () => {
       );
       setPrescriptionList([...prescriptionList, { ...data.result }]);
     }
+    // Reset medicine state to clear the Autocomplete text
     setMedicine({
-      name: "",
+      name: "", // Clear the name field
       medicineType: "tuýp",
       instruction: "",
       quantity: "",
@@ -113,7 +115,12 @@ const Prescription = () => {
 
   const [pdfUrl, setPdfUrl] = useState("");
   const [openPdf, setOpenPdf] = useState(false);
+  const [listMedicine, setListMedicine] = useState([])
+  const handleClickMedicine = async () => {
+      const response = await prescriptionApi.getListDetailMedicine()
+      setListMedicine(response.result)
 
+  }
   const handleExport = async (e) => {
     try {
       const prescription = await prescriptionApi.createPrescription(
@@ -194,9 +201,26 @@ const Prescription = () => {
   return (
     <Container maxWidth="lg" sx={{ py: 4 }}>
       <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography variant="h5" gutterBottom>
+        <Typography
+          variant="h5"
+          gutterBottom
+          sx={{
+            textAlign: "center",
+            fontWeight: "bold",
+          }}
+        >
           Kê Đơn Thuốc
         </Typography>
+
+        {/* Add Back Button */}
+        <Button
+          variant="contained"
+          color="success"
+          onClick={() => navigate(-1)} // Navigate back to the previous page
+          sx={{ mb: 2 }}
+        >
+          Quay lại
+        </Button>
 
         {/* Patient Information */}
         <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
@@ -222,8 +246,8 @@ const Prescription = () => {
               onChange={handlePatientInfoChange}
               disabled
             >
-              <MenuItem value="nam">Nam</MenuItem>
-              <MenuItem value="nu">Nữ</MenuItem>
+              <MenuItem value="Nam">Nam</MenuItem>
+              <MenuItem value="Nữ">Nữ</MenuItem>
             </Select>
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -270,12 +294,30 @@ const Prescription = () => {
         </Typography>
         <Grid container spacing={3}>
           <Grid item xs={12} sm={6}>
-            <TextField
+            <Autocomplete
               fullWidth
-              label="Nhập tên thuốc"
-              name="name"
-              value={medicine.name}
-              onChange={handleMedicineChange}
+              options={listMedicine}
+              getOptionLabel={(option) => option.name}
+              onChange={(event, newValue) => {
+                if (newValue) {
+                  setMedicine((prevMedicine) => ({
+                    ...prevMedicine,
+                    name: newValue.name || newValue,
+                    instruction: newValue.instruction || "",
+                  }));
+                }
+              }}
+              freeSolo={true}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Nhập tên thuốc"
+                  name="name"
+                  value={medicine.name}
+                  onClick={handleClickMedicine}
+                  onChange={handleMedicineChange}
+                />
+              )}
             />
           </Grid>
           <Grid item xs={12} sm={6}>

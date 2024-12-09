@@ -28,7 +28,6 @@ import AppointmentDetailPatient from "./pages/patient/AppointmentDetailPatient";
 import Authenticate from "./pages/patient/Authentication";
 import NotFound from "./pages/patient/NotFound";
 import { getRole } from "./service/otherService/localStorage";
-import { getRole } from "./service/otherService/localStorage";
 
 const PrivateRoute = ({ children }) => {
   const role = getRole()

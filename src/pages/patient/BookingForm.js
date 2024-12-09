@@ -69,8 +69,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
         throw new Error(response.message);
       }
     } catch (error) {
-      toast.error(error.message);
-      toast.error("Đặt lịch không thành công!");
+      toast.error(error.message || "Đặt lịch không thành công!");
     }
   };
 
@@ -137,8 +136,8 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
               value={genderForm}
               onChange={(e) => setGenderForm(e.target.value)}
             >
-              <FormControlLabel value="male" control={<Radio />} label="Nam" />
-              <FormControlLabel value="female" control={<Radio />} label="Nữ" />
+              <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
+              <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
             </RadioGroup>
           </FormControl>
           <TextField

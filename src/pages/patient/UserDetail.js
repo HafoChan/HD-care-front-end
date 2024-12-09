@@ -231,12 +231,12 @@ function UserDetail() {
                 onChange={handleInputChange}
               >
                 <FormControlLabel
-                  value="male"
+                  value="Nam"
                   control={<Radio disabled={!isEditing} />}
                   label="Nam"
                 />
                 <FormControlLabel
-                  value="female"
+                  value="Nữ"
                   control={<Radio disabled={!isEditing} />}
                   label="Nữ"
                 />

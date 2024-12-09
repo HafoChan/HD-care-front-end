@@ -22,5 +22,8 @@ const prescriptionApi = {
   updateMedicine(id, data) {
     return axiosClient.put(`/medicine/${id}`, data);
   },
+  getListDetailMedicine(){
+    return axiosClient.get(`/medicine`)
+  }
 };
 export default prescriptionApi;
