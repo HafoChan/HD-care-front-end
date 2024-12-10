@@ -36,7 +36,10 @@ function ReviewSection() {
 
   const getReview = async () => {
     const response = await reviewApi.getReview(
-      doctorId, filter.sortBy,filter.rating,page
+      doctorId,
+      filter.sortBy,
+      filter.rating,
+      page
     );
     setReviews(response?.result);
     setTotalPages(response?.result?.pageMax);
@@ -400,8 +403,10 @@ function DoctorDetail() {
         doctorId,
         date
       );
+      console.log(response);
 
       if (response.code === 1000) {
+        console.log(response.result);
         setAvailableTimes(response.result); // Cp nhật lịch khả dụng
       }
     } catch (error) {

@@ -371,23 +371,39 @@ const TeamOfDoctors = () => {
                   >
                     LỊCH KHÁM
                   </Typography>
-                  {doctor.schedules.map((schedule) => (
-                    <Button
-                      key={schedule.id}
-                      variant="outlined"
-                      style={{ margin: "5px" }}
-                      onClick={(e) => {
-                        e.stopPropagation();
-                        handleScheduleClick(
-                          selectedDates[doctor.id],
-                          doctor,
-                          schedule.id
-                        );
-                      }}
-                    >
-                      {schedule.start} - {schedule.end}
-                    </Button>
-                  ))}
+                  {doctor.schedules.map((schedule) => {
+                    // Tạo đối tượng Date cho thời gian hiện tại
+                    const now = new Date();
+
+                    // Tạo đối tượng Date cho thời gian của lịch khám
+                    const scheduleDate = new Date(selectedDates[doctor.id]);
+                    const [scheduleHour] = schedule.start
+                      .split(":")
+                      .map(Number);
+                    scheduleDate.setHours(scheduleHour, 0, 0, 0);
+
+                    // Kiểm tra xem lịch có phải trong quá khứ không
+                    const isPastSchedule = scheduleDate < now;
+
+                    return (
+                      <Button
+                        key={schedule.id}
+                        variant="outlined"
+                        style={{ margin: "5px" }}
+                        disabled={isPastSchedule}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          handleScheduleClick(
+                            selectedDates[doctor.id],
+                            doctor,
+                            schedule.id
+                          );
+                        }}
+                      >
+                        {schedule.start} - {schedule.end}
+                      </Button>
+                    );
+                  })}
                 </Box>
                 <Box align="left" width={"230px"}>
                   <TextField
@@ -465,10 +481,10 @@ const TeamOfDoctors = () => {
         <UserProvider>
           <BookingForm
             open={isBookingFormOpen}
-          onClose={() => setIsBookingFormOpen(false)}
-          doctor={doctorSelected}
-          schedule={selectedSchedule}
-          selectedDate={selectedDateClick}
+            onClose={() => setIsBookingFormOpen(false)}
+            doctor={doctorSelected}
+            schedule={selectedSchedule}
+            selectedDate={selectedDateClick}
           />
         </UserProvider>
       )}

@@ -167,7 +167,7 @@ function Sidebar() {
           <Typography>Lịch sử khám</Typography>
         </Button>
       </Link>
-      <Link to="/profile" style={{ textDecoration: "none" }}>
+      {/* <Link to="/profile" style={{ textDecoration: "none" }}>
         <Button
           sx={{
             width: "100%",
@@ -188,7 +188,7 @@ function Sidebar() {
           />
           <Typography>Trang cá nhân</Typography>
         </Button>
-      </Link>
+      </Link> */}
       <Button
         sx={{
           width: "100%",

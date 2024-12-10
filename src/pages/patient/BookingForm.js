@@ -19,11 +19,10 @@ import { appointment } from "../../api/appointment";
 import { toast } from "react-toastify";
 
 const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
-  const { id, name, email, address, phone, gender, dob } = useUserContext();
+  const { id, name, email, address, gender, dob } = useUserContext();
   const [nameForm, setNameForm] = useState();
   const [emailForm, setEmailForm] = useState();
   const [addressForm, setAddressForm] = useState();
-  const [phoneForm, setPhoneForm] = useState();
   const [genderForm, setGenderForm] = useState("");
   const [description, setDescription] = useState("");
   const [title, setTitle] = useState("");
@@ -44,9 +43,8 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
     setNameForm(name);
     setEmailForm(email);
     setAddressForm(address);
-    setPhoneForm(phone);
     setGenderForm(gender);
-  }, [name, email, address, phone, gender, schedule]);
+  }, [name, email, address, gender, schedule]);
 
   const handleSubmit = async (event) => {
     event.preventDefault();
@@ -124,10 +122,10 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
           <TextField
             label="Họ và tên"
             fullWidth
-            required
             InputLabelProps={{ shrink: true }}
             value={nameForm}
             onChange={(e) => setNameForm(e.target.value)}
+            required
           />
           <FormControl>
             <FormLabel>Giới tính</FormLabel>
@@ -135,6 +133,7 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
               row
               value={genderForm}
               onChange={(e) => setGenderForm(e.target.value)}
+              required
             >
               <FormControlLabel value="Nam" control={<Radio />} label="Nam" />
               <FormControlLabel value="Nữ" control={<Radio />} label="Nữ" />
@@ -176,45 +175,37 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
           <TextField
             label="Email xác nhận"
             fullWidth
-            required
             InputLabelProps={{ shrink: true }}
             disabled={true}
             value={emailForm}
             onChange={(e) => setEmailForm(e.target.value)}
-          />
-          <TextField
-            label="Số điện thoại"
-            fullWidth
             required
-            InputLabelProps={{ shrink: true }}
-            value={phoneForm}
-            onChange={(e) => setPhoneForm(e.target.value)}
           />
           <TextField
             label="Địa chỉ"
             fullWidth
-            required
             InputLabelProps={{ shrink: true }}
             value={addressForm}
             onChange={(e) => setAddressForm(e.target.value)}
+            required
           />
           <TextField
             label="Lý do khám"
             fullWidth
-            required
             InputLabelProps={{ shrink: true }}
             value={title}
             onChange={(e) => setTitle(e.target.value)}
+            required
           />
           <TextField
             label="Mô tả triệu chứng và nhu cầu thăm khám"
             multiline
             rows={4}
             fullWidth
-            required
             InputLabelProps={{ shrink: true }}
             value={description}
             onChange={(e) => setDescription(e.target.value)}
+            required
           />
         </Box>
       </DialogContent>

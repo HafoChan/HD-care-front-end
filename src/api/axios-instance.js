@@ -29,7 +29,6 @@ axiosClient.interceptors.request.use(
     if (accessToken) {
       config.headers.Authorization = `Bearer ${accessToken}`;
       config.headers["Accept-Language"] = language;
-      console.log("inn");
     }
     return config;
   },
@@ -64,6 +63,8 @@ axiosClient.interceptors.response.use(
             { refreshToken }
           );
 
+          console.log(result);
+
           const newAccessToken = result.data.result.accessToken;
 
           localStorage.setItem("accessToken", newAccessToken);
@@ -71,11 +72,13 @@ axiosClient.interceptors.response.use(
 
           return axiosClient(originalRequest);
         } catch (refreshError) {
+          console.log(refreshError);
           if (
             refreshError.response?.status === 401 &&
-            refreshError.response?.data?.result === "Token expired"
+            refreshError.response?.data?.message === "Token expired"
           ) {
             isRefreshTokenFailed = true;
+            console.log("Token hết hạn");
             notification.error({
               message: "Phiên đăng nhập hết hạn",
               description: "Vui lòng đăng nhập lại.",

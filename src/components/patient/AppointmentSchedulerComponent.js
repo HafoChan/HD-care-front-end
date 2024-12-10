@@ -55,16 +55,32 @@ const AppointmentSchedulerComponent = ({
         sx={{ mt: 2, display: "flex", justifyContent: "space-between" }}
       >
         <Box>
-          {availableTimes.map((time, index) => (
-            <Button
-              key={index}
-              variant="outlined"
-              style={{ margin: "5px" }}
-              onClick={() => handleScheduleClick(time)}
-            >
-              {time.start} - {time.end}
-            </Button>
-          ))}
+          {availableTimes.map((time, index) => {
+            // Tạo đối tượng Date cho thời gian hiện tại
+            const now = new Date();
+
+            // Tạo đối tượng Date cho thời gian của lịch khám
+            const scheduleDate = new Date(selectedDate);
+            const [scheduleHour] = time.start.split(":").map(Number);
+            scheduleDate.setHours(scheduleHour, 0, 0, 0);
+
+            // Kiểm tra xem lịch có phải trong quá khứ không
+            const isPastSchedule = scheduleDate < now;
+
+            return (
+              <Button
+                key={index}
+                variant="outlined"
+                style={{
+                  margin: "5px",
+                }}
+                disabled={isPastSchedule}
+                onClick={() => handleScheduleClick(time)}
+              >
+                {time.start} - {time.end}
+              </Button>
+            );
+          })}
         </Box>
         <Divider orientation="vertical" flexItem sx={{ mx: 4 }} />
         <Box width={"35%"}>
@@ -72,7 +88,9 @@ const AppointmentSchedulerComponent = ({
             ĐỊA CHỈ KHÁM
           </Typography>
           <Typography fontWeight={"bold"}>{doctorInfo?.clinicName}</Typography>
-          <Typography >{doctorInfo?.address}, {doctorInfo?.district}, {doctorInfo?.city}</Typography>
+          <Typography>
+            {doctorInfo?.address}, {doctorInfo?.district}, {doctorInfo?.city}
+          </Typography>
           <Typography fontWeight={"bold"} display={"flex"}>
             GIÁ KHÁM:
             <Typography
@@ -91,10 +109,10 @@ const AppointmentSchedulerComponent = ({
         <UserProvider>
           <BookingForm
             open={openBookingForm}
-          onClose={() => setOpenBookingForm(false)} // Đóng form
-          selectedDate={selectedDate}
-          doctor={doctorId} // Truyền thông tin bác sĩ
-          schedule={selectedSchedule} // Truyền thông tin lịch đã chọn
+            onClose={() => setOpenBookingForm(false)} // Đóng form
+            selectedDate={selectedDate}
+            doctor={doctorId} // Truyền thông tin bác sĩ
+            schedule={selectedSchedule} // Truyền thông tin lịch đã chọn
           />
         </UserProvider>
       )}

@@ -11,7 +11,11 @@ import { Link, useLocation } from "react-router-dom";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import images from "../../constants/images";
 import React, { useEffect, useState } from "react";
-import { remove, getImg, getAccessToken, getRefreshToken } from "../../service/otherService/localStorage";
+import {
+  remove,
+  getImg,
+  getRefreshToken,
+} from "../../service/otherService/localStorage";
 import { useNavigate } from "react-router-dom";
 
 const HeaderComponent = ({ userInfo }) => {
@@ -19,6 +23,7 @@ const HeaderComponent = ({ userInfo }) => {
   const location = useLocation();
   const [img, setImg] = useState(""); // State to hold user info
   const [anchorEl, setAnchorEl] = useState(null); // State for menu anchor
+  const [checkLogin, setCheckLogin] = useState(false);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget); // Open menu when hovering over img
@@ -32,6 +37,7 @@ const HeaderComponent = ({ userInfo }) => {
   const handleLogout = () => {
     // event.stopPropagation(); // Prevent the menu from closing when clicking logout
     console.log("Đang thực hiện đăng xuất..."); // Log for checking
+    setCheckLogin(false);
     remove(); // Call remove to delete token
     handleMenuClose(); // Close menu after logout
     window.location.href = "/login";
@@ -42,19 +48,25 @@ const HeaderComponent = ({ userInfo }) => {
   };
 
   const getInfo = () => {
-    const storedUserInfo = getImg();
-    if (storedUserInfo) {
-      setImg(storedUserInfo); // Parse and set user info if it exists
-    }
-    else{
-      if (getRefreshToken())
-        setImg("https://kasfaa.com/wp-content/uploads/2023/05/Generic-Avatar.jpg")
+    if (getRefreshToken()) {
+      setCheckLogin(true);
+      const storedUserInfo = getImg();
+
+      if (storedUserInfo && storedUserInfo !== "undefined") {
+        setImg(storedUserInfo);
+      } else {
+        setImg(
+          "https://kasfaa.com/wp-content/uploads/2023/05/Generic-Avatar.jpg"
+        );
+      }
+    } else {
+      setCheckLogin(false);
     }
   };
 
   useEffect(() => {
     getInfo();
-  }, [userInfo]);
+  }, [userInfo, img]);
 
   return (
     <Box sx={{ backgroundColor: "white", paddingY: 2 }}>
@@ -182,7 +194,7 @@ const HeaderComponent = ({ userInfo }) => {
               style={{ textDecoration: "none" }}
               onClick={img ? viewInfo : undefined}
             >
-              {img ? ( // Display user avatar if userInfo exists
+              {checkLogin ? (
                 <Box
                   display="flex"
                   alignItems="center"
