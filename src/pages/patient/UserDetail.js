@@ -59,6 +59,17 @@ function UserDetail() {
   };
 
   const handleSubmit = async () => {
+    if (
+      userInfo.name === "" ||
+      userInfo.phone === "" ||
+      userInfo.dob === "" ||
+      userInfo.address === "" ||
+      userInfo.gender === ""
+    ) {
+      toast.error("Vui lòng nhập đầy đủ thông tin của bạn!");
+      return;
+    }
+
     try {
       const response = await patientApi.updatePatient(userInfo);
       console.log("Response from update:", response);

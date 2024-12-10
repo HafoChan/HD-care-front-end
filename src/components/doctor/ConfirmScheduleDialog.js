@@ -39,6 +39,7 @@ const ConfirmScheduleDialog = ({
             onClose();
           } else {
             toast.error("Có lỗi xảy ra khi tạo lịch khám.");
+            toast.error("Lịch khám không hợp lệ.");
           }
         } catch (error) {
           console.log(error);

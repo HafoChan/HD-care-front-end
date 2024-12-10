@@ -123,6 +123,10 @@ const AppointmentDetailPatient = () => {
     setPdfUrl("");
   };
 
+  const formatNumber = (number) => {
+    return new Intl.NumberFormat("vi-VN").format(number);
+  };
+
   if (!appointmentData) {
     return <Typography>Loading...</Typography>;
   }
@@ -201,7 +205,9 @@ const AppointmentDetailPatient = () => {
                     <Typography variant="body2" color="textSecondary">
                       Giá
                     </Typography>
-                    <Typography variant="body1">{doctorInfo?.price}</Typography>
+                    <Typography variant="body1">
+                      {formatNumber(doctorInfo?.price)}đ
+                    </Typography>
                   </Box>
                 </Box>
               </Box>

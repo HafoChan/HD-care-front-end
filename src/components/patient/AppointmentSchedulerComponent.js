@@ -34,6 +34,10 @@ const AppointmentSchedulerComponent = ({
     setOpenBookingForm(true); // Mở form
   };
 
+  const formatNumber = (number) => {
+    return new Intl.NumberFormat("vi-VN").format(number);
+  };
+
   return (
     <Box sx={{ paddingX: "24px" }}>
       <TextField
@@ -98,7 +102,7 @@ const AppointmentSchedulerComponent = ({
               fontWeight={"bold"}
               sx={{ marginLeft: "8px" }}
             >
-              {doctorInfo?.price}đ
+              {formatNumber(doctorInfo?.price)}đ
             </Typography>
           </Typography>
         </Box>

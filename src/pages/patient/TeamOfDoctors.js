@@ -172,6 +172,10 @@ const TeamOfDoctors = () => {
     setCurrentPage(newPage);
   };
 
+  const formatNumber = (number) => {
+    return new Intl.NumberFormat("vi-VN").format(number);
+  };
+
   return (
     <Box
       align="center"
@@ -458,7 +462,7 @@ const TeamOfDoctors = () => {
                     style={{ margin: "2px 4px", fontSize: 18 }}
                   >
                     <span style={{ color: "#000000" }}>Giá khám:</span>{" "}
-                    {doctor.price}
+                    {formatNumber(doctor.price)}đ
                   </Typography>
                 </Box>
               </Paper>

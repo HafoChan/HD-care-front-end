@@ -24,20 +24,22 @@ const DoctorSchedule = ({ type }) => {
   const [openCancel, setOpenCancel] = useState(false);
   const [cancelReason, setCancelReason] = useState("");
 
-  const today = new Date().toISOString().split("T")[0];
+  const today = new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
+    .toISOString()
+    .split("T")[0];
   const maxDate = new Date();
   maxDate.setDate(new Date().getDate() + 7);
 
   const timeActiveSlots = (selectedDate) => {
-    const slots = [];
+    let slots = [];
     const startTime = new Date();
 
     if (selectedDate === today) {
-      // Nếu chọn ngày hiện tại, khung giờ từ giờ hiện tại đến 10h
+      // Nếu chọn ngày hiện tại, khung giờ từ giờ hiện tại đến 20h
       startTime.setMinutes(0);
       startTime.setSeconds(0);
       startTime.setHours(startTime.getHours() + 1);
-      if (startTime.getHours() >= 20) return slots; // Không còn giờ nào nếu đã quá 20h
+      if (startTime.getHours() >= 20) return slots;
 
       if (startTime.getHours() < 7) startTime.setHours(7, 0, 0, 0);
 
@@ -52,7 +54,7 @@ const DoctorSchedule = ({ type }) => {
 
         startTime.setHours(startTime.getHours() + 1);
       }
-    } else {
+    } else if (selectedDate > today) {
       // Nếu chọn ngày khác, khung giờ từ 7h đến 20h
       startTime.setHours(7, 0, 0, 0); // Đặt giờ bắt đầu là 7:00
       while (startTime.getHours() < 20) {
