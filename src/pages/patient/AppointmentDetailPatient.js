@@ -83,7 +83,7 @@ const AppointmentDetailPatient = () => {
   const handleViewPDF = async () => {
     try {
       const response = await fetch(
-        `http://localhost:8082/api/v1/appointment/pdf/${id}?status=xem`,
+        `https://powerful-motivation-production.up.railway.app/api/v1/appointment/pdf/${id}?status=xem`,
         {
           method: "GET",
           headers: {
