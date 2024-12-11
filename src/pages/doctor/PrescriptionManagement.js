@@ -80,7 +80,7 @@ const Prescription = () => {
     }));
   };
 
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
 
   const handleMedicineSelect = (index) => {
     setEditIndex(index);
@@ -119,12 +119,11 @@ const Prescription = () => {
 
   const [pdfUrl, setPdfUrl] = useState("");
   const [openPdf, setOpenPdf] = useState(false);
-  const [listMedicine, setListMedicine] = useState([])
+  const [listMedicine, setListMedicine] = useState([]);
   const handleClickMedicine = async () => {
-      const response = await prescriptionApi.getListDetailMedicine()
-      setListMedicine(response.result)
-
-  }
+    const response = await prescriptionApi.getListDetailMedicine();
+    setListMedicine(response.result);
+  };
   const handleExport = async (e) => {
     try {
       const prescription = await prescriptionApi.createPrescription(
@@ -142,7 +141,7 @@ const Prescription = () => {
       console.log(appointment);
 
       const response = await fetch(
-        `http://localhost:8082/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
+        `https://grateful-flow-production.up.railway.app/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
         {
           method: "GET",
           headers: {
