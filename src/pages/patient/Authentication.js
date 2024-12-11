@@ -20,7 +20,7 @@ export default function Authenticate() {
 
         try {
           const response = await fetch(
-            `https://powerful-motivation.railway.internal/api/v1/auth/outbound/authentication?code=${authCode}`,
+            `https://powerful-motivation-production.up.railway.app/api/v1/auth/outbound/authentication?code=${authCode}`,
             {
               method: "POST",
             }

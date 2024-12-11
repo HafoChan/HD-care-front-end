@@ -6,7 +6,7 @@ import {
   remove,
 } from "../service/otherService/localStorage";
 const axiosClient = axios.create({
-  baseURL: "https://powerful-motivation.railway.internal/api/v1/",
+  baseURL: "https://powerful-motivation-production.up.railway.app/api/v1/",
   headers: {
     "Content-Type": "application/json",
   },
@@ -59,7 +59,7 @@ axiosClient.interceptors.response.use(
       if (refreshToken && !isRefreshTokenFailed) {
         try {
           const result = await axios.post(
-            "https://powerful-motivation.railway.internal/api/v1/auth/refreshToken",
+            "https://powerful-motivation-production.up.railway.app/api/v1/auth/refreshToken",
             { refreshToken }
           );
 
