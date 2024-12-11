@@ -141,7 +141,7 @@ const Prescription = () => {
       console.log(appointment);
 
       const response = await fetch(
-        `https://grateful-flow-production.up.railway.app/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
+        `https://powerful-motivation.railway.internal/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
         {
           method: "GET",
           headers: {
