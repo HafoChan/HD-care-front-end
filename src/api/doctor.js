@@ -79,4 +79,12 @@ export const doctor = {
       console.error("Error:", error);
     }
   },
+
+  getOtherDoctor(id){
+    try {
+      const response = axiosClient.get(`/doctor/otherDoctor/${id}`);
+      return response;
+    } catch (error) {
+    }
+  }
 };

@@ -80,9 +80,13 @@ const Prescription = () => {
     }));
   };
 
+  const [inputValue, setInputValue] = useState('');
+
   const handleMedicineSelect = (index) => {
     setEditIndex(index);
-    setMedicine(prescriptionList[index]);
+    const selectedMedicine = prescriptionList[index];
+    setMedicine(selectedMedicine);
+    setInputValue(selectedMedicine.name);
   };
 
   const handleAddMedicine = async () => {
@@ -216,7 +220,7 @@ const Prescription = () => {
         <Button
           variant="contained"
           color="success"
-          onClick={() => navigate(-1)} // Navigate back to the previous page
+          onClick={() => navigate("/doctor/manage-appointment-history")} // Navigate back to the previous page
           sx={{ mb: 2 }}
         >
           Quay lại
@@ -298,6 +302,11 @@ const Prescription = () => {
               fullWidth
               options={listMedicine}
               getOptionLabel={(option) => option.name}
+              value={medicine}
+              inputValue={inputValue}
+              onInputChange={(event, newInputValue) => {
+                setInputValue(newInputValue);
+              }}
               onChange={(event, newValue) => {
                 if (newValue) {
                   setMedicine((prevMedicine) => ({
@@ -313,7 +322,6 @@ const Prescription = () => {
                   {...params}
                   label="Nhập tên thuốc"
                   name="name"
-                  value={medicine.name}
                   onClick={handleClickMedicine}
                   onChange={handleMedicineChange}
                 />

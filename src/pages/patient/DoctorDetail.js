@@ -45,6 +45,8 @@ function ReviewSection() {
     setTotalPages(response?.result?.pageMax);
   };
 
+
+
   useEffect(() => {
     getReview();
   }, [filter, page]);
@@ -286,25 +288,64 @@ function ReviewSection() {
 }
 
 function OtherDoctorsSection() {
+  const [otherDoctors, setOtherDoctors] = useState([]);
+  const doctorId = window.location.pathname.split("/")[2];
+
+  useEffect(() => {
+    const fetchOtherDoctors = async () => {
+      try {
+        const response = await doctor.getOtherDoctor(doctorId);
+        if (response?.result) {
+          setOtherDoctors(response.result);
+        }
+      } catch (error) {
+        console.error("Error fetching other doctors:", error);
+      }
+    };
+
+    fetchOtherDoctors();
+  }, [doctorId]);
+
+  const handleDoctorClick = (doctorId) => {
+    window.location.href = `/doctor/${doctorId}`;
+  };
+
+  const scrollContainerRef = React.useRef(null);
+
+  useEffect(() => {
+    const scrollContainer = scrollContainerRef.current;
+    let scrollAmount = 0;
+    const scrollStep = 1; // Adjust the scroll speed
+    const scrollInterval = 20; // Adjust the scroll interval
+
+    const scroll = () => {
+      if (scrollContainer) {
+        scrollAmount += scrollStep;
+        scrollContainer.scrollLeft = scrollAmount;
+        if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
+          scrollAmount = 0; // Reset scroll amount to loop
+        }
+      }
+    };
+
+    const intervalId = setInterval(scroll, scrollInterval);
+
+    return () => clearInterval(intervalId);
+  }, []);
+
   return (
     <Box sx={{ py: 4, px: "32px" }}>
-      <Typography
-        variant="h5"
-        fontWeight={"bold"}
-        mb={4}
-        align="center"
-        gutterBottom
-      >
+      <Typography variant="h5" fontWeight={"bold"} mb={4} align="center" gutterBottom>
         Các Bác Sĩ Khác
       </Typography>
 
       <Grid container spacing={0} justifyContent="center">
-        {doctors.map((doctor, index) => (
+        {otherDoctors.map((doctor, index) => (
           <Grid
             item
             xs={6}
             sm={3}
-            key={index}
+            key={doctor.id || index}
             sx={{
               display: "flex",
               justifyContent: "center",
@@ -316,17 +357,26 @@ function OtherDoctorsSection() {
                 py: 2,
                 width: "180px",
                 boxShadow: "none",
+                cursor: "pointer",
+                "&:hover": {
+                  transform: "scale(1.02)",
+                  transition: "transform 0.2s ease-in-out"
+                }
               }}
+              onClick={() => handleDoctorClick(doctor.id)}
             >
               <Box
+                component="img"
+                src={doctor.img || "#"}
                 sx={{
                   width: "160px",
                   height: "160px",
                   backgroundColor: "#cccccc",
                   margin: "0 auto",
                   borderRadius: "20px",
+                  objectFit: "cover",
                 }}
-              ></Box>
+              />
               <Typography
                 variant="subtitle1"
                 fontWeight={"bold"}
@@ -342,6 +392,7 @@ function OtherDoctorsSection() {
 
       <Box display="flex" justifyContent="center" mt={2}>
         <Button
+          onClick={() => window.location.href = '/team-of-doctors'}
           variant="contained"
           sx={{
             bgcolor: "#077CDB",

@@ -162,7 +162,7 @@ const PatientDetail = () => {
                       Ngày sinh
                     </Typography>
                     <Typography variant="body1">
-                      {formatDate(patientData.dob)}
+                      {patientData.dob ? formatDate(patientData.dob) : "Chưa có ngày sinh"}
                     </Typography>
                   </Box>
                 </Box>

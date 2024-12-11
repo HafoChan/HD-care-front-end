@@ -27,7 +27,7 @@ export default class EvaluateForm extends Component {
       doctorName: "", // Thêm trạng thái cho tên bác sĩ
       doctorImage: "", // Thêm trạng thái cho ảnh bác sĩ
       appointmentStartDate: "", // Thêm trạng thái cho ngày bắt đầu khám
-      appointmentEndDate: "", // Thêm trạng thái cho ngày kết thúc khám
+      appointmentEndDate: "", // Thêm trạng thái cho ngày k��t thúc khám
       uploadedImage: [], // Added state for uploaded image
       snackBarOpen: false, // Moved snackbar state to component state
       snackBarMessage: "",
@@ -89,9 +89,9 @@ export default class EvaluateForm extends Component {
   };
 
   handleImageUpload = (file) => {
-    this.setState({
-      uploadedImage: file,
-    }); // Store the uploaded image in state
+    this.setState(prevState => ({
+      uploadedImage: [...prevState.uploadedImage, ...file]
+    }));
   };
 
   handleSubmit = () => {
