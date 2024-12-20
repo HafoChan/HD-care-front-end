@@ -28,11 +28,12 @@ import AppointmentDetailPatient from "./pages/patient/AppointmentDetailPatient";
 import Authenticate from "./pages/patient/Authentication";
 import NotFound from "./pages/patient/NotFound";
 import { getRole } from "./service/otherService/localStorage";
+import AdminDashboard from "./pages/admin/Dashboard";
 
 const PrivateRoute = ({ children }) => {
-  const role = getRole()
-  
-  if (!role || role !== 'DOCTOR') {
+  const role = getRole();
+
+  if (!role || role !== "DOCTOR") {
     return <Navigate to="/not-found" replace />;
   }
 
@@ -42,6 +43,7 @@ const PrivateRoute = ({ children }) => {
 const AppRouter = () => {
   return (
     <Routes>
+      <Route path="/admin" element={<AdminDashboard />} />
       <Route index element={<Home />} />
       <Route path="/evaluate" element={<EvaluateForm />} />
       <Route path="/authenticate" element={<Authenticate />} />
