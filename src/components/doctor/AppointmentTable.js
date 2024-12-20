@@ -73,7 +73,7 @@ const AppointmentTable = ({
     const data = {
       idDoctor: doctorId,
       status: newStatus,
-      note: `Status updated to ${newStatus}`,
+      note: `Cập nhật trạng thái ${newStatus} cho cuộc hẹn thành công`,
     };
 
     try {
@@ -84,7 +84,7 @@ const AppointmentTable = ({
         [selectedRow]: newStatus,
       }));
 
-      toast.success(`Status updated to: ${newStatus}`);
+      toast.success(`Cập nhật trạng thái ${newStatus} cho cuộc hẹn thành công`);
     } catch (error) {
       toast.error("Failed to update status. Please try again.");
       console.error("Error updating status:", error);

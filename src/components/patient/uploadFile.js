@@ -94,6 +94,7 @@ export default class UploadFiles extends Component {
     const { selectedFiles, currentFiles, progress, message, fileInfos, openSnackbar } =
       this.state;
     const { allowAvatarUpload } = this.props;
+
     return (
       <div>
         <label className="btn btn-default">

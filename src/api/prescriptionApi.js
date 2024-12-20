@@ -22,8 +22,11 @@ const prescriptionApi = {
   updateMedicine(id, data) {
     return axiosClient.put(`/medicine/${id}`, data);
   },
-  getListDetailMedicine(){
-    return axiosClient.get(`/medicine`)
-  }
+  deleteMedicine(id) {
+    return axiosClient.delete(`/medicine/${id}`);
+  },
+  getListDetailMedicine() {
+    return axiosClient.get(`/medicine`);
+  },
 };
 export default prescriptionApi;

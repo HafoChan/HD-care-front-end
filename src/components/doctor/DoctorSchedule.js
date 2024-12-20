@@ -34,14 +34,18 @@ const DoctorSchedule = ({ type }) => {
     let slots = [];
     const startTime = new Date();
 
+    console.log(selectedDate);
+    console.log(today);
+
     if (selectedDate === today) {
       // Nếu chọn ngày hiện tại, khung giờ từ giờ hiện tại đến 20h
       startTime.setMinutes(0);
       startTime.setSeconds(0);
-      startTime.setHours(startTime.getHours() + 1);
-      if (startTime.getHours() >= 20) return slots;
+      startTime.setHours(startTime.getHours());
 
-      if (startTime.getHours() < 7) startTime.setHours(7, 0, 0, 0);
+      if (startTime.getHours() >= 20) return slots;
+      else if (startTime.getHours() < 7) startTime.setHours(7, 0, 0, 0);
+      else startTime.setHours(startTime.getHours() + 1);
 
       while (startTime.getHours() < 20) {
         const endTime = new Date(startTime);
@@ -69,6 +73,8 @@ const DoctorSchedule = ({ type }) => {
         startTime.setHours(startTime.getHours() + 1);
       }
     }
+
+    console.log(slots);
 
     return slots;
   };

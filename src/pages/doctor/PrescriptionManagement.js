@@ -80,7 +80,7 @@ const Prescription = () => {
     }));
   };
 
-  const [inputValue, setInputValue] = useState('');
+  const [inputValue, setInputValue] = useState("");
 
   const handleMedicineSelect = (index) => {
     setEditIndex(index);
@@ -90,6 +90,13 @@ const Prescription = () => {
   };
 
   const handleAddMedicine = async () => {
+    if (!validateFields()) {
+      setSnackbarMessage("Vui lòng điền đầy đủ thông tin bắt buộc!");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+      return;
+    }
+
     if (editIndex !== null) {
       const updatedList = [...prescriptionList];
       updatedList[editIndex] = medicine;
@@ -100,31 +107,35 @@ const Prescription = () => {
       setPrescriptionList(updatedList);
       setEditIndex(null);
     } else {
-      // Add new medicine
       const data = await prescriptionApi.createMedicine(
         appointment.prescriptionId,
         medicine
       );
       setPrescriptionList([...prescriptionList, { ...data.result }]);
     }
-    // Reset medicine state to clear the Autocomplete text
+
     setMedicine({
-      name: "", // Clear the name field
+      name: "",
       medicineType: "tuýp",
       instruction: "",
       quantity: "",
       note: "",
     });
+    setErrors({
+      name: false,
+      medicineType: false,
+      instruction: false,
+      quantity: false,
+    });
   };
 
   const [pdfUrl, setPdfUrl] = useState("");
   const [openPdf, setOpenPdf] = useState(false);
-  const [listMedicine, setListMedicine] = useState([])
+  const [listMedicine, setListMedicine] = useState([]);
   const handleClickMedicine = async () => {
-      const response = await prescriptionApi.getListDetailMedicine()
-      setListMedicine(response.result)
-
-  }
+    const response = await prescriptionApi.getListDetailMedicine();
+    setListMedicine(response.result);
+  };
   const handleExport = async (e) => {
     try {
       const prescription = await prescriptionApi.createPrescription(
@@ -169,10 +180,12 @@ const Prescription = () => {
           throw new Error("Không nhận được file PDF từ server");
         }
         setSnackbarMessage("Tạo PDF thành công!");
+        setSnackbarSeverity("success");
         setOpenSnackbar(true);
       }
     } catch (error) {
       setSnackbarMessage("Tạo PDF thất bại!");
+      setSnackbarSeverity("error");
       setOpenSnackbar(true);
     }
   };
@@ -193,6 +206,7 @@ const Prescription = () => {
   // Thêm state cho thông báo
   const [openSnackbar, setOpenSnackbar] = useState(false);
   const [snackbarMessage, setSnackbarMessage] = useState("");
+  const [snackbarSeverity, setSnackbarSeverity] = useState("success");
 
   // Hàm đóng thông báo
   const handleCloseSnackbar = (event, reason) => {
@@ -200,6 +214,57 @@ const Prescription = () => {
       return;
     }
     setOpenSnackbar(false);
+  };
+
+  const [errors, setErrors] = useState({
+    name: false,
+    medicineType: false,
+    instruction: false,
+    quantity: false,
+  });
+
+  const validateFields = () => {
+    const newErrors = {
+      name: !medicine.name,
+      medicineType: !medicine.medicineType,
+      instruction: !medicine.instruction,
+      quantity: !medicine.quantity,
+    };
+
+    setErrors(newErrors);
+    return !Object.values(newErrors).some((error) => error);
+  };
+
+  const handleDeleteMedicine = async () => {
+    try {
+      if (editIndex !== null) {
+        await prescriptionApi.deleteMedicine(prescriptionList[editIndex].id);
+        const updatedList = prescriptionList.filter(
+          (_, index) => index !== editIndex
+        );
+        setPrescriptionList(updatedList);
+        setEditIndex(null);
+
+        // Reset form
+        setMedicine({
+          name: "",
+          medicineType: "tuýp",
+          instruction: "",
+          quantity: "",
+          note: "",
+        });
+
+        // Hiển thị thông báo thành công
+        setSnackbarMessage("Xóa thuốc thành công!");
+        setSnackbarSeverity("success");
+        setOpenSnackbar(true);
+      }
+    } catch (error) {
+      // Hiển thị thông báo lỗi
+      setSnackbarMessage("Xóa thuốc thất bại!");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    }
   };
 
   return (
@@ -314,6 +379,7 @@ const Prescription = () => {
                     name: newValue.name || newValue,
                     instruction: newValue.instruction || "",
                   }));
+                  setErrors((prev) => ({ ...prev, name: false }));
                 }
               }}
               freeSolo={true}
@@ -324,6 +390,9 @@ const Prescription = () => {
                   name="name"
                   onClick={handleClickMedicine}
                   onChange={handleMedicineChange}
+                  required
+                  error={errors.name}
+                  helperText={errors.name ? "Vui lòng nhập tên thuốc" : ""}
                 />
               )}
             />
@@ -335,6 +404,8 @@ const Prescription = () => {
               name="medicineType"
               value={medicine.medicineType || ""}
               onChange={handleMedicineChange}
+              required
+              error={errors.medicineType}
             >
               <MenuItem value="tuýp">Tuýp</MenuItem>
               <MenuItem value="viên">Viên</MenuItem>
@@ -348,6 +419,9 @@ const Prescription = () => {
               name="instruction"
               value={medicine.instruction}
               onChange={handleMedicineChange}
+              required
+              error={errors.instruction}
+              helperText={errors.instruction ? "Vui lòng nhập hướng dẫn" : ""}
             />
           </Grid>
           <Grid item xs={12} sm={6}>
@@ -358,6 +432,9 @@ const Prescription = () => {
               name="quantity"
               value={medicine.quantity}
               onChange={handleMedicineChange}
+              required
+              error={errors.quantity}
+              helperText={errors.quantity ? "Vui lòng nhập số lượng" : ""}
             />
           </Grid>
           <Grid item xs={12}>
@@ -374,9 +451,20 @@ const Prescription = () => {
               variant="contained"
               color="primary"
               onClick={handleAddMedicine}
+              sx={{ mr: 2 }}
             >
               {editIndex !== null ? "Cập nhật" : "Thêm thuốc"}
             </Button>
+
+            {editIndex !== null && (
+              <Button
+                variant="contained"
+                color="error"
+                onClick={handleDeleteMedicine}
+              >
+                Xóa thuốc
+              </Button>
+            )}
           </Grid>
         </Grid>
 
@@ -446,7 +534,7 @@ const Prescription = () => {
         >
           <Alert
             onClose={handleCloseSnackbar}
-            severity="success"
+            severity={snackbarSeverity}
             variant="filled"
             sx={{ width: "100%" }}
           >
