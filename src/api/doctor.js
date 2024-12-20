@@ -86,5 +86,13 @@ export const doctor = {
       return response;
     } catch (error) {
     }
+  },
+
+  getStatistic(){
+    try {
+      const response = axiosClient.get(`/doctor/statistic`);
+      return response;
+    } catch (error) {
+    }
   }
 };

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { styled } from "@mui/system";
 import {
   Box,
@@ -30,6 +30,10 @@ import {
   MdLocalHospital,
   MdPeople,
 } from "react-icons/md";
+import { AppBar, Toolbar, Grid, Avatar } from "@mui/material";
+import { Menu as MenuIcon, Settings as SettingsIcon, Person as PersonIcon, PieChart as PieChartIcon, ExitToApp as LogoutIcon } from "@mui/icons-material";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { doctor } from "../../api/doctor";
 
 const StyledBox = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -46,6 +50,8 @@ const StyledDrawer = styled(Drawer)(() => ({
     borderRight: "1px solid rgba(0, 0, 0, 0.12)",
   },
 }));
+
+const drawerWidth = 240;
 
 const StyledModal = styled(Modal)(() => ({
   display: "flex",
@@ -336,8 +342,111 @@ const AdminInterface = () => {
       </ModalContent>
     </StyledModal>
   );
+  
+  const AdminDashboard = () => {
+    const [open, setOpen] = useState(true);
+    const [doctorsData, setDoctorData] = useState([])
+  
+    useEffect(() => {
+      const fetchDoctorData = async () => {
+        try {
+          const response = await doctor.getStatistic();
+          setDoctorData(response.result);
+        } catch (error) {
+          console.error("Failed to fetch doctor statistics:", error);
+        }
+      };
+    
+      fetchDoctorData();
+    }, []);
+    const handleDrawerToggle = () => {
+      setOpen(!open);
+    };
+  
+    return (
+      <Box sx={{ display: "flex", margin: 2 }}>
+  
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            margin: 0,
+          }}
+        >
+          <Paper sx={{ p: 3 }}>
+            <Typography variant="h5" gutterBottom>
+              Top Doctors by Patient Visits
+            </Typography>
+            <Grid container spacing={3}>
+              {doctorsData?.map((doctor, index) => (
+                <Grid item xs={12} md={4} key={index}>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 3,
+                      position: "relative",
+                      textAlign: "center",
+                      transition: "transform 0.3s",
+                      "&:hover": {
+                        transform: "scale(1.05)"
+                      }
+                    }}
+                  >
+                    <Box sx={{ position: "absolute", top: -20, left: 20 }}>
+                      <EmojiEventsIcon
+                        sx={{
+                          fontSize: 40,
+                          color:
+                            index === 0
+                              ? "#FFD700"
+                              : index === 1
+                              ? "#C0C0C0"
+                              : "#CD7F32",
+                        }}
+                      />
+                    </Box>
+                    <Avatar
+                      src={doctor.img}
+                      alt={doctor.name}
+                      sx={{
+                        width: 100,
+                        height: 100,
+                        margin: "0 auto 16px",
+                        border: 4,
+                        borderColor: doctor.color,
+                      }}
+                    />
+                    <Typography variant="h6">{doctor.name}</Typography>
+                    <Typography color="textSecondary" sx={{ mt: 1 }}>
+                      {doctor.count} lượt khám
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        bgcolor: "primary.light",
+                        borderRadius: 20,
+                        py: 1,
+                        px: 2,
+                        display: "inline-block",
+                      }}
+                    >
+                     <Typography color="black">
+                      Thứ hạng {index + 1}
+                    </Typography>
 
-  return (
+                    </Box>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Box>
+      </Box>
+    );
+  };
+    return (
     <StyledBox>
       <Box sx={{ display: "flex" }}>
         <StyledDrawer variant="permanent">
@@ -363,6 +472,7 @@ const AdminInterface = () => {
                   color: activeTab === "dashboard" ? "#1976d2" : "inherit",
                 }}
               />
+              
             </StyledListItem>
             <StyledListItem
               button
@@ -398,19 +508,38 @@ const AdminInterface = () => {
                 }}
               />
             </StyledListItem>
+            <StyledListItem
+              button
+              selected={activeTab === "statis"}
+              onClick={() => setActiveTab("statis")}
+            >
+              <ListItemIcon style={{ fontSize: 24 }}>
+                <MdPeople
+                  color={activeTab === "statis" ? "#1976d2" : "#666"}
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary="Thống kê"
+                sx={{
+                  color: activeTab === "statis" ? "#1976d2" : "inherit",
+                }}
+              />
+            </StyledListItem>
           </List>
         </StyledDrawer>
 
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           {activeTab === "dashboard" && (
+            <>
             <Box
               sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
+                display: "flex",
                 gap: 3,
+                width: "100%",
+                justifyContent: "center",
               }}
             >
-              <Paper sx={{ p: 3 }}>
+              <Paper sx={{ p: 3, maxWidth: 300, justifyContent: "center", flex: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <FaUserMd size={24} color="#1976d2" />
                   <Box sx={{ ml: 2 }}>
@@ -419,7 +548,7 @@ const AdminInterface = () => {
                   </Box>
                 </Box>
               </Paper>
-              <Paper sx={{ p: 3 }}>
+              <Paper sx={{ p: 3, maxWidth: 300, justifyContent: "center", flex: 1 }}>
                 <Box sx={{ display: "flex", alignItems: "center" }}>
                   <FaUsers size={24} color="#2e7d32" />
                   <Box sx={{ ml: 2 }}>
@@ -430,18 +559,10 @@ const AdminInterface = () => {
                   </Box>
                 </Box>
               </Paper>
-              <Paper sx={{ p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <FaExclamationTriangle size={24} color="#ed6c02" />
-                  <Box sx={{ ml: 2 }}>
-                    <Typography variant="subtitle1">
-                      Cuộc hẹn chưa được duyệt
-                    </Typography>
-                    <Typography variant="h4">2</Typography>
-                  </Box>
-                </Box>
-              </Paper>
+            
             </Box>
+            <AdminDashboard/>
+            </>
           )}
 
           {activeTab === "doctors" && (
@@ -625,6 +746,7 @@ const AdminInterface = () => {
               </TableContainer>
             </Box>
           )}
+          
         </Box>
       </Box>
 
@@ -632,6 +754,7 @@ const AdminInterface = () => {
       <PatientModal />
       <EditDoctorModal />
       <EditPatientModal />
+
     </StyledBox>
   );
 };
