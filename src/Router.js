@@ -29,6 +29,8 @@ import Authenticate from "./pages/patient/Authentication";
 import NotFound from "./pages/patient/NotFound";
 import { getRole } from "./service/otherService/localStorage";
 import AdminDashboard from "./pages/admin/Dashboard";
+import DoctorDetailAdmin from "./pages/admin/DoctorDetailAdmin";
+import PatientDetailAdmin from "./pages/admin/PatientDetailAdmin";
 
 const PrivateRoute = ({ children }) => {
   const role = getRole();
@@ -44,6 +46,9 @@ const AppRouter = () => {
   return (
     <Routes>
       <Route path="/admin" element={<AdminDashboard />} />
+      <Route path="/admin/doctor-detail" element={<DoctorDetailAdmin />} />
+      <Route path="/admin/patient-detail" element={<PatientDetailAdmin />} />
+
       <Route index element={<Home />} />
       <Route path="/evaluate" element={<EvaluateForm />} />
       <Route path="/authenticate" element={<Authenticate />} />

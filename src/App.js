@@ -7,7 +7,7 @@ const App = () => {
   return (
     <Router>
       <AppRouter />
-      <ToastContainer/>
+      <ToastContainer />
     </Router>
   );
 };

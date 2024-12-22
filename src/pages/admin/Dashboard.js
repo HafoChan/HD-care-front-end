@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useEffect, useState } from "react";
 import { styled } from "@mui/system";
 import {
   Box,
@@ -20,16 +20,30 @@ import {
   ListItemIcon,
   ListItemText,
   Switch,
+  Grid,
+  Autocomplete,
+  FormControl,
+  RadioGroup,
+  Radio,
+  FormControlLabel,
+  Pagination,
+  InputLabel,
+  Select,
+  MenuItem,
 } from "@mui/material";
 import { FaUserMd, FaUsers, FaExclamationTriangle } from "react-icons/fa";
 import {
   MdEdit,
-  MdDelete,
   MdAdd,
   MdDashboard,
   MdLocalHospital,
   MdPeople,
 } from "react-icons/md";
+import axios from "axios";
+import { useNavigate } from "react-router-dom";
+import { doctor } from "../../api/doctor";
+import patientApi from "../../api/patient";
+import { toast } from "react-toastify";
 
 const StyledBox = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -58,7 +72,7 @@ const ModalContent = styled(Box)(() => ({
   padding: 32,
   borderRadius: 8,
   width: "100%",
-  maxWidth: 500,
+  maxWidth: 700,
 }));
 
 const StyledListItem = styled(ListItem)(({ theme }) => ({
@@ -94,13 +108,6 @@ const IOSSwitch = styled((props) => (
         opacity: 1,
         border: 0,
       },
-      "&.Mui-disabled + .MuiSwitch-track": {
-        opacity: 0.5,
-      },
-    },
-    "&.Mui-focusVisible .MuiSwitch-thumb": {
-      color: "#33cf4d",
-      border: "6px solid #fff",
     },
   },
   "& .MuiSwitch-thumb": {
@@ -117,6 +124,7 @@ const IOSSwitch = styled((props) => (
 }));
 
 const AdminInterface = () => {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("dashboard");
   const [showDoctorModal, setShowDoctorModal] = useState(false);
   const [showPatientModal, setShowPatientModal] = useState(false);
@@ -124,97 +132,287 @@ const AdminInterface = () => {
   const [showEditPatientModal, setShowEditPatientModal] = useState(false);
   const [selectedDoctor, setSelectedDoctor] = useState(null);
   const [selectedPatient, setSelectedPatient] = useState(null);
+  const [selectedRow, setSelectedRow] = useState(null);
+  const [selectedRowPatient, setSelectedRowPatient] = useState(null);
 
-  const dummyDoctors = [
-    {
-      id: 1,
-      name: "Dr. John Smith",
-      email: "johnsmith@yopmail.com",
-      username: "johnSmith",
-      password: "password123",
-      phone: "0123456789",
-      address: "123 Main Street abcdef 0123456789",
-      gender: "Male",
-      specialty: "Cardiology",
-      status: "Active",
-    },
-    {
-      id: 2,
-      name: "Dr. Sarah Johnson",
-      email: "sarahjohnson@yopmail.com",
-      username: "sarahJohnson",
-      password: "password123",
-      phone: "0987654321",
-      address: "456 Elm Street",
-      gender: "Female",
-      specialty: "Pediatrics",
-      status: "Inactive",
-    },
-    {
-      id: 3,
-      name: "Dr. Michael Brown",
-      email: "michaelbrown@yopmail.com",
-      username: "michaelBrown",
-      password: "password123",
-      phone: "0678945612",
-      address: "789 Pine Avenue",
-      gender: "Male",
-      specialty: "Neurology",
-      status: "Active",
-    },
-    {
-      id: 4,
-      name: "Dr. Nguyễn Viết Nam",
-      email: "doctornam@yopmail.com",
-      username: "doctorNamV",
-      password: "12345678",
-      phone: "0348278226",
-      address: "210, ngõ 317",
-      gender: "Nam",
-      specialty: "General Medicine",
-      status: "Active",
-    },
-  ];
+  const [selectedProvince, setSelectedProvince] = useState(null); // Lưu tỉnh đã chọn
+  const [selectedDistrict, setSelectedDistrict] = useState(null); // Lưu huyện đã chọn
+  const [options, setOptions] = useState([]);
 
-  const dummyPatients = [
-    { id: "P001", name: "James Wilson", status: "Active" },
-    { id: "P002", name: "Emma Davis", status: "Inactive" },
-    { id: "P003", name: "Robert Taylor", status: "Active" },
-  ];
+  const [currentPage, setCurrentPage] = useState(1);
+  const [pageMax, setPageMax] = useState(1);
+  const [totalDoctor, setTotalDoctor] = useState();
 
-  const handleStatusChange = (item, type) => {
-    console.log(`Changed status for ${type} ${item.id}`);
+  const [currentPagePatient, setCurrentPagePatient] = useState(1);
+  const [pageMaxPatient, setPageMaxPatient] = useState(1);
+  const [totalPatient, setTotalPatient] = useState();
+
+  const getCity = async () => {
+    const data = await axios.get(
+      "https://raw.githubusercontent.com/kenzouno1/DiaGioiHanhChinhVN/master/data.json"
+    );
+    setOptions(data.data); // Set the fetched options
+  };
+
+  const handleSelectChange = (type, newValue) => {
+    if (type === "province") {
+      setSelectedProvince(newValue);
+      setSelectedDistrict(null); // Reset huyện khi thay đổi tỉnh
+    } else if (type === "district") {
+      setSelectedDistrict(newValue);
+    }
+  };
+
+  const [doctorData, setDoctorData] = useState([]);
+
+  const [patientData, setPatientData] = useState([]);
+
+  const getDoctor = async (page) => {
+    try {
+      const response = await doctor.getAllByAdmin(page);
+      setDoctorData(response.result.content); // Giả sử response.data chứa danh sách bác sĩ
+      setPageMax(response.result.totalPages);
+      setTotalDoctor(response.result.totalElements);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const getPatient = async (page) => {
+    try {
+      const response = await patientApi.getAllByAdmin(page);
+      setPatientData(response.result.content); // Giả sử response.data chứa danh sách bác sĩ
+      setPageMaxPatient(response.result.totalPages);
+      setTotalPatient(response.result.totalElements);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleStatusChange = async (doctorId) => {
+    try {
+      await doctor.updateEnableDoctor(doctorId); // Gọi API để cập nhật trạng thái
+      // Cập nhật lại danh sách bác sĩ sau khi thay đổi trạng thái
+      getDoctor(currentPage);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handleStatusPatientChange = async (patientId) => {
+    try {
+      await patientApi.updateEnablePatient(patientId); // Gọi API để cập nhật trạng thái
+      // Cập nhật lại danh sách bệnh nhân sau khi thay đổi trạng thái
+      getPatient(currentPagePatient);
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  };
+
+  const handlePageChange = (event, newPage) => {
+    setCurrentPage(newPage);
+  };
+
+  const handlePageChangePatient = (event, newPage) => {
+    setCurrentPagePatient(newPage);
   };
 
   const EditDoctorModal = () => (
     <StyledModal
       open={showEditDoctorModal}
-      onClose={() => setShowEditDoctorModal(false)}
+      onClose={() => {
+        setShowEditDoctorModal(false);
+        setSelectedProvince(null);
+        setSelectedDistrict(null);
+      }}
     >
       <ModalContent>
         <Typography variant="h5" gutterBottom>
           Chỉnh sửa bác sĩ
         </Typography>
-        <Box component="form" sx={{ mt: 2 }}>
+        <Box
+          component="form"
+          sx={{
+            mt: 2,
+            maxHeight: "80vh", // Giới hạn chiều cao của form
+            overflowY: "auto",
+          }}
+        >
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              fullWidth
+              label="Tên bác sĩ"
+              margin="normal"
+              sx={{ flex: 1 }}
+              defaultValue={selectedDoctor?.name || ""}
+            />
+            <TextField
+              fullWidth
+              label="Email"
+              type="email"
+              margin="normal"
+              sx={{ flex: 1 }}
+              defaultValue={selectedDoctor?.email || ""}
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              fullWidth
+              label="Tên đăng nhập"
+              margin="normal"
+              sx={{ flex: 1 }}
+              defaultValue={selectedDoctor?.username || ""}
+            />
+            <TextField
+              fullWidth
+              label="Số điện thoại"
+              margin="normal"
+              sx={{ flex: 1 }}
+              defaultValue={selectedDoctor?.phone || ""}
+            />
+          </Box>
+
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              fullWidth
+              label="Địa chỉ"
+              margin="normal"
+              sx={{ flex: 1 }}
+              defaultValue={selectedDoctor?.address || ""}
+            />
+            <Box
+              sx={{
+                flex: 1,
+                display: "flex",
+                alignItems: "center",
+                gap: 2,
+              }}
+            >
+              <Typography
+                sx={{
+                  whiteSpace: "nowrap",
+                  marginRight: 2,
+                }}
+              >
+                Giới tính:
+              </Typography>
+              <FormControl>
+                <RadioGroup
+                  row
+                  name="gender"
+                  defaultValue={selectedDoctor?.gender?.toLowerCase() || ""}
+                >
+                  <FormControlLabel
+                    value={"nam"}
+                    control={<Radio />}
+                    label="Nam"
+                  />
+                  <FormControlLabel value="nữ" control={<Radio />} label="Nữ" />
+                </RadioGroup>
+              </FormControl>
+            </Box>
+          </Box>
+
+          <Grid container spacing={2} alignItems="center" mt={0.5} mb={1}>
+            <Grid item xs={6}>
+              <Autocomplete
+                size="small"
+                value={selectedProvince}
+                onChange={(event, newValue) =>
+                  handleSelectChange("province", newValue)
+                }
+                options={options}
+                getOptionLabel={(option) => option.Name || ""}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Tỉnh thành"
+                    sx={{ backgroundColor: "white", borderRadius: "4px" }}
+                  />
+                )}
+                style={{ width: "100%" }}
+              />
+            </Grid>
+            <Grid item xs={6}>
+              <Autocomplete
+                size="small"
+                value={selectedDistrict}
+                onChange={(event, newValue) => {
+                  setSelectedDistrict(newValue);
+                }}
+                options={(selectedProvince && selectedProvince.Districts) || []}
+                getOptionLabel={(option) => option.Name || ""}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    label="Huyện"
+                    sx={{ backgroundColor: "white", borderRadius: "4px" }}
+                  />
+                )}
+                style={{ width: "100%" }}
+              />
+            </Grid>
+          </Grid>
+
+          <Box sx={{ display: "flex", gap: 2 }}>
+            <TextField
+              fullWidth
+              label="Tên phòng khám"
+              margin="normal"
+              sx={{ flex: 2 }}
+              defaultValue={selectedDoctor?.clinicName || ""}
+            />
+            <TextField
+              fullWidth
+              label="Giá"
+              type="number"
+              margin="normal"
+              sx={{ flex: 1 }}
+              defaultValue={selectedDoctor?.price || ""}
+            />
+          </Box>
+
           <TextField
             fullWidth
-            label="Name"
+            label="Chuyên môn"
             margin="normal"
-            defaultValue={selectedDoctor?.name || ""}
+            sx={{ flex: 2 }}
+            multiline
+            rows={2}
+            defaultValue={selectedDoctor?.specialization || ""}
           />
+
           <TextField
             fullWidth
-            label="Specialty"
+            label="Kinh nghiệm"
             margin="normal"
-            defaultValue={selectedDoctor?.specialty || ""}
+            sx={{ flex: 2 }}
+            multiline
+            rows={4}
+            defaultValue={selectedDoctor?.experience || ""}
           />
-          <TextField fullWidth label="Email" type="email" margin="normal" />
+
+          <TextField
+            fullWidth
+            label="Mô tả"
+            margin="normal"
+            multiline
+            rows={4}
+            sx={{ flex: 2 }}
+            defaultValue={selectedDoctor?.description || ""}
+          />
+
           <Box
             sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}
           >
             <Button
               variant="outlined"
-              onClick={() => setShowEditDoctorModal(false)}
+              onClick={() => {
+                setShowEditDoctorModal(false);
+                setSelectedProvince(null);
+                setSelectedDistrict(null);
+              }}
             >
               Hủy
             </Button>
@@ -227,115 +425,628 @@ const AdminInterface = () => {
     </StyledModal>
   );
 
-  const EditPatientModal = () => (
-    <StyledModal
-      open={showEditPatientModal}
-      onClose={() => setShowEditPatientModal(false)}
-    >
-      <ModalContent>
-        <Typography variant="h5" gutterBottom>
-          Edit Patient
-        </Typography>
-        <Box component="form" sx={{ mt: 2 }}>
-          <TextField
-            fullWidth
-            label="Name"
-            margin="normal"
-            defaultValue={selectedPatient?.name || ""}
-          />
-          <TextField fullWidth label="Email" type="email" margin="normal" />
-          <TextField
-            fullWidth
-            label="Health Information"
-            multiline
-            rows={3}
-            margin="normal"
-          />
-          <Box
-            sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}
-          >
-            <Button
-              variant="outlined"
-              onClick={() => setShowEditPatientModal(false)}
-            >
-              Cancel
-            </Button>
-            <Button variant="contained" color="primary">
-              Save Changes
-            </Button>
-          </Box>
-        </Box>
-      </ModalContent>
-    </StyledModal>
-  );
+  const EditPatientModal = () => {
+    const [patientInfo, setPatientInfo] = useState({
+      username: selectedPatient?.username || "",
+      email: selectedPatient?.email || "",
+      name: selectedPatient?.name || "",
+      phone: selectedPatient?.phone || "",
+      address: selectedPatient?.address || "",
+      gender: selectedPatient?.gender || "",
+      dob: selectedPatient?.dob || "",
+    });
 
-  const DoctorModal = () => (
-    <StyledModal
-      open={showDoctorModal}
-      onClose={() => setShowDoctorModal(false)}
-    >
-      <ModalContent>
-        <Typography variant="h5" gutterBottom>
-          Thêm bác sĩ
-        </Typography>
-        <Box component="form" sx={{ mt: 2 }}>
-          <TextField fullWidth label="Name" margin="normal" />
-          <TextField fullWidth label="Specialty" margin="normal" />
-          <TextField fullWidth label="Email" type="email" margin="normal" />
-          <Box
-            sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}
-          >
-            <Button
-              variant="outlined"
-              onClick={() => setShowDoctorModal(false)}
-            >
-              Hủy
-            </Button>
-            <Button variant="contained" color="primary">
-              Xác nhận
-            </Button>
-          </Box>
-        </Box>
-      </ModalContent>
-    </StyledModal>
-  );
+    const handleInputChange = (event) => {
+      const { name, value } = event.target;
+      setPatientInfo((prevInfo) => ({
+        ...prevInfo,
+        [name]: value,
+      }));
+    };
 
-  const PatientModal = () => (
-    <StyledModal
-      open={showPatientModal}
-      onClose={() => setShowPatientModal(false)}
-    >
-      <ModalContent>
-        <Typography variant="h5" gutterBottom>
-          Thêm khách hàng
-        </Typography>
-        <Box component="form" sx={{ mt: 2 }}>
-          <TextField fullWidth label="Name" margin="normal" />
-          <TextField fullWidth label="Email" type="email" margin="normal" />
-          <TextField
-            fullWidth
-            label="Health Information"
-            multiline
-            rows={3}
-            margin="normal"
-          />
-          <Box
-            sx={{ mt: 3, display: "flex", justifyContent: "flex-end", gap: 2 }}
-          >
-            <Button
-              variant="outlined"
-              onClick={() => setShowPatientModal(false)}
+    const handleSubmit = async () => {
+      if (
+        patientInfo.username === "" ||
+        patientInfo.email === "" ||
+        patientInfo.name === "" ||
+        patientInfo.phone === "" ||
+        patientInfo.address === "" ||
+        patientInfo.gender === "" ||
+        patientInfo.dob === ""
+      ) {
+        toast.error("Vui lòng nhập đầy đủ thông tin cho khách hàng!");
+        return;
+      }
+
+      try {
+        console.log({
+          ...patientInfo,
+          id: selectedPatient.id,
+        });
+        await patientApi.updatePatientForAdmin({
+          ...patientInfo,
+          id: selectedPatient.id,
+        });
+        setShowEditPatientModal(false);
+
+        getPatient(currentPagePatient);
+      } catch (error) {
+        console.error("Error updating patient:", error);
+      }
+    };
+
+    return (
+      <StyledModal
+        open={showEditPatientModal}
+        onClose={() => setShowEditPatientModal(false)}
+      >
+        <ModalContent>
+          <Typography variant="h5" gutterBottom>
+            Chỉnh sửa khách hàng
+          </Typography>
+          <Box component="form" sx={{ mt: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên khách hàng"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="name"
+                value={patientInfo.name}
+                onChange={handleInputChange}
+              />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                margin="normal"
+                disabled={true}
+                sx={{ flex: 1 }}
+                name="email"
+                value={patientInfo.email}
+                onChange={handleInputChange}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên đăng nhập"
+                margin="normal"
+                disabled={true}
+                sx={{ flex: 1 }}
+                name="username"
+                value={patientInfo.username}
+                onChange={handleInputChange}
+              />
+              <TextField
+                fullWidth
+                label="Số điện thoại"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="phone"
+                value={patientInfo.phone}
+                onChange={handleInputChange}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Ngày sinh"
+                margin="normal"
+                type="date"
+                InputLabelProps={{ shrink: true }}
+                sx={{ flex: 1 }}
+                name="dob"
+                value={patientInfo.dob}
+                onChange={handleInputChange}
+              />
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    whiteSpace: "nowrap",
+                    marginRight: 2,
+                  }}
+                >
+                  Giới tính:
+                </Typography>
+                <FormControl>
+                  <RadioGroup
+                    row
+                    name="gender"
+                    value={patientInfo.gender}
+                    onChange={handleInputChange}
+                  >
+                    <FormControlLabel
+                      value="nam"
+                      control={<Radio />}
+                      label="Nam"
+                    />
+                    <FormControlLabel
+                      value="nữ"
+                      control={<Radio />}
+                      label="Nữ"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Box>
+            </Box>
+
+            <TextField
+              fullWidth
+              label="Địa chỉ"
+              margin="normal"
+              sx={{ flex: 1 }}
+              name="address"
+              value={patientInfo.address}
+              onChange={handleInputChange}
+            />
+
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+              }}
             >
-              Hủy
-            </Button>
-            <Button variant="contained" color="primary">
-              Xác nhận
-            </Button>
+              <Button
+                variant="outlined"
+                onClick={() => setShowEditPatientModal(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+              >
+                Xác nhận
+              </Button>
+            </Box>
           </Box>
-        </Box>
-      </ModalContent>
-    </StyledModal>
-  );
+        </ModalContent>
+      </StyledModal>
+    );
+  };
+
+  useEffect(() => {
+    getCity();
+    getDoctor(currentPage);
+    getPatient(currentPagePatient);
+  }, []);
+
+  useEffect(() => {
+    getCity();
+    getDoctor(currentPage);
+  }, [currentPage]);
+
+  useEffect(() => {
+    getCity();
+    getPatient(currentPagePatient);
+  }, [currentPagePatient]);
+
+  const DoctorModal = () => {
+    const [imgFile, setImgFile] = useState(null); // State để lưu file ảnh
+    const [formData, setFormData] = useState({
+      name: "",
+      email: "",
+      username: "",
+      password: "",
+      phone: "",
+      address: "",
+      gender: "Nam", // Mặc định là Nam
+      city: "",
+      district: "",
+    });
+
+    const [selectedProvince, setSelectedProvince] = useState(null);
+    const [selectedDistrict, setSelectedDistrict] = useState(null);
+
+    const handleFileChange = (event) => {
+      const file = event.target.files[0];
+      if (file) {
+        setImgFile(file);
+      }
+    };
+
+    const handleInputChange = (event) => {
+      const { name, value } = event.target;
+      setFormData((prevData) => ({
+        ...prevData,
+        [name]: value,
+      }));
+    };
+
+    const handleSubmit = () => {
+      const createUserRequest = {
+        name: formData.name,
+        email: formData.email,
+        username: formData.username,
+        password: formData.password,
+        phone: formData.phone,
+        address: formData.address,
+        gender: formData.gender,
+        city: selectedProvince?.Name || "", // Lấy tên tỉnh
+        district: selectedDistrict?.Name || "", // Lấy tên huyện
+        img: imgFile ? imgFile.name : "", // Lưu tên file ảnh
+      };
+
+      console.log(createUserRequest); // Gửi đối tượng này đến API
+      // Gọi API ở đây với createUserRequest
+    };
+
+    const handleProvinceChange = (event, newValue) => {
+      setSelectedProvince(newValue);
+      // Không reset formData
+      setSelectedDistrict(null); // Reset huyện khi chọn tỉnh mới
+    };
+
+    return (
+      <StyledModal
+        open={showDoctorModal}
+        onClose={() => {
+          setShowDoctorModal(false);
+          setSelectedProvince(null); // Reset tỉnh
+          setSelectedDistrict(null); // Reset huyện
+          setImgFile(null); // Reset file ảnh
+          setFormData({
+            name: "",
+            email: "",
+            username: "",
+            password: "",
+            phone: "",
+            address: "",
+            gender: "Nam",
+          });
+        }}
+      >
+        <ModalContent>
+          <Typography variant="h5" gutterBottom>
+            Thêm bác sĩ
+          </Typography>
+          <Box component="form" sx={{ mt: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên bác sĩ"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="name"
+                value={formData.name}
+                onChange={handleInputChange}
+              />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="email"
+                value={formData.email}
+                onChange={handleInputChange}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên đăng nhập"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="username"
+                value={formData.username}
+                onChange={handleInputChange}
+              />
+              <TextField
+                fullWidth
+                label="Mật khẩu"
+                type="password"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="password"
+                value={formData.password}
+                onChange={handleInputChange}
+              />
+            </Box>
+
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Số điện thoại"
+                margin="normal"
+                sx={{ flex: 1 }}
+                name="phone"
+                value={formData.phone}
+                onChange={handleInputChange}
+              />
+              <Box
+                sx={{
+                  flex: 1,
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    whiteSpace: "nowrap",
+                    marginRight: 2,
+                  }}
+                >
+                  Giới tính:
+                </Typography>
+                <FormControl>
+                  <RadioGroup
+                    row
+                    name="gender"
+                    value={formData.gender}
+                    onChange={handleInputChange}
+                  >
+                    <FormControlLabel
+                      value="Nam"
+                      control={<Radio />}
+                      label="Nam"
+                    />
+                    <FormControlLabel
+                      value="Nữ"
+                      control={<Radio />}
+                      label="Nữ"
+                    />
+                  </RadioGroup>
+                </FormControl>
+              </Box>
+            </Box>
+
+            <TextField
+              fullWidth
+              label="Địa chỉ"
+              margin="normal"
+              sx={{ flex: 1 }}
+              name="address"
+              value={formData.address}
+              onChange={handleInputChange}
+            />
+
+            <Grid container spacing={2} alignItems="center" mt={0.5}>
+              <Grid item xs={6}>
+                <Autocomplete
+                  size="small"
+                  value={selectedProvince}
+                  onChange={handleProvinceChange} // Sử dụng hàm mới
+                  options={options}
+                  getOptionLabel={(option) => option.Name || ""}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Tỉnh thành"
+                      sx={{ backgroundColor: "white", borderRadius: "4px" }}
+                    />
+                  )}
+                  style={{ width: "100%" }}
+                />
+              </Grid>
+              <Grid item xs={6}>
+                <Autocomplete
+                  size="small"
+                  value={selectedDistrict}
+                  onChange={(event, newValue) => setSelectedDistrict(newValue)}
+                  options={
+                    (selectedProvince && selectedProvince.Districts) || []
+                  }
+                  getOptionLabel={(option) => option.Name || ""}
+                  renderInput={(params) => (
+                    <TextField
+                      {...params}
+                      label="Huyện"
+                      sx={{ backgroundColor: "white", borderRadius: "4px" }}
+                    />
+                  )}
+                  style={{ width: "100%" }}
+                />
+              </Grid>
+            </Grid>
+
+            {/* Phần tải ảnh */}
+            <Box sx={{ mt: 2 }}>
+              <input type="file" accept="image/*" onChange={handleFileChange} />
+            </Box>
+
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => {
+                  setShowDoctorModal(false);
+                  setSelectedProvince(null);
+                  setSelectedDistrict(null);
+                  setImgFile(null);
+                }}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit} // Gọi hàm tạo đối tượng
+              >
+                Xác nhận
+              </Button>
+            </Box>
+          </Box>
+        </ModalContent>
+      </StyledModal>
+    );
+  };
+
+  const PatientModal = () => {
+    const [patientInfo, setPatientInfo] = useState({
+      username: "",
+      email: "",
+      password: "",
+      name: "",
+      phone: "",
+      address: "",
+      gender: "",
+    });
+
+    const handleInputChange = (event) => {
+      const { name, value } = event.target;
+      setPatientInfo((prevInfo) => ({
+        ...prevInfo,
+        [name]: value,
+      }));
+    };
+
+    const handleSubmit = async () => {
+      try {
+        const response = await patientApi.create(patientInfo); // Gọi API để thêm bệnh nhân
+        // Reset form sau khi thêm thành công
+        console.log(response);
+
+        setPatientInfo({
+          username: "",
+          email: "",
+          password: "",
+          name: "",
+          phone: "",
+          address: "",
+          gender: "",
+        });
+        setShowPatientModal(false); // Đóng modal
+        toast.success("Thêm khách hàng thành công");
+      } catch (error) {
+        console.error("Error adding patient:", error);
+        toast.error("Thêm khách hàng thất bại. Vui lòng thử lại.");
+      }
+    };
+
+    return (
+      <StyledModal
+        open={showPatientModal}
+        onClose={() => setShowPatientModal(false)}
+      >
+        <ModalContent>
+          <Typography variant="h5" gutterBottom>
+            Thêm khách hàng
+          </Typography>
+          <Box component="form" sx={{ mt: 2 }}>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên"
+                margin="normal"
+                name="name"
+                value={patientInfo.name}
+                onChange={handleInputChange}
+                sx={{ flex: 1 }}
+              />
+              <TextField
+                fullWidth
+                label="Email"
+                type="email"
+                margin="normal"
+                name="email"
+                value={patientInfo.email}
+                onChange={handleInputChange}
+                sx={{ flex: 1 }}
+              />
+            </Box>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Tên đăng nhập"
+                margin="normal"
+                name="username"
+                value={patientInfo.username}
+                onChange={handleInputChange}
+              />
+              <TextField
+                fullWidth
+                label="Mật khẩu"
+                type="password"
+                margin="normal"
+                name="password"
+                value={patientInfo.password}
+                onChange={handleInputChange}
+              />
+            </Box>
+            <Box sx={{ display: "flex", gap: 2 }}>
+              <TextField
+                fullWidth
+                label="Số điện thoại"
+                margin="normal"
+                name="phone"
+                value={patientInfo.phone}
+                onChange={handleInputChange}
+              />
+              <FormControl
+                variant="outlined"
+                fullWidth
+                margin="normal"
+                required
+              >
+                <InputLabel>Giới tính</InputLabel>
+                <Select
+                  name="gender"
+                  value={patientInfo.gender}
+                  onChange={handleInputChange}
+                  label="Giới tính"
+                >
+                  <MenuItem value="Nam">Nam</MenuItem>
+                  <MenuItem value="Nữ">Nữ</MenuItem>
+                </Select>
+              </FormControl>
+            </Box>
+            <TextField
+              fullWidth
+              label="Địa chỉ"
+              margin="normal"
+              name="address"
+              value={patientInfo.address}
+              onChange={handleInputChange}
+            />
+            <Box
+              sx={{
+                mt: 3,
+                display: "flex",
+                justifyContent: "flex-end",
+                gap: 2,
+              }}
+            >
+              <Button
+                variant="outlined"
+                onClick={() => setShowPatientModal(false)}
+              >
+                Hủy
+              </Button>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={handleSubmit}
+              >
+                Xác nhận
+              </Button>
+            </Box>
+          </Box>
+        </ModalContent>
+      </StyledModal>
+    );
+  };
 
   return (
     <StyledBox>
@@ -415,7 +1126,7 @@ const AdminInterface = () => {
                   <FaUserMd size={24} color="#1976d2" />
                   <Box sx={{ ml: 2 }}>
                     <Typography variant="subtitle1">Tổng bác số sĩ</Typography>
-                    <Typography variant="h4">{dummyDoctors.length}</Typography>
+                    <Typography variant="h4">{totalDoctor}</Typography>
                   </Box>
                 </Box>
               </Paper>
@@ -426,7 +1137,7 @@ const AdminInterface = () => {
                     <Typography variant="subtitle1">
                       Tổng số khách hàng
                     </Typography>
-                    <Typography variant="h4">{dummyPatients.length}</Typography>
+                    <Typography variant="h4">{totalPatient}</Typography>
                   </Box>
                 </Box>
               </Paper>
@@ -454,7 +1165,14 @@ const AdminInterface = () => {
                   <Button
                     style={{ marginRight: 10, textTransform: "none" }}
                     variant="contained"
-                    onClick={() => setShowDoctorModal(true)}
+                    onClick={() => {
+                      if (selectedRow) {
+                        navigate("/admin/doctor-detail", {
+                          state: { doctor: selectedRow },
+                        });
+                      }
+                    }}
+                    disabled={!selectedRow}
                   >
                     Xem chi tiết
                   </Button>
@@ -472,23 +1190,38 @@ const AdminInterface = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Tên</TableCell>
-                      <TableCell>Email</TableCell>
-                      <TableCell>Số điện thoại</TableCell>
-                      <TableCell>Địa chỉ</TableCell>
-                      <TableCell>Giới tính</TableCell>
-                      <TableCell>Trạng thái</TableCell>
-                      <TableCell>Hành động</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Tên</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Số điện thoại
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Địa chỉ</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Giới tính
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Trạng thái
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {dummyDoctors.map((doctor) => (
-                      <TableRow key={doctor.id}>
-                        <TableCell>{doctor.name}</TableCell>
-                        <TableCell>{doctor.email}</TableCell>
-                        <TableCell>{doctor.phone}</TableCell>
-                        <TableCell>{doctor.address}</TableCell>
-                        <TableCell>{doctor.gender}</TableCell>
+                    {doctorData?.map((doctor) => (
+                      <TableRow
+                        key={doctor?.id}
+                        onClick={() => setSelectedRow(doctor)}
+                        selected={selectedRow?.id === doctor?.id}
+                        hover
+                        sx={{ cursor: "pointer" }}
+                      >
+                        <TableCell>{doctor?.name}</TableCell>
+                        <TableCell>{doctor?.email}</TableCell>
+                        <TableCell>{doctor?.phone}</TableCell>
+                        <TableCell sx={{ width: 300 }}>
+                          {doctor?.address} - {doctor?.district} -{" "}
+                          {doctor?.city}
+                        </TableCell>
+                        <TableCell>{doctor?.gender}</TableCell>
                         <TableCell>
                           <Box
                             sx={{
@@ -498,21 +1231,16 @@ const AdminInterface = () => {
                             }}
                           >
                             <IOSSwitch
-                              checked={doctor.status === "Active"}
-                              onChange={() =>
-                                handleStatusChange(doctor, "doctor")
-                              }
+                              checked={doctor?.enable === true}
+                              onChange={() => handleStatusChange(doctor?.id)}
                             />
                             <Typography
                               sx={{
-                                color:
-                                  doctor.status === "Active"
-                                    ? "#2ECA45"
-                                    : "#666",
+                                color: doctor?.enable ? "#2ECA45" : "#666",
                                 fontSize: "0.875rem",
                               }}
                             >
-                              {doctor.status}
+                              {doctor?.enable ? "Active" : "Inactive"}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -522,12 +1250,19 @@ const AdminInterface = () => {
                             onClick={() => {
                               setSelectedDoctor(doctor);
                               setShowEditDoctorModal(true);
+                              const provinceObj = options.find(
+                                (p) => p.Name === doctor.city
+                              );
+                              setSelectedProvince(provinceObj);
+                              if (provinceObj) {
+                                const districtObj = provinceObj.Districts.find(
+                                  (d) => d.Name === doctor.district
+                                );
+                                setSelectedDistrict(districtObj);
+                              }
                             }}
                           >
                             <MdEdit />
-                          </IconButton>
-                          <IconButton color="error">
-                            <MdDelete />
                           </IconButton>
                         </TableCell>
                       </TableRow>
@@ -535,6 +1270,15 @@ const AdminInterface = () => {
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              <Box display="flex" justifyContent="center" marginTop={3}>
+                <Pagination
+                  count={pageMax}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                />
+              </Box>
             </Box>
           )}
 
@@ -548,10 +1292,18 @@ const AdminInterface = () => {
                   <Button
                     style={{ marginRight: 10, textTransform: "none" }}
                     variant="contained"
-                    onClick={() => setShowDoctorModal(true)}
+                    onClick={() => {
+                      if (selectedRowPatient) {
+                        navigate("/admin/patient-detail", {
+                          state: { patient: selectedRowPatient },
+                        });
+                      }
+                    }}
+                    disabled={!selectedRowPatient}
                   >
                     Xem chi tiết
                   </Button>
+
                   <Button
                     style={{ textTransform: "none" }}
                     variant="contained"
@@ -566,17 +1318,43 @@ const AdminInterface = () => {
                 <Table>
                   <TableHead>
                     <TableRow>
-                      <TableCell>Patient ID</TableCell>
-                      <TableCell>Name</TableCell>
-                      <TableCell>Status</TableCell>
-                      <TableCell>Actions</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Tên</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Email</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Số điện thoại
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Tên tài khoản
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>Địa chỉ</TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Giới tính
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Ngày sinh
+                      </TableCell>
+                      <TableCell sx={{ fontWeight: "bold" }}>
+                        Trạng thái
+                      </TableCell>
+                      <TableCell></TableCell>
                     </TableRow>
                   </TableHead>
                   <TableBody>
-                    {dummyPatients.map((patient) => (
-                      <TableRow key={patient.id}>
-                        <TableCell>{patient.id}</TableCell>
-                        <TableCell>{patient.name}</TableCell>
+                    {patientData.map((patient) => (
+                      <TableRow
+                        key={patient.id}
+                        onClick={() => setSelectedRowPatient(patient)}
+                        selected={selectedRowPatient?.id === patient.id}
+                        hover
+                        sx={{ cursor: "pointer" }}
+                      >
+                        <TableCell>{patient?.name}</TableCell>
+                        <TableCell>{patient?.email}</TableCell>
+                        <TableCell>{patient?.phone}</TableCell>
+                        <TableCell>{patient?.username}</TableCell>
+                        <TableCell>{patient?.address}</TableCell>
+                        <TableCell>{patient?.gender}</TableCell>
+                        <TableCell>{patient?.dob}</TableCell>
                         <TableCell>
                           <Box
                             sx={{
@@ -586,21 +1364,18 @@ const AdminInterface = () => {
                             }}
                           >
                             <IOSSwitch
-                              checked={patient.status === "Active"}
+                              checked={patient?.enable === true}
                               onChange={() =>
-                                handleStatusChange(patient, "patient")
+                                handleStatusPatientChange(patient?.id)
                               }
                             />
                             <Typography
                               sx={{
-                                color:
-                                  patient.status === "Active"
-                                    ? "#2ECA45"
-                                    : "#666",
+                                color: patient?.enable ? "#2ECA45" : "#666",
                                 fontSize: "0.875rem",
                               }}
                             >
-                              {patient.status}
+                              {patient.enable ? "Active" : "Inactive"}
                             </Typography>
                           </Box>
                         </TableCell>
@@ -614,15 +1389,21 @@ const AdminInterface = () => {
                           >
                             <MdEdit />
                           </IconButton>
-                          <IconButton color="error">
-                            <MdDelete />
-                          </IconButton>
                         </TableCell>
                       </TableRow>
                     ))}
                   </TableBody>
                 </Table>
               </TableContainer>
+
+              <Box display="flex" justifyContent="center" marginTop={3}>
+                <Pagination
+                  count={pageMaxPatient}
+                  page={currentPagePatient}
+                  onChange={handlePageChangePatient}
+                  color="primary"
+                />
+              </Box>
             </Box>
           )}
         </Box>

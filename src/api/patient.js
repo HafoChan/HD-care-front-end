@@ -24,8 +24,10 @@ const patientApi = {
   create(data) {
     return axiosInstance.post("/patient", data);
   },
+
   async updatePatient(data) {
     try {
+      console.log(data);
       const response = await axiosInstance.put(`/patient`, data);
       console.log("Update response:", response);
       return response;
@@ -34,6 +36,22 @@ const patientApi = {
       throw error;
     }
   },
+
+  async updatePatientForAdmin(data) {
+    try {
+      console.log("alo");
+      const response = await axiosInstance.put(
+        `/patient/update-by-admin`,
+        data
+      );
+      console.log("Update response:", response);
+      return response;
+    } catch (error) {
+      console.error("Update error:", error);
+      throw error;
+    }
+  },
+
   getInfo() {
     return axiosInstance.get("/patient/my-info");
   },
@@ -46,6 +64,28 @@ const patientApi = {
     return axiosInstance.post(`/patient/create-password`, {
       password: password,
     });
+  },
+
+  getAllByAdmin(page) {
+    try {
+      const response = axiosInstance.get(
+        `/patient/get-all-by-admin?page=${page}`
+      );
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
+
+  updateEnablePatient(patientId) {
+    try {
+      const response = axiosInstance.post(`/patient/active/${patientId}`);
+      console.log(`/doctor/active/${patientId}`);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
   },
 };
 export default patientApi;

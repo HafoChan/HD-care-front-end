@@ -73,6 +73,24 @@ export const doctor = {
         `/appointment/doctor-appointment/manage-patient?${query}`
       );
       console.log(`/appointment/doctor-appointment/manage-patient?${query}`);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
+
+  getOtherDoctor(id) {
+    try {
+      const response = axiosClient.get(`/doctor/otherDoctor/${id}`);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
+
+  getAllByAdmin(page) {
+    try {
+      const response = axiosClient.get(`/doctor/get-all-by-admin?page=${page}`);
       console.log(response);
       return response;
     } catch (error) {
@@ -80,11 +98,13 @@ export const doctor = {
     }
   },
 
-  getOtherDoctor(id){
+  updateEnableDoctor(doctorId) {
     try {
-      const response = axiosClient.get(`/doctor/otherDoctor/${id}`);
+      const response = axiosClient.post(`/doctor/active/${doctorId}`);
+      console.log(`/doctor/active/${doctorId}`);
       return response;
     } catch (error) {
+      console.error("Error:", error);
     }
-  }
+  },
 };
