@@ -107,4 +107,11 @@ export const doctor = {
       console.error("Error:", error);
     }
   },
+
+  getStatistic() {
+    try {
+      const response = axiosClient.get(`/doctor/statistic`);
+      return response;
+    } catch (error) {}
+  },
 };

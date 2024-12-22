@@ -30,8 +30,9 @@ import {
   InputLabel,
   Select,
   MenuItem,
+  Avatar,
 } from "@mui/material";
-import { FaUserMd, FaUsers, FaExclamationTriangle } from "react-icons/fa";
+import { FaUserMd, FaUsers } from "react-icons/fa";
 import {
   MdEdit,
   MdAdd,
@@ -39,11 +40,14 @@ import {
   MdLocalHospital,
   MdPeople,
 } from "react-icons/md";
+import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import axios from "axios";
 import { useNavigate } from "react-router-dom";
 import { doctor } from "../../api/doctor";
 import patientApi from "../../api/patient";
 import { toast } from "react-toastify";
+import EmojiEventsIcon from "@mui/icons-material/EmojiEvents";
+import { remove } from "../../service/otherService/localStorage";
 
 const StyledBox = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -60,6 +64,8 @@ const StyledDrawer = styled(Drawer)(() => ({
     borderRight: "1px solid rgba(0, 0, 0, 0.12)",
   },
 }));
+
+const drawerWidth = 240;
 
 const StyledModal = styled(Modal)(() => ({
   display: "flex",
@@ -634,6 +640,12 @@ const AdminInterface = () => {
     getPatient(currentPagePatient);
   }, [currentPagePatient]);
 
+  const handleLogout = () => {
+    console.log("Đang thực hiện đăng xuất...");
+    remove();
+    window.location.href = "/login";
+  };
+
   const DoctorModal = () => {
     const [imgFile, setImgFile] = useState(null); // State để lưu file ảnh
     const [formData, setFormData] = useState({
@@ -1047,6 +1059,105 @@ const AdminInterface = () => {
       </StyledModal>
     );
   };
+  const AdminDashboard = () => {
+    const [open, setOpen] = useState(true);
+    const [doctorsData, setDoctorData] = useState([]);
+
+    useEffect(() => {
+      const fetchDoctorData = async () => {
+        try {
+          const response = await doctor.getStatistic();
+          setDoctorData(response.result);
+        } catch (error) {
+          console.error("Failed to fetch doctor statistics:", error);
+        }
+      };
+
+      fetchDoctorData();
+    }, []);
+    const handleDrawerToggle = () => {
+      setOpen(!open);
+    };
+
+    return (
+      <Box sx={{ display: "flex", margin: 2 }}>
+        <Box
+          component="main"
+          sx={{
+            flexGrow: 1,
+            p: 3,
+            width: { sm: `calc(100% - ${drawerWidth}px)` },
+            margin: 0,
+          }}
+        >
+          <Paper sx={{ p: 3, pb: 6 }}>
+            <Typography variant="h5" gutterBottom mb={4}>
+              Bác sĩ nổi bật
+            </Typography>
+            <Grid container spacing={3}>
+              {doctorsData?.map((doctor, index) => (
+                <Grid item xs={12} md={4} key={index}>
+                  <Paper
+                    elevation={3}
+                    sx={{
+                      p: 3,
+                      position: "relative",
+                      textAlign: "center",
+                      transition: "transform 0.3s",
+                      "&:hover": {
+                        transform: "scale(1.05)",
+                      },
+                    }}
+                  >
+                    <Box sx={{ position: "absolute", top: -20, left: 20 }}>
+                      <EmojiEventsIcon
+                        sx={{
+                          fontSize: 40,
+                          color:
+                            index === 0
+                              ? "#FFD700"
+                              : index === 1
+                              ? "#C0C0C0"
+                              : "#CD7F32",
+                        }}
+                      />
+                    </Box>
+                    <Avatar
+                      src={doctor.img}
+                      alt={doctor.name}
+                      sx={{
+                        width: 150,
+                        height: 150,
+                        margin: "0 auto 16px",
+                        border: 2,
+                        borderColor: "#cccccc",
+                      }}
+                    />
+                    <Typography variant="h6">{doctor.name}</Typography>
+                    <Typography color="textSecondary" sx={{ mt: 1 }}>
+                      {doctor.count} lượt khám
+                    </Typography>
+                    <Box
+                      sx={{
+                        mt: 2,
+                        bgcolor: "primary.light",
+                        borderRadius: 20,
+                        py: 1,
+                        px: 2,
+                        display: "inline-block",
+                      }}
+                    >
+                      <Typography color="white">Hạng {index + 1}</Typography>
+                    </Box>
+                  </Paper>
+                </Grid>
+              ))}
+            </Grid>
+          </Paper>
+        </Box>
+      </Box>
+    );
+  };
 
   return (
     <StyledBox>
@@ -1109,50 +1220,76 @@ const AdminInterface = () => {
                 }}
               />
             </StyledListItem>
+            <StyledListItem
+              button
+              selected={activeTab === "logout"}
+              onClick={handleLogout}
+            >
+              <ListItemIcon style={{ fontSize: 24 }}>
+                <ExitToAppIcon
+                  color={activeTab === "logout" ? "#1976d2" : "#666"}
+                />
+              </ListItemIcon>
+              <ListItemText
+                primary="Đăng xuất"
+                sx={{
+                  color: activeTab === "logout" ? "#1976d2" : "inherit",
+                }}
+              />
+            </StyledListItem>
           </List>
         </StyledDrawer>
 
         <Box component="main" sx={{ flexGrow: 1, p: 3 }}>
           {activeTab === "dashboard" && (
-            <Box
-              sx={{
-                display: "grid",
-                gridTemplateColumns: "repeat(3, 1fr)",
-                gap: 3,
-              }}
-            >
-              <Paper sx={{ p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <FaUserMd size={24} color="#1976d2" />
-                  <Box sx={{ ml: 2 }}>
-                    <Typography variant="subtitle1">Tổng bác số sĩ</Typography>
-                    <Typography variant="h4">{totalDoctor}</Typography>
+            <>
+              <Box
+                sx={{
+                  display: "flex",
+                  gap: 3,
+                  width: "100%",
+                  justifyContent: "center",
+                }}
+              >
+                <Paper
+                  sx={{
+                    p: 3,
+                    maxWidth: 300,
+                    justifyContent: "center",
+                    flex: 1,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <FaUserMd size={24} color="#1976d2" />
+                    <Box sx={{ ml: 2 }}>
+                      <Typography variant="subtitle1">
+                        Tổng bác số sĩ
+                      </Typography>
+                      <Typography variant="h4">{totalDoctor}</Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </Paper>
-              <Paper sx={{ p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <FaUsers size={24} color="#2e7d32" />
-                  <Box sx={{ ml: 2 }}>
-                    <Typography variant="subtitle1">
-                      Tổng số khách hàng
-                    </Typography>
-                    <Typography variant="h4">{totalPatient}</Typography>
+                </Paper>
+                <Paper
+                  sx={{
+                    p: 3,
+                    maxWidth: 300,
+                    justifyContent: "center",
+                    flex: 1,
+                  }}
+                >
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <FaUsers size={24} color="#2e7d32" />
+                    <Box sx={{ ml: 2 }}>
+                      <Typography variant="subtitle1">
+                        Tổng số khách hàng
+                      </Typography>
+                      <Typography variant="h4">{totalPatient}</Typography>
+                    </Box>
                   </Box>
-                </Box>
-              </Paper>
-              <Paper sx={{ p: 3 }}>
-                <Box sx={{ display: "flex", alignItems: "center" }}>
-                  <FaExclamationTriangle size={24} color="#ed6c02" />
-                  <Box sx={{ ml: 2 }}>
-                    <Typography variant="subtitle1">
-                      Cuộc hẹn chưa được duyệt
-                    </Typography>
-                    <Typography variant="h4">2</Typography>
-                  </Box>
-                </Box>
-              </Paper>
-            </Box>
+                </Paper>
+              </Box>
+              <AdminDashboard />
+            </>
           )}
 
           {activeTab === "doctors" && (
@@ -1326,13 +1463,6 @@ const AdminInterface = () => {
                       <TableCell sx={{ fontWeight: "bold" }}>
                         Tên tài khoản
                       </TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>Địa chỉ</TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Giới tính
-                      </TableCell>
-                      <TableCell sx={{ fontWeight: "bold" }}>
-                        Ngày sinh
-                      </TableCell>
                       <TableCell sx={{ fontWeight: "bold" }}>
                         Trạng thái
                       </TableCell>
@@ -1352,9 +1482,6 @@ const AdminInterface = () => {
                         <TableCell>{patient?.email}</TableCell>
                         <TableCell>{patient?.phone}</TableCell>
                         <TableCell>{patient?.username}</TableCell>
-                        <TableCell>{patient?.address}</TableCell>
-                        <TableCell>{patient?.gender}</TableCell>
-                        <TableCell>{patient?.dob}</TableCell>
                         <TableCell>
                           <Box
                             sx={{
