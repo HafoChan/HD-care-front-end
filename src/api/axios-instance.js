@@ -40,8 +40,10 @@ axiosClient.interceptors.response.use(
   function (config) {
     if (config.data?.result?.roles === "DOCTOR") {
       window.location.href = "doctor/schedule-management";
-    } else if (config.data?.result?.roles === "PATIENT")
+    } else if (config.data?.result?.roles === "PATIENT") {
       window.location.href = "/home";
+    } else if (config.data?.result?.roles === "ADMIN")
+      window.location.href = "/admin";
 
     return config.data;
   },

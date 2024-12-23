@@ -4,6 +4,7 @@ export const doctor = {
   createDoctor(data) {
     try {
       const response = axiosClient.post("/doctor", data);
+      console.log(response);
       return response;
     } catch (error) {
       console.error("Error:", error);

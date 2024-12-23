@@ -257,6 +257,7 @@ const AdminInterface = () => {
               label="Email"
               type="email"
               margin="normal"
+              disabled={true}
               sx={{ flex: 1 }}
               defaultValue={selectedDoctor?.email || ""}
             />
@@ -267,6 +268,7 @@ const AdminInterface = () => {
               fullWidth
               label="Tên đăng nhập"
               margin="normal"
+              disabled={true}
               sx={{ flex: 1 }}
               defaultValue={selectedDoctor?.username || ""}
             />
@@ -678,7 +680,7 @@ const AdminInterface = () => {
       }));
     };
 
-    const handleSubmit = () => {
+    const handleSubmit = async () => {
       const createUserRequest = {
         name: formData.name,
         email: formData.email,
@@ -687,19 +689,46 @@ const AdminInterface = () => {
         phone: formData.phone,
         address: formData.address,
         gender: formData.gender,
-        city: selectedProvince?.Name || "", // Lấy tên tỉnh
-        district: selectedDistrict?.Name || "", // Lấy tên huyện
-        img: imgFile ? imgFile.name : "", // Lưu tên file ảnh
+        city: selectedProvince?.Name || "",
+        district: selectedDistrict?.Name || "",
       };
 
-      console.log(createUserRequest); // Gửi đối tượng này đến API
-      // Gọi API ở đây với createUserRequest
+      if (
+        formData.name === "" ||
+        formData.email === "" ||
+        formData.username === "" ||
+        formData.password === "" ||
+        formData.phone === "" ||
+        formData.address === "" ||
+        formData.gender === "" ||
+        formData.city === "" ||
+        formData.district === ""
+      ) {
+        toast.error("Vui lòng nhập đầy đủ thông tin cho bác sĩ!");
+        return;
+      }
+
+      let response;
+
+      try {
+        response = await doctor.createDoctor(createUserRequest);
+        console.log(response);
+
+        if (response?.code === 1028) {
+          toast.success("Thêm bác sĩ thành công!");
+          setShowDoctorModal(false);
+        } else {
+          toast.error("Thêm bác sĩ thất bại!");
+          toast.error(response?.message);
+        }
+      } catch (e) {
+        console.error("Error creating doctor:", e);
+      }
     };
 
     const handleProvinceChange = (event, newValue) => {
       setSelectedProvince(newValue);
-      // Không reset formData
-      setSelectedDistrict(null); // Reset huyện khi chọn tỉnh mới
+      setSelectedDistrict(null);
     };
 
     return (
@@ -707,9 +736,9 @@ const AdminInterface = () => {
         open={showDoctorModal}
         onClose={() => {
           setShowDoctorModal(false);
-          setSelectedProvince(null); // Reset tỉnh
-          setSelectedDistrict(null); // Reset huyện
-          setImgFile(null); // Reset file ảnh
+          setSelectedProvince(null);
+          setSelectedDistrict(null);
+          setImgFile(null);
           setFormData({
             name: "",
             email: "",
@@ -925,22 +954,39 @@ const AdminInterface = () => {
     };
 
     const handleSubmit = async () => {
+      if (
+        patientInfo.username === "" ||
+        patientInfo.email === "" ||
+        patientInfo.password === "" ||
+        patientInfo.name === "" ||
+        patientInfo.phone === "" ||
+        patientInfo.address === "" ||
+        patientInfo.gender === ""
+      ) {
+        toast.error("Vui lòng nhập đầy đủ thông tin cho bệnh nhân!");
+        return;
+      }
+
       try {
-        const response = await patientApi.create(patientInfo); // Gọi API để thêm bệnh nhân
-        // Reset form sau khi thêm thành công
+        const response = await patientApi.create(patientInfo);
         console.log(response);
 
-        setPatientInfo({
-          username: "",
-          email: "",
-          password: "",
-          name: "",
-          phone: "",
-          address: "",
-          gender: "",
-        });
-        setShowPatientModal(false); // Đóng modal
-        toast.success("Thêm khách hàng thành công");
+        if (response.code === 1028) {
+          setPatientInfo({
+            username: "",
+            email: "",
+            password: "",
+            name: "",
+            phone: "",
+            address: "",
+            gender: "",
+          });
+          setShowPatientModal(false); // Đóng modal
+          toast.success("Thêm khách hàng thành công");
+        } else {
+          toast.error("Thêm khách hàng thất bại. Vui lòng thử lại.");
+          toast.error(response.message);
+        }
       } catch (error) {
         console.error("Error adding patient:", error);
         toast.error("Thêm khách hàng thất bại. Vui lòng thử lại.");
@@ -1140,10 +1186,10 @@ const AdminInterface = () => {
                     <Box
                       sx={{
                         mt: 2,
-                        bgcolor: "primary.light",
+                        bgcolor: "#1976d2",
                         borderRadius: 20,
                         py: 1,
-                        px: 2,
+                        px: 4,
                         display: "inline-block",
                       }}
                     >
@@ -1164,7 +1210,11 @@ const AdminInterface = () => {
       <Box sx={{ display: "flex" }}>
         <StyledDrawer variant="permanent">
           <Box sx={{ p: 3 }}>
-            <Typography variant="h6" gutterBottom>
+            <Typography
+              variant="h5"
+              gutterBottom
+              sx={{ fontWeight: 600, mb: 0 }}
+            >
               Trang quản trị
             </Typography>
           </Box>
@@ -1263,7 +1313,7 @@ const AdminInterface = () => {
                     <FaUserMd size={24} color="#1976d2" />
                     <Box sx={{ ml: 2 }}>
                       <Typography variant="subtitle1">
-                        Tổng bác số sĩ
+                        Tổng số bác sĩ
                       </Typography>
                       <Typography variant="h4">{totalDoctor}</Typography>
                     </Box>
