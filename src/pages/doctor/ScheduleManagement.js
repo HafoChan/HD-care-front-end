@@ -1,8 +1,33 @@
 import * as React from "react";
 import PropTypes from "prop-types";
-import { Box, Typography, Tabs, Tab } from "@mui/material";
+import {
+  Box,
+  Typography,
+  Tabs,
+  Tab,
+  Container,
+  Card,
+  Grid,
+  TextField,
+  InputAdornment,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  Button,
+  Chip,
+  IconButton,
+  TableContainer,
+  Table,
+  TableHead,
+  TableBody,
+  TableRow,
+  Pagination,
+} from "@mui/material";
 import Sidebar from "../../components/doctor/Sidebar";
 import DoctorSchedule from "../../components/doctor/DoctorSchedule";
+import { Fade } from "@mui/material";
+import { alpha, useTheme } from "@mui/material/styles";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -34,6 +59,7 @@ function a11yProps(index) {
 }
 
 function ScheduleManagement() {
+  const theme = useTheme();
   const [value, setValue] = React.useState(0);
 
   const handleChange = (event, newValue) => {
@@ -41,71 +67,98 @@ function ScheduleManagement() {
   };
 
   return (
-    <div style={{ backgroundColor: "white", height: "100%" }}>
-      <Box sx={{ marginLeft: "230px", backgroundColor: "white" }}>
-        <Box maxWidth={200}>
-          <Sidebar />
-        </Box>
+    <Box
+      sx={{
+        backgroundColor: alpha(theme.palette.background.default, 0.98),
+        minHeight: "100vh",
+        display: "flex",
+        pb: 10,
+      }}
+    >
+      <Sidebar />
 
-        <Box
-          sx={{
-            display: "flex",
-            flexDirection: "column",
-            width: "100%",
-            margin: "0 auto",
-          }}
-        >
-          <Typography
-            variant="h4"
-            gutterBottom
-            sx={{ color: "#1976d2", fontWeight: 500, mb: 4, mt: 4 }}
-          >
-            Quản Lý Lịch Khám
-          </Typography>
-
-          <Box sx={{ width: "100%" }}>
-            <Box
+      <Box
+        sx={{
+          flexGrow: 1,
+          ml: { xs: 0, md: "280px" },
+          transition: "margin 0.2s ease",
+          py: 4,
+          px: { xs: 2, sm: 4 },
+        }}
+      >
+        <Fade in timeout={800}>
+          <Container maxWidth="xl">
+            <Typography
+              variant="h4"
+              component="h1"
               sx={{
-                borderBottom: 1,
-                borderColor: "divider",
-                width: "100%",
-                display: "flex",
-                justifyContent: "flex-start",
+                fontWeight: 700,
+                color: theme.palette.primary.main,
+                mb: 4,
               }}
             >
+              Quản Lý Lịch Khám
+            </Typography>
+
+            <Box sx={{ width: "100%" }}>
               <Tabs
                 value={value}
                 onChange={handleChange}
-                aria-label="basic tabs example"
+                aria-label="schedule tabs"
+                sx={{
+                  borderBottom: 1,
+                  borderColor: "divider",
+                  mb: 3,
+                }}
               >
                 <Tab
+                  label="Chưa thiết lập"
                   sx={{
                     textTransform: "none",
                     fontWeight: value === 0 ? "bold" : "normal",
                   }}
-                  label="Chưa thiết lập"
-                  {...a11yProps(0)}
                 />
                 <Tab
+                  label="Đã thiết lập"
                   sx={{
                     textTransform: "none",
                     fontWeight: value === 1 ? "bold" : "normal",
                   }}
-                  label="Đã thiết lập"
-                  {...a11yProps(1)}
                 />
               </Tabs>
+
+              <CustomTabPanel value={value} index={1}>
+                <DoctorSchedule />
+              </CustomTabPanel>
+              <CustomTabPanel value={value} index={0}>
+                <DoctorSchedule type={"add"} />
+              </CustomTabPanel>
             </Box>
-            <CustomTabPanel value={value} index={1}>
-              <DoctorSchedule />
-            </CustomTabPanel>
-            <CustomTabPanel value={value} index={0}>
-              <DoctorSchedule type={"add"} />
-            </CustomTabPanel>
-          </Box>
-        </Box>
+          </Container>
+        </Fade>
       </Box>
-    </div>
+
+      <Box
+        sx={{
+          position: "fixed",
+          bottom: 0,
+          right: 0,
+          width: "calc(100% - 280px)",
+          bgcolor: "background.paper",
+          borderTop: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+          py: 2,
+          px: 3,
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          zIndex: 1000,
+        }}
+      >
+        <Typography variant="body2" color="text.secondary">
+          © {new Date().getFullYear()} HD-Care. Bảo lưu mọi quyền.
+        </Typography>
+      </Box>
+    </Box>
   );
 }
 

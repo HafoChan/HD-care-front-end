@@ -78,7 +78,7 @@ const patientApi = {
     }
   },
 
-  updateEnablePatient(patientId) {
+  updateBlockPatient(patientId) {
     try {
       const response = axiosInstance.post(`/patient/active/${patientId}`);
       console.log(`/doctor/active/${patientId}`);

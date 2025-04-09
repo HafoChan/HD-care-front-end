@@ -31,6 +31,19 @@ import { getRole } from "./service/otherService/localStorage";
 import AdminDashboard from "./pages/admin/Dashboard";
 import DoctorDetailAdmin from "./pages/admin/DoctorDetailAdmin";
 import PatientDetailAdmin from "./pages/admin/PatientDetailAdmin";
+import PostPage from "./pages/social-network/PostPage";
+import CreatePostPage from "./pages/social-network/CreatePostPage";
+import SavedPostsPage from "./pages/social-network/SavedPostsPage";
+import FollowPage from "./pages/social-network/FollowPage";
+import FollowRequestsPage from "./pages/social-network/FollowRequestsPage";
+
+// News pages
+import NewsHomePage from "./pages/news/HomePage";
+import NewsDetailPage from "./pages/news/DetailPage";
+import CreateNewsPage from "./pages/news/CreatePage";
+import EditNewsPage from "./pages/news/EditPage";
+import SavedNewsPage from "./pages/news/SavedNewsPage";
+import MyArticlesPage from "./pages/news/MyArticlesPage";
 
 const PrivateRoute = ({ children }) => {
   const role = getRole();
@@ -49,7 +62,7 @@ const AppRouter = () => {
       <Route path="/admin/doctor-detail" element={<DoctorDetailAdmin />} />
       <Route path="/admin/patient-detail" element={<PatientDetailAdmin />} />
 
-      <Route index element={<Home />} />
+      <Route index element={<Navigate to="/home" replace />} />
       <Route path="/evaluate" element={<EvaluateForm />} />
       <Route path="/authenticate" element={<Authenticate />} />
       <Route path="/home" element={<Home />} />
@@ -112,6 +125,24 @@ const AppRouter = () => {
           element={<AppointmentDetail />}
         />
       </Route>
+
+      {/* News Routes - Order matters: specific routes first, then dynamic routes */}
+      <Route path="/news" element={<NewsHomePage />} />
+      <Route path="/news/create" element={<CreateNewsPage />} />
+      <Route path="/news/saved" element={<SavedNewsPage />} />
+      <Route path="/news/my-articles" element={<MyArticlesPage />} />
+      <Route path="/news/edit/:id" element={<EditNewsPage />} />
+      <Route path="/news/:id" element={<NewsDetailPage />} />
+
+      {/* Social Network Routes */}
+      <Route path="/social-network" element={<PostPage />} />
+      <Route path="/social-network/create-post" element={<CreatePostPage />} />
+      <Route path="/social-network/saved-posts" element={<SavedPostsPage />} />
+      <Route path="/social-network/follow" element={<FollowPage />} />
+      <Route
+        path="/social-network/follow-requests"
+        element={<FollowRequestsPage />}
+      />
     </Routes>
   );
 };

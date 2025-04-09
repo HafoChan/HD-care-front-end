@@ -13,18 +13,31 @@ import {
   Avatar,
   Rating,
   Pagination,
+  Container,
+  Divider,
+  Chip,
+  Paper,
+  alpha,
+  useTheme,
+  LinearProgress,
+  Stack,
+  Fade,
+  Zoom,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
 import { schedule } from "../../api/schedule";
 import reviewApi from "../../api/reviewApi";
-
-const doctors = [
-  { name: "BS CKII Lê Thị Thanh Thảo" },
-  { name: "BS CKII Lê Thị Thanh Thảo" },
-  { name: "BS CKII Lê Thị Thanh Thảo" },
-  { name: "BS CKII Lê Thị Thanh Thảo" },
-];
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import FormatQuoteIcon from "@mui/icons-material/FormatQuote";
+import StarIcon from "@mui/icons-material/Star";
+import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import SortIcon from "@mui/icons-material/Sort";
+import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 
 function ReviewSection() {
+  const theme = useTheme();
   const [reviews, setReviews] = useState([]);
   const [totalPages, setTotalPages] = useState(1);
   const [filter, setFilter] = useState({
@@ -44,8 +57,6 @@ function ReviewSection() {
     setReviews(response?.result);
     setTotalPages(response?.result?.pageMax);
   };
-
-
 
   useEffect(() => {
     getReview();
@@ -72,222 +83,497 @@ function ReviewSection() {
   };
 
   return (
-    <Box paddingX={"24px"} sx={{ bgcolor: "#1d8be4", color: "white", py: 4 }}>
-      <Typography variant="h5" fontWeight={"bold"} mb={4} mt={2} align="center">
-        Đánh giá của bệnh nhân
-      </Typography>
+    <Box
+      sx={{
+        background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+        color: theme.palette.primary.contrastText,
+        py: 8,
+        borderRadius: { xs: 0, md: "0 0 60px 60px" },
+        boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+        position: "relative",
+        overflow: "hidden",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundImage:
+            "radial-gradient(circle at 30% 20%, rgba(255,255,255,0.1) 0%, rgba(255,255,255,0) 50%)",
+          pointerEvents: "none",
+        },
+      }}
+    >
+      <Container maxWidth="lg">
+        <Zoom in timeout={800}>
+          <Typography
+            variant="h4"
+            fontWeight={700}
+            mb={5}
+            mt={2}
+            align="center"
+            sx={{
+              textShadow: "0 2px 10px rgba(0,0,0,0.1)",
+              position: "relative",
+              "&:after": {
+                content: '""',
+                position: "absolute",
+                width: "60px",
+                height: "4px",
+                backgroundColor: theme.palette.primary.contrastText,
+                bottom: "-12px",
+                left: "50%",
+                transform: "translateX(-50%)",
+                borderRadius: "4px",
+              },
+            }}
+          >
+            Đánh giá của bệnh nhân
+          </Typography>
+        </Zoom>
 
-      <Grid container spacing={2}>
-        <Grid item xs={12} md={4}>
-          <Box sx={{ textAlign: "center", mb: 3 }}>
-            <Typography variant="h3">{reviews.countAvg}</Typography>
-            <Rating
-              value={parseFloat(reviews.countAvg)}
-              precision={0.1}
-              readOnly
-              size="large"
-            />
-            <Typography>({reviews.countReview} đánh giá)</Typography>
-          </Box>
-
-          {[5, 4, 3, 2, 1, 0].map((star) => (
-            <Box
-              key={star}
-              sx={{
-                display: "flex",
-                alignItems: "center",
-                mb: 1,
-                cursor: "pointer",
-                "&:hover": {
-                  bgcolor: "rgba(255, 255, 255, 0.1)",
-                },
-              }}
-              onClick={() => handleRatingFilter(star)}
-            >
-              <Typography
-                sx={{
-                  minWidth: "60px",
-                  color: filter.rating === star ? "#FFD700" : "white",
-                }}
-              >
-                {star} sao
-              </Typography>
+        <Grid container spacing={4}>
+          <Grid item xs={12} md={4}>
+            <Fade in timeout={1000}>
               <Box
                 sx={{
-                  flex: 1,
-                  mx: 1,
-                  height: 8,
-                  bgcolor: "rgba(255, 255, 255, 0.2)",
-                  borderRadius: 1,
-                  overflow: "hidden",
+                  textAlign: "center",
+                  mb: 3,
+                  p: 3,
+                  backgroundColor: alpha(theme.palette.background.paper, 0.08),
+                  borderRadius: 3,
+                  backdropFilter: "blur(10px)",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                  border: `1px solid ${alpha(
+                    theme.palette.primary.contrastText,
+                    0.1
+                  )}`,
+                  transform: "translateY(0)",
+                  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-5px)",
+                    boxShadow: "0 8px 30px rgba(0,0,0,0.15)",
+                  },
                 }}
               >
-                <Box
+                <Typography
+                  variant="h2"
                   sx={{
-                    width: `${
-                      (getStarCount(star) / reviews.countReview) * 100
-                    }%`,
-                    height: "100%",
-                    bgcolor: filter.rating === star ? "#FFD700" : "white",
-                  }}
-                />
-              </Box>
-              <Typography sx={{ minWidth: "40px" }}>
-                {getStarCount(star)}
-              </Typography>
-            </Box>
-          ))}
-        </Grid>
-
-        <Grid item xs={12} md={8}>
-          <Box sx={{ mb: 2 }}>
-            <Box sx={{ display: "flex", gap: 1, mb: 2 }}>
-              <select
-                style={{
-                  padding: "8px",
-                  borderRadius: "4px",
-                  border: "1px solid white",
-                  backgroundColor: "transparent",
-                  color: "white",
-                }}
-                onChange={(e) => handleSort(e.target.value)}
-                value={filter.sortBy || ""}
-              >
-                <option
-                  value=""
-                  style={{ backgroundColor: "#077CDB", color: "white" }}
-                >
-                  Sắp xếp theo
-                </option>
-                <option
-                  value="desc"
-                  style={{ backgroundColor: "#077CDB", color: "white" }}
-                >
-                  Mới nhất
-                </option>
-                <option
-                  value="asc"
-                  style={{ backgroundColor: "#077CDB", color: "white" }}
-                >
-                  Cũ nhất
-                </option>
-              </select>
-
-              <select
-                style={{
-                  padding: "8px",
-                  borderRadius: "4px",
-                  border: "1px solid white",
-                  backgroundColor: "transparent",
-                  color: "white",
-                }}
-                onChange={(e) => handleRatingFilter(Number(e.target.value))}
-                value={filter.rating !== null ? filter.rating : ""}
-              >
-                <option
-                  value=""
-                  style={{ backgroundColor: "#077CDB", color: "white" }}
-                >
-                  Tất cả sao
-                </option>
-                {[5, 4, 3, 2, 1, 0].map((star) => (
-                  <option
-                    key={star}
-                    value={star}
-                    style={{ backgroundColor: "#077CDB", color: "white" }}
-                  >
-                    {star} sao
-                  </option>
-                ))}
-              </select>
-            </Box>
-          </Box>
-
-          {reviews?.reviewList?.map((review, index) => (
-            <Card key={index} sx={{ mb: 2, bgcolor: "white" }}>
-              <CardContent>
-                <Box
-                  sx={{
-                    display: "flex",
-                    justifyContent: "space-between",
-                    mb: 1,
+                    fontWeight: 700,
+                    color: "#FFD700",
+                    textShadow: "0 2px 10px rgba(0,0,0,0.15)",
                   }}
                 >
-                  <Typography
-                    variant="subtitle1"
-                    color="text.primary"
-                    fontWeight="bold"
-                  >
-                    {review.patient.name}
-                  </Typography>
-                  <Typography variant="caption" color="text.secondary">
-                    {new Date(review.date).toLocaleString("vi-VN", {
-                      hour: "2-digit",
-                      minute: "2-digit",
-                      day: "2-digit",
-                      month: "2-digit",
-                      year: "numeric",
-                    })}
-                  </Typography>
-                </Box>
+                  {reviews.countAvg || "0.0"}
+                </Typography>
                 <Rating
-                  value={parseFloat(review.rating)}
+                  value={parseFloat(reviews.countAvg) || 0}
                   precision={0.1}
                   readOnly
-                  size="small"
+                  size="large"
+                  icon={<StarIcon fontSize="inherit" />}
+                  emptyIcon={<StarIcon fontSize="inherit" />}
+                  sx={{
+                    my: 1,
+                    "& .MuiRating-iconFilled": {
+                      color: "#FFD700",
+                    },
+                    "& .MuiRating-iconEmpty": {
+                      color: alpha(theme.palette.primary.contrastText, 0.3),
+                    },
+                  }}
                 />
-                <Typography color="text.primary" sx={{ mt: 1 }}>
-                  {review.content}
+                <Typography sx={{ fontSize: "0.95rem", opacity: 0.9 }}>
+                  ({reviews.countReview || 0} đánh giá)
                 </Typography>
-                {review?.img && review?.img?.length > 0 && (
+              </Box>
+            </Fade>
+
+            <Fade in timeout={1200}>
+              <Stack spacing={1.5} sx={{ px: 1 }}>
+                {[5, 4, 3, 2, 1, 0].map((star) => (
                   <Box
-                    sx={{ display: "flex", gap: 1, mt: 2, flexWrap: "wrap" }}
+                    key={star}
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      p: 1.5,
+                      borderRadius: 2,
+                      cursor: "pointer",
+                      backgroundColor:
+                        filter.rating === star
+                          ? alpha(theme.palette.background.paper, 0.15)
+                          : "transparent",
+                      transition: "all 0.2s ease",
+                      "&:hover": {
+                        backgroundColor: alpha(
+                          theme.palette.background.paper,
+                          0.1
+                        ),
+                      },
+                    }}
+                    onClick={() => handleRatingFilter(star)}
                   >
-                    {review?.img?.map((image, imgIndex) => (
+                    <Typography
+                      sx={{
+                        minWidth: "60px",
+                        fontWeight: filter.rating === star ? 700 : 500,
+                        color:
+                          filter.rating === star
+                            ? "#FFD700"
+                            : theme.palette.primary.contrastText,
+                      }}
+                    >
+                      {star} sao
+                    </Typography>
+                    <Box
+                      sx={{
+                        flex: 1,
+                        mx: 1.5,
+                        height: 8,
+                        bgcolor: alpha(theme.palette.background.paper, 0.1),
+                        borderRadius: 4,
+                        overflow: "hidden",
+                      }}
+                    >
                       <Box
-                        key={imgIndex}
-                        component="img"
-                        src={image}
-                        alt={`Review image ${imgIndex + 1}`}
                         sx={{
-                          width: 100,
-                          height: 100,
-                          objectFit: "cover",
-                          borderRadius: 1,
-                          cursor: "pointer",
+                          width: `${
+                            reviews.countReview
+                              ? (getStarCount(star) / reviews.countReview) * 100
+                              : 0
+                          }%`,
+                          height: "100%",
+                          bgcolor:
+                            filter.rating === star
+                              ? "#FFD700"
+                              : alpha(theme.palette.primary.contrastText, 0.7),
+                          borderRadius: 4,
+                          transition: "width 0.3s ease",
                         }}
                       />
-                    ))}
+                    </Box>
+                    <Typography
+                      sx={{
+                        minWidth: "40px",
+                        fontWeight: filter.rating === star ? 600 : 400,
+                      }}
+                    >
+                      {getStarCount(star) || 0}
+                    </Typography>
                   </Box>
-                )}
-              </CardContent>
-            </Card>
-          ))}
+                ))}
+              </Stack>
+            </Fade>
+          </Grid>
 
-          <Box sx={{ display: "flex", justifyContent: "center", mt: 3 }}>
-            <Pagination
-              count={totalPages}
-              page={page}
-              onChange={handlePageChange}
-              color="primary"
-              sx={{
-                "& .MuiPaginationItem-root": {
-                  color: "white",
-                  borderColor: "white",
-                },
-                "& .Mui-selected": {
-                  backgroundColor: "rgba(255, 255, 255, 0.2) !important",
-                },
-              }}
-            />
-          </Box>
+          <Grid item xs={12} md={8}>
+            <Box sx={{ mb: 3 }}>
+              <Fade in timeout={1000}>
+                <Stack
+                  direction={{ xs: "column", sm: "row" }}
+                  spacing={2}
+                  sx={{
+                    mb: 3,
+                    p: 0.5,
+                    borderRadius: 3,
+                    backgroundColor: alpha(
+                      theme.palette.background.paper,
+                      0.08
+                    ),
+                    backdropFilter: "blur(10px)",
+                    border: `1px solid ${alpha(
+                      theme.palette.primary.contrastText,
+                      0.1
+                    )}`,
+                  }}
+                >
+                  <Button
+                    variant={!filter.sortBy ? "contained" : "text"}
+                    onClick={() => handleSort(null)}
+                    startIcon={<FilterListIcon />}
+                    sx={{
+                      flex: 1,
+                      color: !filter.sortBy
+                        ? theme.palette.primary.main
+                        : theme.palette.primary.contrastText,
+                      backgroundColor: !filter.sortBy
+                        ? theme.palette.primary.contrastText
+                        : "transparent",
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      "&:hover": {
+                        backgroundColor: !filter.sortBy
+                          ? theme.palette.primary.contrastText
+                          : alpha(theme.palette.primary.contrastText, 0.1),
+                      },
+                    }}
+                  >
+                    Tất cả
+                  </Button>
+                  <Button
+                    variant={filter.sortBy === "desc" ? "contained" : "text"}
+                    onClick={() => handleSort("desc")}
+                    startIcon={
+                      <SortIcon sx={{ transform: "rotate(180deg)" }} />
+                    }
+                    sx={{
+                      flex: 1,
+                      color:
+                        filter.sortBy === "desc"
+                          ? theme.palette.primary.main
+                          : theme.palette.primary.contrastText,
+                      backgroundColor:
+                        filter.sortBy === "desc"
+                          ? theme.palette.primary.contrastText
+                          : "transparent",
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      "&:hover": {
+                        backgroundColor:
+                          filter.sortBy === "desc"
+                            ? theme.palette.primary.contrastText
+                            : alpha(theme.palette.primary.contrastText, 0.1),
+                      },
+                    }}
+                  >
+                    Mới nhất
+                  </Button>
+                  <Button
+                    variant={filter.sortBy === "asc" ? "contained" : "text"}
+                    onClick={() => handleSort("asc")}
+                    startIcon={<SortIcon />}
+                    sx={{
+                      flex: 1,
+                      color:
+                        filter.sortBy === "asc"
+                          ? theme.palette.primary.main
+                          : theme.palette.primary.contrastText,
+                      backgroundColor:
+                        filter.sortBy === "asc"
+                          ? theme.palette.primary.contrastText
+                          : "transparent",
+                      borderRadius: 2,
+                      textTransform: "none",
+                      fontWeight: 600,
+                      "&:hover": {
+                        backgroundColor:
+                          filter.sortBy === "asc"
+                            ? theme.palette.primary.contrastText
+                            : alpha(theme.palette.primary.contrastText, 0.1),
+                      },
+                    }}
+                  >
+                    Cũ nhất
+                  </Button>
+                </Stack>
+              </Fade>
+
+              <Stack spacing={2} sx={{ mt: 3 }}>
+                {reviews?.reviewList?.length === 0 && (
+                  <Fade in timeout={800}>
+                    <Box
+                      sx={{
+                        textAlign: "center",
+                        py: 5,
+                        backgroundColor: alpha(
+                          theme.palette.background.paper,
+                          0.08
+                        ),
+                        borderRadius: 3,
+                        border: `1px solid ${alpha(
+                          theme.palette.primary.contrastText,
+                          0.1
+                        )}`,
+                      }}
+                    >
+                      <Typography variant="h6">Chưa có đánh giá nào</Typography>
+                      <Typography variant="body2" sx={{ mt: 1, opacity: 0.7 }}>
+                        Hãy là người đầu tiên đánh giá bác sĩ này.
+                      </Typography>
+                    </Box>
+                  </Fade>
+                )}
+
+                {reviews?.reviewList?.map((review, index) => (
+                  <Fade key={index} in timeout={800 + index * 100}>
+                    <Card
+                      sx={{
+                        mb: 2,
+                        bgcolor: theme.palette.background.paper,
+                        borderRadius: 3,
+                        overflow: "hidden",
+                        boxShadow: "0 4px 12px rgba(0,0,0,0.08)",
+                        transition: "transform 0.2s ease, box-shadow 0.2s ease",
+                        "&:hover": {
+                          transform: "translateY(-3px)",
+                          boxShadow: "0 6px 16px rgba(0,0,0,0.1)",
+                        },
+                        position: "relative",
+                      }}
+                    >
+                      <FormatQuoteIcon
+                        sx={{
+                          position: "absolute",
+                          top: 10,
+                          right: 10,
+                          fontSize: 40,
+                          color: alpha(theme.palette.primary.main, 0.1),
+                          transform: "scaleX(-1)",
+                        }}
+                      />
+                      <CardContent sx={{ p: 2.5 }}>
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "space-between",
+                            alignItems: "center",
+                            mb: 1.5,
+                          }}
+                        >
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Avatar
+                              sx={{
+                                width: 40,
+                                height: 40,
+                                bgcolor: theme.palette.primary.main,
+                                color: theme.palette.primary.contrastText,
+                                fontWeight: 600,
+                                mr: 1.5,
+                              }}
+                            >
+                              {review.patient?.name?.charAt(0).toUpperCase() ||
+                                "U"}
+                            </Avatar>
+                            <Box>
+                              <Typography
+                                variant="subtitle1"
+                                color="text.primary"
+                                fontWeight={600}
+                              >
+                                {review.patient.name}
+                              </Typography>
+                              <Rating
+                                value={parseFloat(review.rating)}
+                                precision={0.5}
+                                readOnly
+                                size="small"
+                                sx={{ mt: 0.2 }}
+                              />
+                            </Box>
+                          </Box>
+                          <Chip
+                            label={new Date(review.date).toLocaleString(
+                              "vi-VN",
+                              {
+                                day: "2-digit",
+                                month: "2-digit",
+                                year: "numeric",
+                              }
+                            )}
+                            size="small"
+                            icon={<AccessTimeIcon fontSize="small" />}
+                            sx={{
+                              backgroundColor: alpha(
+                                theme.palette.primary.main,
+                                0.1
+                              ),
+                              color: theme.palette.primary.main,
+                              fontWeight: 500,
+                              fontSize: "0.75rem",
+                              mr: 4,
+                            }}
+                          />
+                        </Box>
+
+                        <Typography
+                          color="text.primary"
+                          variant="body2"
+                          sx={{
+                            mt: 1.5,
+                            mb: 1,
+                            fontSize: "0.95rem",
+                            lineHeight: 1.6,
+                          }}
+                        >
+                          {review.content}
+                        </Typography>
+
+                        {review?.img && review?.img?.length > 0 && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              gap: 1,
+                              mt: 2,
+                              flexWrap: "wrap",
+                            }}
+                          >
+                            {review?.img?.map((image, imgIndex) => (
+                              <Box
+                                key={imgIndex}
+                                component="img"
+                                src={image}
+                                alt={`Review image ${imgIndex + 1}`}
+                                sx={{
+                                  width: 80,
+                                  height: 80,
+                                  objectFit: "cover",
+                                  borderRadius: 2,
+                                  cursor: "pointer",
+                                  border: `1px solid ${alpha(
+                                    theme.palette.primary.main,
+                                    0.2
+                                  )}`,
+                                  transition: "transform 0.2s ease",
+                                  "&:hover": {
+                                    transform: "scale(1.05)",
+                                  },
+                                }}
+                              />
+                            ))}
+                          </Box>
+                        )}
+                      </CardContent>
+                    </Card>
+                  </Fade>
+                ))}
+              </Stack>
+            </Box>
+
+            <Box sx={{ display: "flex", justifyContent: "center", mt: 4 }}>
+              <Pagination
+                count={totalPages || 1}
+                page={page}
+                onChange={handlePageChange}
+                color="primary"
+                sx={{
+                  "& .MuiPaginationItem-root": {
+                    color: theme.palette.primary.contrastText,
+                    borderColor: alpha(theme.palette.primary.contrastText, 0.5),
+                  },
+                  "& .Mui-selected": {
+                    backgroundColor: `${theme.palette.primary.contrastText} !important`,
+                    color: theme.palette.primary.main,
+                    fontWeight: 600,
+                  },
+                  "& .MuiPaginationItem-ellipsis": {
+                    color: theme.palette.primary.contrastText,
+                  },
+                }}
+              />
+            </Box>
+          </Grid>
         </Grid>
-      </Grid>
+      </Container>
     </Box>
   );
 }
 
 function OtherDoctorsSection() {
+  const theme = useTheme();
   const [otherDoctors, setOtherDoctors] = useState([]);
   const doctorId = window.location.pathname.split("/")[2];
 
@@ -310,109 +596,152 @@ function OtherDoctorsSection() {
     window.location.href = `/doctor/${doctorId}`;
   };
 
-  const scrollContainerRef = React.useRef(null);
-
-  useEffect(() => {
-    const scrollContainer = scrollContainerRef.current;
-    let scrollAmount = 0;
-    const scrollStep = 1; // Adjust the scroll speed
-    const scrollInterval = 20; // Adjust the scroll interval
-
-    const scroll = () => {
-      if (scrollContainer) {
-        scrollAmount += scrollStep;
-        scrollContainer.scrollLeft = scrollAmount;
-        if (scrollAmount >= scrollContainer.scrollWidth - scrollContainer.clientWidth) {
-          scrollAmount = 0; // Reset scroll amount to loop
-        }
-      }
-    };
-
-    const intervalId = setInterval(scroll, scrollInterval);
-
-    return () => clearInterval(intervalId);
-  }, []);
-
   return (
-    <Box sx={{ py: 4, px: "32px" }}>
-      <Typography variant="h5" fontWeight={"bold"} mb={4} align="center" gutterBottom>
-        Các Bác Sĩ Khác
-      </Typography>
-
-      <Grid container spacing={0} justifyContent="center">
-        {otherDoctors.map((doctor, index) => (
-          <Grid
-            item
-            xs={6}
-            sm={3}
-            key={doctor.id || index}
-            sx={{
-              display: "flex",
-              justifyContent: "center",
-            }}
-          >
-            <Card
-              sx={{
-                textAlign: "center",
-                py: 2,
-                width: "180px",
-                boxShadow: "none",
-                cursor: "pointer",
-                "&:hover": {
-                  transform: "scale(1.02)",
-                  transition: "transform 0.2s ease-in-out"
-                }
-              }}
-              onClick={() => handleDoctorClick(doctor.id)}
-            >
-              <Box
-                component="img"
-                src={doctor.img || "#"}
-                sx={{
-                  width: "160px",
-                  height: "160px",
-                  backgroundColor: "#cccccc",
-                  margin: "0 auto",
-                  borderRadius: "20px",
-                  objectFit: "cover",
-                }}
-              />
-              <Typography
-                variant="subtitle1"
-                fontWeight={"bold"}
-                marginX={2}
-                sx={{ mt: 1 }}
-              >
-                {doctor.name}
-              </Typography>
-            </Card>
-          </Grid>
-        ))}
-      </Grid>
-
-      <Box display="flex" justifyContent="center" mt={2}>
-        <Button
-          onClick={() => window.location.href = '/team-of-doctors'}
-          variant="contained"
+    <Box
+      sx={{
+        py: 8,
+        px: { xs: 2, md: "32px" },
+        backgroundColor: alpha(theme.palette.background.default, 0.5),
+      }}
+    >
+      <Container maxWidth="lg">
+        <Typography
+          variant="h4"
+          fontWeight={700}
+          mb={5}
+          align="center"
           sx={{
-            bgcolor: "#077CDB",
-            color: "white",
-            mt: 2,
-            width: "150px",
+            position: "relative",
+            color: theme.palette.primary.main,
+            "&:after": {
+              content: '""',
+              position: "absolute",
+              width: "60px",
+              height: "4px",
+              backgroundColor: theme.palette.primary.main,
+              bottom: "-12px",
+              left: "50%",
+              transform: "translateX(-50%)",
+              borderRadius: "4px",
+            },
           }}
         >
-          Xem tất cả
-        </Button>
-      </Box>
+          Các Bác Sĩ Khác
+        </Typography>
+
+        <Grid container spacing={3} justifyContent="center">
+          {otherDoctors.map((doctor, index) => (
+            <Grid
+              item
+              xs={6}
+              sm={4}
+              md={3}
+              key={doctor.id || index}
+              sx={{
+                display: "flex",
+                justifyContent: "center",
+              }}
+            >
+              <Card
+                sx={{
+                  textAlign: "center",
+                  width: "100%",
+                  height: "100%",
+                  borderRadius: 4,
+                  overflow: "hidden",
+                  cursor: "pointer",
+                  boxShadow: "0 4px 20px rgba(0,0,0,0.08)",
+                  transition: "all 0.3s ease",
+                  "&:hover": {
+                    transform: "translateY(-8px)",
+                    boxShadow: "0 12px 28px rgba(0,0,0,0.12)",
+                  },
+                }}
+                onClick={() => handleDoctorClick(doctor.id)}
+              >
+                <Box sx={{ position: "relative", pt: "100%" }}>
+                  <Box
+                    component="img"
+                    src={doctor.img || "#"}
+                    sx={{
+                      position: "absolute",
+                      top: 0,
+                      left: 0,
+                      width: "100%",
+                      height: "100%",
+                      objectFit: "cover",
+                    }}
+                  />
+                </Box>
+                <Box sx={{ p: 2 }}>
+                  <Typography
+                    variant="subtitle1"
+                    fontWeight={700}
+                    sx={{
+                      mt: 1,
+                      fontSize: "1rem",
+                      color: theme.palette.text.primary,
+                    }}
+                  >
+                    {doctor.name}
+                  </Typography>
+                  {doctor.specialization && (
+                    <Typography
+                      variant="body2"
+                      sx={{
+                        color: theme.palette.text.secondary,
+                        mt: 0.5,
+                        fontSize: "0.85rem",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: "vertical",
+                      }}
+                    >
+                      {doctor.specialization}
+                    </Typography>
+                  )}
+                </Box>
+              </Card>
+            </Grid>
+          ))}
+        </Grid>
+
+        <Box display="flex" justifyContent="center" mt={5}>
+          <Button
+            onClick={() => (window.location.href = "/team-of-doctors")}
+            variant="contained"
+            color="primary"
+            sx={{
+              py: 1.2,
+              px: 4,
+              borderRadius: 2,
+              textTransform: "none",
+              fontWeight: 600,
+              boxShadow: theme.shadows[4],
+              transition: "all 0.2s ease",
+              "&:hover": {
+                transform: "translateY(-3px)",
+                boxShadow: theme.shadows[8],
+              },
+            }}
+          >
+            Xem tất cả bác sĩ
+          </Button>
+        </Box>
+      </Container>
     </Box>
   );
 }
 
 function DoctorDetail() {
+  const theme = useTheme();
   const [doctorInfo, setDoctorInfo] = useState();
   const [doctorSchedule, setDoctorSchedule] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
   const [availableTimes, setAvailableTimes] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const doctorId = window.location.pathname.split("/")[2];
 
@@ -424,7 +753,10 @@ function DoctorDetail() {
   });
 
   useEffect(() => {
+    document.title = "Chi tiết bác sĩ | HD-Care";
+
     const fetchDoctorData = async () => {
+      setLoading(true);
       try {
         const [scheduleResponse, doctorResponse] = await Promise.all([
           schedule.getScheduleByDoctorAndDate(doctorId, formattedDate),
@@ -440,11 +772,17 @@ function DoctorDetail() {
         setSelectedDate(formattedDate);
       } catch (error) {
         console.error("Error fetching doctor data:", error);
+      } finally {
+        setLoading(false);
       }
     };
 
     fetchDoctorData();
-  }, [doctorId]); // Chỉ phụ thuộc vào `doctorId`
+
+    return () => {
+      document.title = "HD-Care";
+    };
+  }, [doctorId, formattedDate]);
 
   const fetchAvailableTimes = async (date) => {
     if (!date) return; // Tránh gọi API nếu không có ngày
@@ -458,7 +796,7 @@ function DoctorDetail() {
 
       if (response.code === 1000) {
         console.log(response.result);
-        setAvailableTimes(response.result); // Cp nhật lịch khả dụng
+        setAvailableTimes(response.result); // Cập nhật lịch khả dụng
       }
     } catch (error) {
       console.error("Error fetching available times:", error);
@@ -466,129 +804,383 @@ function DoctorDetail() {
   };
 
   return (
-    <Box width={"100%"} align="center">
-      <Box maxWidth={"1200px"}>
-        <HeaderComponent />
+    <Box
+      sx={{
+        width: "100%",
+        minHeight: "100vh",
+        backgroundColor: theme.palette.background.default,
+      }}
+    >
+      <HeaderComponent />
+
+      {/* Doctor Profile Section - Gradient Background */}
+      <Box
+        sx={{
+          width: "100%",
+          background: `linear-gradient(135deg, ${theme.palette.primary.dark} 0%, ${theme.palette.primary.main} 100%)`,
+          py: 6,
+          position: "relative",
+          overflow: "hidden",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            width: "600px",
+            height: "600px",
+            background: `radial-gradient(circle, ${alpha(
+              theme.palette.primary.contrastText,
+              0.1
+            )} 0%, ${alpha(theme.palette.primary.contrastText, 0)} 70%)`,
+            top: "-300px",
+            right: "-100px",
+            borderRadius: "50%",
+            zIndex: 0,
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            width: "400px",
+            height: "400px",
+            background: `radial-gradient(circle, ${alpha(
+              theme.palette.primary.contrastText,
+              0.05
+            )} 0%, ${alpha(theme.palette.primary.contrastText, 0)} 70%)`,
+            bottom: "-200px",
+            left: "10%",
+            borderRadius: "50%",
+            zIndex: 0,
+          },
+        }}
+      >
+        <Container maxWidth="lg" sx={{ position: "relative", zIndex: 1 }}>
+          <Fade in timeout={800}>
+            <Box>
+              <DoctorProfileComponent doctorInfo={doctorInfo} />
+            </Box>
+          </Fade>
+        </Container>
       </Box>
 
-      <Box width={"100%"} backgroundColor="#1d8be4">
-        <Box maxWidth={"1200px"} align="left">
-          <DoctorProfileComponent doctorInfo={doctorInfo} />
-        </Box>
+      {/* Appointment Scheduler Section */}
+      <Box sx={{ width: "100%", py: 6 }} id="appointment-scheduler">
+        <Container maxWidth="lg">
+          <Zoom in timeout={1000}>
+            <Paper
+              elevation={0}
+              sx={{
+                borderRadius: 4,
+                overflow: "hidden",
+                border: `1px solid ${alpha(theme.palette.divider, 0.1)}`,
+                boxShadow: "0 8px 32px rgba(0,0,0,0.06)",
+                transform: "translateY(-40px)",
+                mb: 3,
+              }}
+            >
+              <AppointmentSchedulerComponent
+                doctorInfo={doctorInfo}
+                doctorId={doctorId}
+                selectedDate={selectedDate}
+                setSelectedDate={setSelectedDate}
+                fetchAvailableTimes={fetchAvailableTimes}
+                availableTimes={availableTimes} // Truyền lịch khả dụng
+              />
+            </Paper>
+          </Zoom>
+        </Container>
       </Box>
 
-      <Box width={"100%"} backgroundColor="white">
-        <Box maxWidth={"1200px"} align="left">
-          <AppointmentSchedulerComponent
-            doctorInfo={doctorInfo}
-            doctorId={doctorId}
-            selectedDate={selectedDate}
-            setSelectedDate={setSelectedDate}
-            fetchAvailableTimes={fetchAvailableTimes}
-            availableTimes={availableTimes} // Truyền lịch khả dụng
-          />
-        </Box>
-      </Box>
-
-      <Box width={"100%"} backgroundColor="#1d8be4">
-        <Box maxWidth={"1200px"} align="left">
-          <Card
-            sx={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "space-between",
-              backgroundColor: "#1d8be4",
-              margin: "24px",
-              boxShadow: "none",
-              paddingY: "24px",
-            }}
-          >
-            <CardContent sx={{ padding: "0px", color: "white" }}>
+      {/* Specialization Section */}
+      <Box
+        sx={{
+          width: "100%",
+          backgroundColor: alpha(theme.palette.primary.main, 0.03),
+          py: 6,
+          position: "relative",
+          "&::before": {
+            content: '""',
+            position: "absolute",
+            top: 0,
+            left: 0,
+            right: 0,
+            height: "1px",
+            background: `linear-gradient(to right, transparent, ${alpha(
+              theme.palette.primary.main,
+              0.3
+            )}, transparent)`,
+          },
+          "&::after": {
+            content: '""',
+            position: "absolute",
+            bottom: 0,
+            left: 0,
+            right: 0,
+            height: "1px",
+            background: `linear-gradient(to right, transparent, ${alpha(
+              theme.palette.primary.main,
+              0.3
+            )}, transparent)`,
+          },
+        }}
+      >
+        <Container maxWidth="lg">
+          <Fade in timeout={800}>
+            <Box sx={{ textAlign: "center", mb: 4 }}>
               <Typography
-                variant="h5"
-                fontWeight={"bold"}
+                variant="h4"
+                fontWeight={700}
                 mb={4}
-                mt={2}
-                align="center"
+                color={theme.palette.primary.main}
               >
-                {doctorInfo?.specialization}
+                {doctorInfo?.specialization || "Chuyên khoa"}
               </Typography>
-              <Box display={"flex"} gap={6} marginX={6}>
-                {doctorInfo?.experience?.split(".").map((exp, index) => (
-                  <Box
-                    key={index}
+              <Grid container spacing={3} justifyContent="center">
+                {doctorInfo?.experience?.split(".").map(
+                  (exp, index) =>
+                    exp.trim() && (
+                      <Grid item xs={12} sm={6} md={4} key={index}>
+                        <Zoom in timeout={800 + index * 150}>
+                          <Box
+                            sx={{
+                              borderRadius: 3,
+                              p: 3,
+                              height: "100%",
+                              backgroundColor: theme.palette.background.paper,
+                              boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+                              transition: "all 0.3s ease",
+                              "&:hover": {
+                                transform: "translateY(-5px)",
+                                boxShadow: "0 10px 25px rgba(0,0,0,0.08)",
+                                borderColor: alpha(
+                                  theme.palette.primary.main,
+                                  0.5
+                                ),
+                              },
+                              border: `1px solid ${alpha(
+                                theme.palette.divider,
+                                0.15
+                              )}`,
+                              position: "relative",
+                              overflow: "hidden",
+                              "&::before": {
+                                content: '""',
+                                position: "absolute",
+                                top: 0,
+                                left: 0,
+                                width: "4px",
+                                height: "100%",
+                                backgroundColor: theme.palette.primary.main,
+                              },
+                            }}
+                          >
+                            <Typography
+                              fontSize={"1rem"}
+                              textAlign={"left"}
+                              fontWeight={500}
+                              lineHeight={1.6}
+                              pl={1}
+                            >
+                              {exp.trim()}
+                            </Typography>
+                          </Box>
+                        </Zoom>
+                      </Grid>
+                    )
+                )}
+              </Grid>
+            </Box>
+          </Fade>
+        </Container>
+      </Box>
+
+      {/* Description and Experience Section */}
+      <Box
+        sx={{
+          width: "100%",
+          backgroundColor: theme.palette.background.paper,
+          py: 6,
+        }}
+      >
+        <Container maxWidth="lg">
+          <Grid container spacing={5}>
+            <Grid item xs={12} md={6}>
+              <Fade in timeout={800}>
+                <Box>
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    mb={3}
+                    color={theme.palette.primary.main}
                     sx={{
-                      border: "2px solid white",
-                      borderRadius: "10px",
-                      padding: "10px 20px",
-                      justifyContent: "center",
+                      position: "relative",
+                      display: "inline-block",
+                      "&:after": {
+                        content: '""',
+                        position: "absolute",
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: theme.palette.primary.main,
+                        bottom: "-8px",
+                        left: 0,
+                        borderRadius: "2px",
+                      },
                     }}
                   >
-                    <Typography fontSize={"18px"} textAlign={"center"}>
-                      {exp.trim()}
-                    </Typography>
+                    Mô tả
+                  </Typography>
+                  <Box
+                    sx={{
+                      p: 3,
+                      borderRadius: 3,
+                      backgroundColor: alpha(
+                        theme.palette.background.default,
+                        0.5
+                      ),
+                      border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                    }}
+                  >
+                    {doctorInfo?.description?.split(".").map(
+                      (sentence, index) =>
+                        sentence.trim() && (
+                          <Fade key={index} in timeout={800 + index * 100}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                mb: 1.5,
+                                p: 1.5,
+                                borderRadius: 2,
+                                "&:hover": {
+                                  backgroundColor: alpha(
+                                    theme.palette.primary.main,
+                                    0.05
+                                  ),
+                                },
+                                transition: "background-color 0.2s ease",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  backgroundColor: theme.palette.primary.main,
+                                  mt: 1,
+                                  mr: 1.5,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  color: theme.palette.text.primary,
+                                  lineHeight: 1.6,
+                                }}
+                              >
+                                {sentence.trim()}
+                              </Typography>
+                            </Box>
+                          </Fade>
+                        )
+                    )}
                   </Box>
-                ))}
-              </Box>
-            </CardContent>
-          </Card>
-        </Box>
-      </Box>
+                </Box>
+              </Fade>
+            </Grid>
 
-      <Box width={"100%"} backgroundColor="white" pb={4}>
-        <Box maxWidth={"1200px"} align="left" paddingX={24}>
-          <Typography variant="h5" fontWeight={"bold"} mb={2} mt={4}>
-            Mô tả
-          </Typography>
-          <Typography
-            component="span"
-            sx={{ display: "block", marginBottom: "8px" }}
-          >
-            {doctorInfo?.description?.split(".").map(
-              (sentence, index) =>
-                sentence.trim() && (
+            <Grid item xs={12} md={6}>
+              <Fade in timeout={1000}>
+                <Box>
                   <Typography
-                    key={index}
-                    component="span"
-                    sx={{ display: "block", marginBottom: "8px" }}
+                    variant="h5"
+                    fontWeight={700}
+                    mb={3}
+                    color={theme.palette.primary.main}
+                    sx={{
+                      position: "relative",
+                      display: "inline-block",
+                      "&:after": {
+                        content: '""',
+                        position: "absolute",
+                        width: "100%",
+                        height: "3px",
+                        backgroundColor: theme.palette.primary.main,
+                        bottom: "-8px",
+                        left: 0,
+                        borderRadius: "2px",
+                      },
+                    }}
                   >
-                    • {sentence.trim()}
+                    Kinh nghiệm
                   </Typography>
-                )
-            )}
-          </Typography>
-
-          <Typography variant="h5" fontWeight={"bold"} mb={2} mt={4}>
-            Kinh nghiệm
-          </Typography>
-          <Typography>
-            {doctorInfo?.experience?.split(".").map(
-              (specialty, index) =>
-                specialty.trim() && (
-                  <Typography
-                    key={index}
-                    component="span"
-                    sx={{ display: "block", marginBottom: "8px" }}
+                  <Box
+                    sx={{
+                      p: 3,
+                      borderRadius: 3,
+                      backgroundColor: alpha(
+                        theme.palette.background.default,
+                        0.5
+                      ),
+                      border: `1px solid ${alpha(theme.palette.divider, 0.08)}`,
+                      boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
+                    }}
                   >
-                    • {specialty.trim()}
-                  </Typography>
-                )
-            )}
-          </Typography>
-        </Box>
+                    {doctorInfo?.experience?.split(".").map(
+                      (specialty, index) =>
+                        specialty.trim() && (
+                          <Fade key={index} in timeout={1000 + index * 100}>
+                            <Box
+                              sx={{
+                                display: "flex",
+                                alignItems: "flex-start",
+                                mb: 1.5,
+                                p: 1.5,
+                                borderRadius: 2,
+                                "&:hover": {
+                                  backgroundColor: alpha(
+                                    theme.palette.primary.main,
+                                    0.05
+                                  ),
+                                },
+                                transition: "background-color 0.2s ease",
+                              }}
+                            >
+                              <Box
+                                sx={{
+                                  width: 8,
+                                  height: 8,
+                                  borderRadius: "50%",
+                                  backgroundColor: theme.palette.primary.main,
+                                  mt: 1,
+                                  mr: 1.5,
+                                  flexShrink: 0,
+                                }}
+                              />
+                              <Typography
+                                variant="body1"
+                                sx={{
+                                  color: theme.palette.text.primary,
+                                  lineHeight: 1.6,
+                                }}
+                              >
+                                {specialty.trim()}
+                              </Typography>
+                            </Box>
+                          </Fade>
+                        )
+                    )}
+                  </Box>
+                </Box>
+              </Fade>
+            </Grid>
+          </Grid>
+        </Container>
       </Box>
 
-      <Box width={"100%"} backgroundColor="#1d8be4">
-        <Box maxWidth={"1200px"} align="left">
-          <ReviewSection />
-        </Box>
-      </Box>
+      {/* Reviews Section */}
+      <ReviewSection />
 
-      <Box width={"100%"} backgroundColor="white">
-        <Box maxWidth={"1200px"} align="left">
-          <OtherDoctorsSection />
-        </Box>
-      </Box>
+      {/* Other Doctors Section */}
+      <OtherDoctorsSection />
     </Box>
   );
 }

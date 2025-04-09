@@ -14,11 +14,25 @@ import {
   InputLabel,
   Button,
   TextField,
+  Paper,
+  Chip,
+  Divider,
+  Stack,
+  useTheme,
+  alpha,
+  InputAdornment,
+  Fade,
 } from "@mui/material";
 import PropTypes from "prop-types";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import { appointment } from "../../api/appointment";
 import patientApi from "../../api/patient";
+import CalendarTodayIcon from "@mui/icons-material/CalendarToday";
+import FilterListIcon from "@mui/icons-material/FilterList";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import EmailIcon from "@mui/icons-material/Email";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import { motion } from "framer-motion";
 
 function CustomTabPanel(props) {
   const { children, value, index, ...other } = props;
@@ -42,6 +56,21 @@ CustomTabPanel.propTypes = {
   value: PropTypes.number.isRequired,
 };
 
+const getStatusColor = (status) => {
+  switch (status) {
+    case "CONFIRMED":
+      return "primary";
+    case "PENDING":
+      return "warning";
+    case "COMPLETED":
+      return "success";
+    case "CANCELLED":
+      return "error";
+    default:
+      return "default";
+  }
+};
+
 const AppointmentCard = ({
   doctor,
   date,
@@ -50,56 +79,147 @@ const AppointmentCard = ({
   avatar,
   isActive,
   title,
+  status,
   onclick,
-}) => (
-  <Card
-    onClick={onclick}
-    sx={{
-      display: "flex",
-      alignItems: "center",
-      justifyContent: "space-between",
-      py: "16px",
-      px: 8,
-      marginBottom: "16px",
-      border: isActive ? "2px solid #1976d2" : "1px solid #ddd",
-      boxShadow: isActive ? "0px 4px 8px rgba(25, 118, 210, 0.2)" : "none",
-      "&:hover": {
-        border: "2px solid #1976d2",
-      },
-    }}
-  >
-    <Box display="flex" alignItems="center">
-      <Avatar
-        src={avatar}
-        alt={doctor}
-        sx={{ width: 64, height: 64, marginRight: 4 }}
-      />
-      <Box>
-        <Typography variant="subtitle1" fontWeight="bold" color="#1976d2">
-          Bác sĩ {doctor}
-        </Typography>
-        <Typography variant="body2">Ngày hẹn: {date}</Typography>
-        <Typography variant="body2">Thời gian: {time}</Typography>
-      </Box>
-    </Box>
-    <Box
-      sx={{
-        display: "flex",
-        flexDirection: "column", // Sắp xếp các phần tử theo cột
-        alignItems: "flex-end", // Căn phải
-      }}
-    >
-      <Typography sx={{ fontSize: 18, fontWeight: "bold", mb: 0.5 }}>
-        {title}
-      </Typography>
-      <Typography variant="body2" color="#1976d2">
-        Email LH: {email}
-      </Typography>
-    </Box>
-  </Card>
-);
+}) => {
+  const theme = useTheme();
+
+  return (
+    <motion.div whileHover={{ scale: 1.01 }} transition={{ duration: 0.2 }}>
+      <Card
+        onClick={onclick}
+        sx={{
+          display: "flex",
+          alignItems: "center",
+          justifyContent: "space-between",
+          p: 3,
+          marginBottom: 2,
+          borderRadius: 2,
+          border: isActive
+            ? `2px solid ${theme.palette.primary.main}`
+            : `1px solid ${alpha(theme.palette.divider, 0.5)}`,
+          boxShadow: isActive
+            ? `0px 4px 16px ${alpha(theme.palette.primary.main, 0.15)}`
+            : `0px 1px 8px ${alpha(theme.palette.common.black, 0.05)}`,
+          cursor: "pointer",
+          transition: "all 0.2s ease-in-out",
+          "&:hover": {
+            borderColor: theme.palette.primary.main,
+            boxShadow: `0px 4px 16px ${alpha(
+              theme.palette.primary.main,
+              0.15
+            )}`,
+          },
+        }}
+      >
+        <Box display="flex" alignItems="center">
+          <Avatar
+            src={avatar}
+            alt={doctor}
+            sx={{
+              width: 72,
+              height: 72,
+              mr: 3,
+              boxShadow: `0px 2px 8px ${alpha(
+                theme.palette.common.black,
+                0.1
+              )}`,
+            }}
+          />
+          <Box>
+            <Typography
+              variant="h6"
+              fontWeight="bold"
+              color="primary.main"
+              gutterBottom
+            >
+              Bác sĩ {doctor}
+            </Typography>
+            <Stack direction="row" spacing={2} alignItems="center">
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <CalendarTodayIcon
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontSize: 16,
+                    mr: 0.5,
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {date}
+                </Typography>
+              </Box>
+              <Box sx={{ display: "flex", alignItems: "center" }}>
+                <AccessTimeIcon
+                  sx={{
+                    color: theme.palette.text.secondary,
+                    fontSize: 16,
+                    mr: 0.5,
+                  }}
+                />
+                <Typography variant="body2" color="text.secondary">
+                  {time}
+                </Typography>
+              </Box>
+            </Stack>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              <EmailIcon
+                sx={{
+                  color: theme.palette.text.secondary,
+                  fontSize: 16,
+                  mr: 0.5,
+                }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {email}
+              </Typography>
+            </Box>
+          </Box>
+        </Box>
+        <Box
+          sx={{
+            display: "flex",
+            flexDirection: "column",
+            alignItems: "flex-end",
+          }}
+        >
+          <Chip
+            label={status}
+            size="small"
+            color={getStatusColor(status)}
+            sx={{ mb: 1.5 }}
+          />
+          <Typography
+            sx={{
+              fontSize: 18,
+              fontWeight: "bold",
+              mb: 1.5,
+              color: theme.palette.text.primary,
+            }}
+          >
+            {title}
+          </Typography>
+          <Button
+            variant="outlined"
+            color="primary"
+            size="small"
+            startIcon={<VisibilityIcon />}
+            sx={{
+              textTransform: "none",
+              borderRadius: 1.5,
+              fontSize: 12,
+              px: 1.5,
+            }}
+          >
+            Xem chi tiết
+          </Button>
+        </Box>
+      </Card>
+    </motion.div>
+  );
+};
 
 const AppointmentList = () => {
+  const theme = useTheme();
   const navigate = useNavigate();
   const [id, setId] = useState();
   const [currentPage, setCurrentPage] = useState(1);
@@ -216,28 +336,48 @@ const AppointmentList = () => {
   }, []);
 
   return (
-    <Box>
+    <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.8) }}>
       <HeaderComponent />
 
-      <Container sx={{ maxWidth: 1200, pb: 8 }}>
-        <div
-          style={{
-            width: "100%",
-            height: "1.1px",
-            backgroundColor: "#cccccc",
-            margin: "20px 0 40px",
-          }}
-        />
-        <Typography variant="h5" fontWeight="bold" marginBottom="16px">
-          Lịch hẹn của bạn
-        </Typography>
+      <Container sx={{ maxWidth: 1200, py: 6 }}>
+        <Divider sx={{ mb: 5 }} />
 
-        <Grid
-          container
-          spacing={2}
-          sx={{ justifyContent: "end", alignItems: "center", mb: 2 }}
-        >
-          <Grid item xs={2}>
+        <Fade in timeout={500}>
+          <Paper
+            elevation={0}
+            sx={{
+              p: 4,
+              borderRadius: 3,
+              mb: 4,
+              background: `linear-gradient(120deg, ${alpha(
+                theme.palette.primary.main,
+                0.08
+              )} 0%, ${alpha(theme.palette.background.default, 0.6)} 100%)`,
+              border: `1px solid ${alpha(theme.palette.primary.main, 0.1)}`,
+            }}
+          >
+            <Typography
+              variant="h4"
+              fontWeight="700"
+              color="primary.main"
+              gutterBottom
+            >
+              Lịch hẹn của bạn
+            </Typography>
+            <Typography
+              variant="body1"
+              color="text.secondary"
+              sx={{ maxWidth: 700 }}
+            >
+              Quản lý tất cả các cuộc hẹn của bạn với bác sĩ. Bạn có thể xem chi
+              tiết, lọc theo ngày hoặc trạng thái, và theo dõi lịch sử các cuộc
+              hẹn.
+            </Typography>
+          </Paper>
+        </Fade>
+
+        <Grid container spacing={2} sx={{ mb: 4 }}>
+          <Grid item xs={12} md={3}>
             <TextField
               fullWidth
               size="small"
@@ -247,88 +387,137 @@ const AppointmentList = () => {
               InputLabelProps={{
                 shrink: true,
               }}
+              InputProps={{
+                startAdornment: (
+                  <InputAdornment position="start">
+                    <CalendarTodayIcon fontSize="small" />
+                  </InputAdornment>
+                ),
+                sx: { borderRadius: 2 },
+              }}
             />
           </Grid>
 
-          <Grid item xs={2}>
-            <FormControl sx={{ width: "100%" }}>
-              <InputLabel id="demo-simple-select-label" size="small">
-                Lọc
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <InputLabel id="filter-time-label" size="small">
+                Khoảng thời gian
               </InputLabel>
               <Select
-                labelId="demo-simple-select-label"
+                labelId="filter-time-label"
                 size="small"
                 onChange={(e) => handleFilterMonth(e)}
-                label="Lọc"
+                label="Khoảng thời gian"
+                IconComponent={FilterListIcon}
+                sx={{ borderRadius: 2 }}
               >
-                <MenuItem value="cancel">Bỏ lọc</MenuItem>
+                <MenuItem value="cancel">Tất cả thời gian</MenuItem>
                 <MenuItem value="week">Tuần này</MenuItem>
                 <MenuItem value="month">Tháng này</MenuItem>
               </Select>
             </FormControl>
           </Grid>
 
-          <Grid item xs={2}>
-            <FormControl sx={{ width: "100%" }}>
-              <InputLabel id="demo-simple-select-label" size="small">
+          <Grid item xs={12} md={3}>
+            <FormControl fullWidth>
+              <InputLabel id="filter-status-label" size="small">
                 Trạng thái
               </InputLabel>
               <Select
-                labelId="demo-simple-select-label"
+                labelId="filter-status-label"
                 size="small"
                 onChange={(e) => handleFilterStatus(e)}
                 label="Trạng thái"
+                IconComponent={FilterListIcon}
+                sx={{ borderRadius: 2 }}
               >
-                <MenuItem value="noFilter">Bỏ lọc</MenuItem>
-                <MenuItem value="CONFIRMED">CONFIRMED</MenuItem>
-                <MenuItem value="PENDING">PENDING</MenuItem>
-                <MenuItem value="COMPLETED">COMPLETED</MenuItem>
-                <MenuItem value="CANCELLED">CANCELLED</MenuItem>
+                <MenuItem value="noFilter">Tất cả trạng thái</MenuItem>
+                <MenuItem value="CONFIRMED">Đã xác nhận</MenuItem>
+                <MenuItem value="PENDING">Đang chờ</MenuItem>
+                <MenuItem value="COMPLETED">Đã hoàn thành</MenuItem>
+                <MenuItem value="CANCELLED">Đã hủy</MenuItem>
               </Select>
             </FormControl>
           </Grid>
 
-          <Grid item xs={2}>
+          <Grid item xs={12} md={3}>
             <Button
               variant="contained"
-              color="info"
-              sx={{ width: "100%", textTransform: "none" }}
+              color="primary"
+              fullWidth
+              sx={{
+                height: "100%",
+                textTransform: "none",
+                fontWeight: 600,
+                borderRadius: 2,
+                boxShadow: `0px 4px 8px ${alpha(
+                  theme.palette.primary.main,
+                  0.25
+                )}`,
+              }}
               onClick={handleDetailClick}
               disabled={!selectedRow}
+              startIcon={<VisibilityIcon />}
             >
-              Xem chi tiết
+              Xem chi tiết lịch hẹn
             </Button>
           </Grid>
         </Grid>
 
-        {appointmentList?.length > 0 ? (
-          appointmentList?.map((item, index) => (
-            <AppointmentCard
-              key={item?.id}
-              doctor={item?.nameDoctor}
-              date={item?.start?.split(" ")[0]}
-              time={`${item?.start?.split(" ")[1]} - ${
-                item?.end?.split(" ")[1]
-              }`}
-              email={item?.email}
-              avatar={item?.img}
-              title={item?.title}
-              isActive={selectedRow === item?.id}
-              onclick={() => handleRowClick(item?.id)}
-            />
-          ))
-        ) : (
-          <Typography variant="body1">Không có lịch hẹn nào.</Typography>
-        )}
+        <Fade in timeout={800}>
+          <Box>
+            {appointmentList?.length > 0 ? (
+              appointmentList?.map((item, index) => (
+                <AppointmentCard
+                  key={item?.id}
+                  doctor={item?.nameDoctor}
+                  date={item?.start?.split(" ")[0]}
+                  time={`${item?.start?.split(" ")[1]} - ${
+                    item?.end?.split(" ")[1]
+                  }`}
+                  email={item?.email}
+                  avatar={item?.img}
+                  title={item?.title}
+                  status={item?.status}
+                  isActive={selectedRow === item?.id}
+                  onclick={() => handleRowClick(item?.id)}
+                />
+              ))
+            ) : (
+              <Paper
+                elevation={0}
+                sx={{
+                  p: 4,
+                  borderRadius: 3,
+                  textAlign: "center",
+                  border: `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
+                }}
+              >
+                <Typography variant="h6" color="text.secondary" gutterBottom>
+                  Không tìm thấy lịch hẹn nào
+                </Typography>
+                <Typography variant="body2" color="text.secondary">
+                  Bạn chưa có lịch hẹn nào hoặc không có lịch hẹn phù hợp với
+                  các bộ lọc đã chọn
+                </Typography>
+              </Paper>
+            )}
 
-        <Box display="flex" justifyContent="center" marginTop={3}>
-          <Pagination
-            count={totalPages}
-            page={currentPage}
-            onChange={handlePageChange}
-            color="primary"
-          />
-        </Box>
+            {totalPages > 1 && (
+              <Box display="flex" justifyContent="center" marginTop={4}>
+                <Pagination
+                  count={totalPages}
+                  page={currentPage}
+                  onChange={handlePageChange}
+                  color="primary"
+                  variant="outlined"
+                  shape="rounded"
+                  size="large"
+                />
+              </Box>
+            )}
+          </Box>
+        </Fade>
       </Container>
     </Box>
   );

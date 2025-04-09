@@ -21,9 +21,138 @@ import {
   Alert,
   Dialog,
   DialogContent,
+  Box,
+  Avatar,
+  Divider,
+  CircularProgress,
+  Chip,
+  IconButton,
+  Tooltip,
 } from "@mui/material";
+import { alpha } from "@mui/material/styles";
+import Sidebar from "../../components/doctor/Sidebar";
+import { useTheme } from "@mui/material/styles";
+import KeyboardBackspaceIcon from "@mui/icons-material/KeyboardBackspace";
+import SendIcon from "@mui/icons-material/Send";
+import MedicationIcon from "@mui/icons-material/Medication";
+import PersonIcon from "@mui/icons-material/Person";
+import EventIcon from "@mui/icons-material/Event";
+import DescriptionIcon from "@mui/icons-material/Description";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import PictureAsPdfIcon from "@mui/icons-material/PictureAsPdf";
+import { styled } from "@mui/system";
+
+// Styled components
+const StyledPaper = styled(Paper)(({ theme }) => ({
+  padding: "24px",
+  borderRadius: "16px",
+  backgroundColor: alpha("#ffffff", 0.9),
+  backdropFilter: "blur(10px)",
+  boxShadow: "0 8px 32px rgba(0,0,0,0.05)",
+  border: `1px solid ${alpha("#f0f0f0", 0.1)}`,
+  transition: "transform 0.3s ease, box-shadow 0.3s ease",
+  "&:hover": {
+    boxShadow: "0 10px 40px rgba(0,0,0,0.08)",
+    transform: "translateY(-4px)",
+  },
+}));
+
+const SectionTitle = styled(Typography)({
+  fontSize: 18,
+  fontWeight: 600,
+  marginBottom: 16,
+  display: "flex",
+  alignItems: "center",
+  gap: 8,
+  color: "#1976d2",
+});
+
+const StyledTableContainer = styled(TableContainer)({
+  marginTop: 24,
+  borderRadius: 12,
+  overflow: "hidden",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.04)",
+});
+
+const StyledTableHead = styled(TableHead)({
+  backgroundColor: alpha("#1976d2", 0.08),
+  "& .MuiTableCell-root": {
+    fontWeight: 600,
+    color: "#1976d2",
+  },
+});
+
+const StyledTableRow = styled(TableRow)({
+  transition: "background-color 0.2s",
+  "&:hover": {
+    backgroundColor: alpha("#f5f5f5", 0.8),
+    cursor: "pointer",
+  },
+  "&:nth-of-type(even)": {
+    backgroundColor: alpha("#f9f9f9", 0.5),
+  },
+});
+
+const StyledTextField = styled(TextField)({
+  marginBottom: 16,
+  "& .MuiOutlinedInput-root": {
+    borderRadius: 8,
+    transition: "all 0.3s",
+    "&:hover": {
+      boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+    },
+    "&.Mui-focused": {
+      boxShadow: "0 4px 10px rgba(0,0,0,0.1)",
+    },
+  },
+});
+
+const StyledButton = styled(Button)({
+  textTransform: "none",
+  borderRadius: 8,
+  padding: "8px 16px",
+  fontWeight: 500,
+  boxShadow: "0 4px 10px rgba(0,0,0,0.05)",
+  transition: "transform 0.2s, box-shadow 0.2s",
+  "&:hover": {
+    transform: "translateY(-2px)",
+    boxShadow: "0 6px 15px rgba(0,0,0,0.1)",
+  },
+});
+
+const StyledDialog = styled(Dialog)({
+  "& .MuiDialog-paper": {
+    borderRadius: 16,
+    overflow: "hidden",
+    boxShadow: "0 24px 38px rgba(0,0,0,0.14)",
+  },
+});
+
+const StyledChip = styled(Chip)(({ color }) => ({
+  fontWeight: 500,
+  borderRadius: 16,
+  backgroundColor: color ? alpha(color, 0.1) : undefined,
+  color: color,
+  "& .MuiChip-label": {
+    padding: "0 12px",
+  },
+}));
+
+const IconWrapper = styled(Box)({
+  display: "flex",
+  alignItems: "center",
+  justifyContent: "center",
+  width: 40,
+  height: 40,
+  borderRadius: "50%",
+  backgroundColor: alpha("#1976d2", 0.08),
+  marginRight: 12,
+  color: "#1976d2",
+});
 
 const Prescription = () => {
+  const theme = useTheme();
+
   const location = useLocation();
   const navigate = useNavigate();
 
@@ -32,12 +161,14 @@ const Prescription = () => {
   const [appointment, setAppointment] = useState({});
   const [prescriptionList, setPrescriptionList] = useState([]);
   const [editIndex, setEditIndex] = useState(null); // New state to track the index of the medicine being edited
+  const [loading, setLoading] = useState(false);
 
   // Thêm state mới cho kết quả khám
 
   useEffect(() => {
     const getInfoPatient = async () => {
       try {
+        setLoading(true);
         if (location.state?.appointment?.idPatient) {
           const response = await prescriptionApi.getInfoPatient(
             location.state.appointment.idPatient
@@ -53,6 +184,8 @@ const Prescription = () => {
         }
       } catch (error) {
         console.error("Error fetching patient info:", error);
+      } finally {
+        setLoading(false);
       }
     };
     getInfoPatient();
@@ -97,36 +230,51 @@ const Prescription = () => {
       return;
     }
 
-    if (editIndex !== null) {
-      const updatedList = [...prescriptionList];
-      updatedList[editIndex] = medicine;
-      await prescriptionApi.updateMedicine(
-        prescriptionList[editIndex].id,
-        medicine
-      );
-      setPrescriptionList(updatedList);
-      setEditIndex(null);
-    } else {
-      const data = await prescriptionApi.createMedicine(
-        appointment.prescriptionId,
-        medicine
-      );
-      setPrescriptionList([...prescriptionList, { ...data.result }]);
-    }
+    try {
+      setLoading(true);
+      if (editIndex !== null) {
+        const updatedList = [...prescriptionList];
+        updatedList[editIndex] = medicine;
+        await prescriptionApi.updateMedicine(
+          prescriptionList[editIndex].id,
+          medicine
+        );
+        setPrescriptionList(updatedList);
+        setEditIndex(null);
+        setSnackbarMessage("Cập nhật thuốc thành công!");
+        setSnackbarSeverity("success");
+      } else {
+        const data = await prescriptionApi.createMedicine(
+          appointment.prescriptionId,
+          medicine
+        );
+        setPrescriptionList([...prescriptionList, { ...data.result }]);
+        setSnackbarMessage("Thêm thuốc thành công!");
+        setSnackbarSeverity("success");
+      }
 
-    setMedicine({
-      name: "",
-      medicineType: "tuýp",
-      instruction: "",
-      quantity: "",
-      note: "",
-    });
-    setErrors({
-      name: false,
-      medicineType: false,
-      instruction: false,
-      quantity: false,
-    });
+      setMedicine({
+        name: "",
+        medicineType: "tuýp",
+        instruction: "",
+        quantity: "",
+        note: "",
+      });
+      setErrors({
+        name: false,
+        medicineType: false,
+        instruction: false,
+        quantity: false,
+      });
+      setOpenSnackbar(true);
+    } catch (error) {
+      console.error("Error handling medicine:", error);
+      setSnackbarMessage("Đã xảy ra lỗi!");
+      setSnackbarSeverity("error");
+      setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const [pdfUrl, setPdfUrl] = useState("");
@@ -138,6 +286,7 @@ const Prescription = () => {
   };
   const handleExport = async (e) => {
     try {
+      setLoading(true);
       const prescription = await prescriptionApi.createPrescription(
         appointment.prescriptionId,
         {
@@ -187,6 +336,8 @@ const Prescription = () => {
       setSnackbarMessage("Tạo PDF thất bại!");
       setSnackbarSeverity("error");
       setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -237,6 +388,7 @@ const Prescription = () => {
 
   const handleDeleteMedicine = async () => {
     try {
+      setLoading(true);
       if (editIndex !== null) {
         await prescriptionApi.deleteMedicine(prescriptionList[editIndex].id);
         const updatedList = prescriptionList.filter(
@@ -264,297 +416,448 @@ const Prescription = () => {
       setSnackbarMessage("Xóa thuốc thất bại!");
       setSnackbarSeverity("error");
       setOpenSnackbar(true);
+    } finally {
+      setLoading(false);
     }
   };
 
   return (
-    <Container maxWidth="lg" sx={{ py: 4 }}>
-      <Paper elevation={3} sx={{ p: 3 }}>
-        <Typography
-          variant="h5"
-          gutterBottom
-          sx={{
-            textAlign: "center",
-            fontWeight: "bold",
-          }}
-        >
-          Kê Đơn Thuốc
-        </Typography>
-
-        {/* Add Back Button */}
-        <Button
-          variant="contained"
-          color="success"
-          onClick={() => navigate("/doctor/manage-appointment-history")} // Navigate back to the previous page
-          sx={{ mb: 2 }}
-        >
-          Quay lại
-        </Button>
-
-        {/* Patient Information */}
-        <Typography variant="h6" gutterBottom sx={{ mt: 3 }}>
-          Thông tin bệnh nhân
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Tên bệnh nhân"
-              name="name"
-              value={patientInfo?.name || ""}
-              onChange={handlePatientInfoChange}
-              disabled
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Select
-              fullWidth
-              label="Giới tính"
-              name="gender"
-              value={patientInfo?.gender || ""}
-              onChange={handlePatientInfoChange}
-              disabled
-            >
-              <MenuItem value="Nam">Nam</MenuItem>
-              <MenuItem value="Nữ">Nữ</MenuItem>
-            </Select>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              type="date"
-              label="Ngày sinh"
-              name="dateOfBirth"
-              value={patientInfo?.dob || ""}
-              onChange={handlePatientInfoChange}
-              InputLabelProps={{ shrink: true }}
-              disabled
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Lý do khám"
-              name="reason"
-              value={appointment?.title || ""}
-              onChange={handlePatientInfoChange}
-              disabled
-            />
-          </Grid>
-
-          {/* Thêm trường Kết quả khám */}
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              multiline
-              rows={4}
-              label="Kết quả khám"
-              name="result"
-              value={appointment?.result || ""}
-              onChange={handleResultChange}
-              placeholder="Nhập kết quả khám..."
-            />
-          </Grid>
-        </Grid>
-
-        {/* Medicine Input */}
-        <Typography variant="h6" gutterBottom sx={{ mt: 4 }}>
-          Nhập thông tin thuốc
-        </Typography>
-        <Grid container spacing={3}>
-          <Grid item xs={12} sm={6}>
-            <Autocomplete
-              fullWidth
-              options={listMedicine}
-              getOptionLabel={(option) => option.name}
-              value={medicine}
-              inputValue={inputValue}
-              onInputChange={(event, newInputValue) => {
-                setInputValue(newInputValue);
-              }}
-              onChange={(event, newValue) => {
-                if (newValue) {
-                  setMedicine((prevMedicine) => ({
-                    ...prevMedicine,
-                    name: newValue.name || newValue,
-                    instruction: newValue.instruction || "",
-                  }));
-                  setErrors((prev) => ({ ...prev, name: false }));
-                }
-              }}
-              freeSolo={true}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Nhập tên thuốc"
-                  name="name"
-                  onClick={handleClickMedicine}
-                  onChange={handleMedicineChange}
-                  required
-                  error={errors.name}
-                  helperText={errors.name ? "Vui lòng nhập tên thuốc" : ""}
-                />
-              )}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <Select
-              fullWidth
-              label="Dạng thuốc"
-              name="medicineType"
-              value={medicine.medicineType || ""}
-              onChange={handleMedicineChange}
-              required
-              error={errors.medicineType}
-            >
-              <MenuItem value="tuýp">Tuýp</MenuItem>
-              <MenuItem value="viên">Viên</MenuItem>
-              <MenuItem value="chai">Chai</MenuItem>
-            </Select>
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              label="Hướng dẫn"
-              name="instruction"
-              value={medicine.instruction}
-              onChange={handleMedicineChange}
-              required
-              error={errors.instruction}
-              helperText={errors.instruction ? "Vui lòng nhập hướng dẫn" : ""}
-            />
-          </Grid>
-          <Grid item xs={12} sm={6}>
-            <TextField
-              fullWidth
-              type="number"
-              label="Số lượng"
-              name="quantity"
-              value={medicine.quantity}
-              onChange={handleMedicineChange}
-              required
-              error={errors.quantity}
-              helperText={errors.quantity ? "Vui lòng nhập số lượng" : ""}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <TextField
-              fullWidth
-              label="Lưu ý"
-              name="note"
-              value={medicine.note}
-              onChange={handleMedicineChange}
-            />
-          </Grid>
-          <Grid item xs={12}>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleAddMedicine}
-              sx={{ mr: 2 }}
-            >
-              {editIndex !== null ? "Cập nhật" : "Thêm thuốc"}
-            </Button>
-
-            {editIndex !== null && (
-              <Button
-                variant="contained"
-                color="error"
-                onClick={handleDeleteMedicine}
+    <Box
+      sx={{
+        background: "linear-gradient(145deg, #f0f7ff 0%, #f5f7fa 100%)",
+        minHeight: "100vh",
+        display: "flex",
+      }}
+    >
+      <Sidebar />
+      <Box
+        sx={{
+          flexGrow: 1,
+          ml: { xs: 0, md: "280px" },
+          transition: "margin 0.2s ease",
+          py: 4,
+          px: { xs: 2, sm: 4 },
+        }}
+      >
+        <Container maxWidth="xl">
+          <Box
+            sx={{
+              mb: 4,
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center" }}>
+              <IconWrapper>
+                <MedicationIcon />
+              </IconWrapper>
+              <Typography
+                variant="h4"
+                sx={{
+                  fontWeight: 700,
+                  backgroundImage: "linear-gradient(135deg, #1976d2, #64b5f6)",
+                  backgroundClip: "text",
+                  color: "transparent",
+                  WebkitBackgroundClip: "text",
+                  WebkitTextFillColor: "transparent",
+                }}
               >
-                Xóa thuốc
-              </Button>
-            )}
-          </Grid>
-        </Grid>
+                Kê Đơn Thuốc
+              </Typography>
+            </Box>
+            <StyledButton
+              variant="outlined"
+              startIcon={<KeyboardBackspaceIcon />}
+              onClick={() => navigate("/doctor/manage-appointment-history")}
+            >
+              Quay lại
+            </StyledButton>
+          </Box>
 
-        {/* Prescription Table */}
-        <TableContainer component={Paper} sx={{ mt: 4 }}>
-          <Table>
-            <TableHead>
-              <TableRow>
-                <TableCell>STT</TableCell>
-                <TableCell>Tên thuốc</TableCell>
-                <TableCell>Dạng thuốc</TableCell>
-                <TableCell>Số lượng</TableCell>
-                <TableCell>Hướng dẫn</TableCell>
-                <TableCell>Lưu ý</TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {prescriptionList.map((item, index) => (
-                <TableRow
-                  key={item.id}
-                  onClick={() => handleMedicineSelect(index)}
+          <StyledPaper>
+            {/* Patient Information */}
+            <Box sx={{ mb: 4 }}>
+              <SectionTitle>
+                <PersonIcon fontSize="small" />
+                Thông tin bệnh nhân
+              </SectionTitle>
+              <Divider sx={{ mb: 3 }} />
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <StyledTextField
+                    fullWidth
+                    label="Tên bệnh nhân"
+                    name="name"
+                    value={patientInfo?.name || ""}
+                    onChange={handlePatientInfoChange}
+                    disabled
+                    variant="outlined"
+                    InputProps={{
+                      startAdornment: (
+                        <Avatar
+                          sx={{
+                            width: 24,
+                            height: 24,
+                            fontSize: 14,
+                            mr: 1,
+                            bgcolor: "#1976d2",
+                          }}
+                        >
+                          {patientInfo?.name?.charAt(0) || "P"}
+                        </Avatar>
+                      ),
+                    }}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <StyledTextField
+                    select
+                    fullWidth
+                    label="Giới tính"
+                    name="gender"
+                    value={patientInfo?.gender || ""}
+                    onChange={handlePatientInfoChange}
+                    disabled
+                    variant="outlined"
+                  >
+                    <MenuItem value="Nam">Nam</MenuItem>
+                    <MenuItem value="Nữ">Nữ</MenuItem>
+                  </StyledTextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <StyledTextField
+                    fullWidth
+                    type="date"
+                    label="Ngày sinh"
+                    name="dateOfBirth"
+                    value={patientInfo?.dob || ""}
+                    onChange={handlePatientInfoChange}
+                    InputLabelProps={{ shrink: true }}
+                    disabled
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <StyledTextField
+                    fullWidth
+                    label="Lý do khám"
+                    name="reason"
+                    value={appointment?.title || ""}
+                    onChange={handlePatientInfoChange}
+                    disabled
+                    variant="outlined"
+                  />
+                </Grid>
+
+                {/* Thêm trường Kết quả khám */}
+                <Grid item xs={12}>
+                  <StyledTextField
+                    fullWidth
+                    multiline
+                    rows={4}
+                    label="Kết quả khám"
+                    name="result"
+                    value={appointment?.result || ""}
+                    onChange={handleResultChange}
+                    placeholder="Nhập kết quả khám..."
+                    variant="outlined"
+                  />
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Medicine Input */}
+            <Box sx={{ mb: 4 }}>
+              <SectionTitle>
+                <MedicationIcon fontSize="small" />
+                Nhập thông tin thuốc
+              </SectionTitle>
+              <Divider sx={{ mb: 3 }} />
+
+              <Grid container spacing={3}>
+                <Grid item xs={12} sm={6}>
+                  <Autocomplete
+                    fullWidth
+                    options={listMedicine || []}
+                    getOptionLabel={(option) => option.name || ""}
+                    value={medicine.name ? medicine : null}
+                    inputValue={inputValue}
+                    onInputChange={(event, newInputValue) => {
+                      setInputValue(newInputValue);
+                    }}
+                    onChange={(event, newValue) => {
+                      if (newValue) {
+                        setMedicine((prevMedicine) => ({
+                          ...prevMedicine,
+                          name: newValue.name || newValue,
+                          instruction: newValue.instruction || "",
+                        }));
+                        setErrors((prev) => ({ ...prev, name: false }));
+                      }
+                    }}
+                    freeSolo={true}
+                    renderInput={(params) => (
+                      <StyledTextField
+                        {...params}
+                        label="Nhập tên thuốc"
+                        name="name"
+                        onClick={handleClickMedicine}
+                        onChange={handleMedicineChange}
+                        required
+                        error={errors.name}
+                        helperText={
+                          errors.name ? "Vui lòng nhập tên thuốc" : ""
+                        }
+                        variant="outlined"
+                      />
+                    )}
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <StyledTextField
+                    select
+                    fullWidth
+                    label="Dạng thuốc"
+                    name="medicineType"
+                    value={medicine.medicineType || ""}
+                    onChange={handleMedicineChange}
+                    required
+                    error={errors.medicineType}
+                    helperText={
+                      errors.medicineType ? "Vui lòng chọn dạng thuốc" : ""
+                    }
+                    variant="outlined"
+                  >
+                    <MenuItem value="tuýp">Tuýp</MenuItem>
+                    <MenuItem value="viên">Viên</MenuItem>
+                    <MenuItem value="chai">Chai</MenuItem>
+                  </StyledTextField>
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <StyledTextField
+                    fullWidth
+                    label="Hướng dẫn"
+                    name="instruction"
+                    value={medicine.instruction || ""}
+                    onChange={handleMedicineChange}
+                    required
+                    error={errors.instruction}
+                    helperText={
+                      errors.instruction ? "Vui lòng nhập hướng dẫn" : ""
+                    }
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12} sm={6}>
+                  <StyledTextField
+                    fullWidth
+                    type="number"
+                    label="Số lượng"
+                    name="quantity"
+                    value={medicine.quantity || ""}
+                    onChange={handleMedicineChange}
+                    required
+                    error={errors.quantity}
+                    helperText={errors.quantity ? "Vui lòng nhập số lượng" : ""}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <StyledTextField
+                    fullWidth
+                    label="Lưu ý"
+                    name="note"
+                    value={medicine.note || ""}
+                    onChange={handleMedicineChange}
+                    variant="outlined"
+                  />
+                </Grid>
+                <Grid item xs={12}>
+                  <Box sx={{ display: "flex", gap: 2 }}>
+                    <StyledButton
+                      variant="contained"
+                      color="primary"
+                      onClick={handleAddMedicine}
+                      disabled={loading}
+                      startIcon={
+                        loading ? <CircularProgress size={20} /> : null
+                      }
+                    >
+                      {editIndex !== null ? "Cập nhật thuốc" : "Thêm thuốc"}
+                    </StyledButton>
+
+                    {editIndex !== null && (
+                      <StyledButton
+                        variant="outlined"
+                        color="error"
+                        onClick={handleDeleteMedicine}
+                        disabled={loading}
+                      >
+                        Xóa thuốc
+                      </StyledButton>
+                    )}
+                  </Box>
+                </Grid>
+              </Grid>
+            </Box>
+
+            {/* Prescription Table */}
+            <Box sx={{ mb: 4 }}>
+              <SectionTitle>
+                <DescriptionIcon fontSize="small" />
+                Danh sách thuốc
+              </SectionTitle>
+              <Divider sx={{ mb: 3 }} />
+
+              {prescriptionList.length === 0 ? (
+                <Box
                   sx={{
-                    cursor: "pointer",
-                    "&:hover": {
-                      backgroundColor: "#f5f5f5",
-                    },
+                    textAlign: "center",
+                    py: 4,
+                    bgcolor: alpha("#f5f5f5", 0.5),
+                    borderRadius: 2,
                   }}
                 >
-                  <TableCell>{index + 1}</TableCell>
-                  <TableCell>{item.name}</TableCell>
-                  <TableCell>{item.medicineType}</TableCell>
-                  <TableCell>{item.quantity}</TableCell>
-                  <TableCell>{item.instruction}</TableCell>
-                  <TableCell>{item.note}</TableCell>
-                </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+                  <Typography color="text.secondary">
+                    Chưa có thuốc nào được thêm vào đơn
+                  </Typography>
+                </Box>
+              ) : (
+                <StyledTableContainer>
+                  <Table>
+                    <StyledTableHead>
+                      <TableRow>
+                        <TableCell width={30} align="center">
+                          STT
+                        </TableCell>
+                        <TableCell width={180}>Tên thuốc</TableCell>
+                        <TableCell width={80}>Dạng thuốc</TableCell>
+                        <TableCell align="center" width={80}>
+                          Số lượng
+                        </TableCell>
+                        <TableCell>Hướng dẫn</TableCell>
+                        <TableCell width={150}>Lưu ý</TableCell>
+                        <TableCell align="center" width={70}>
+                          Thao tác
+                        </TableCell>
+                      </TableRow>
+                    </StyledTableHead>
+                    <TableBody>
+                      {prescriptionList.map((item, index) => (
+                        <StyledTableRow key={item.id}>
+                          <TableCell align="center">{index + 1}</TableCell>
+                          <TableCell>
+                            <Typography fontWeight={500}>
+                              {item.name}
+                            </Typography>
+                          </TableCell>
+                          <TableCell>
+                            <StyledChip
+                              label={item.medicineType}
+                              size="small"
+                              color={
+                                item.medicineType === "viên"
+                                  ? "#4caf50"
+                                  : item.medicineType === "tuýp"
+                                  ? "#2196f3"
+                                  : "#ff9800"
+                              }
+                            />
+                          </TableCell>
+                          <TableCell align="center">{item.quantity}</TableCell>
+                          <TableCell>{item.instruction}</TableCell>
+                          <TableCell>{item.note || "-"}</TableCell>
+                          <TableCell align="center">
+                            <Tooltip title="Chỉnh sửa">
+                              <IconButton
+                                size="small"
+                                onClick={() => handleMedicineSelect(index)}
+                                sx={{
+                                  color: "#1976d2",
+                                  bgcolor: alpha("#1976d2", 0.1),
+                                  "&:hover": {
+                                    bgcolor: alpha("#1976d2", 0.2),
+                                  },
+                                }}
+                              >
+                                <VisibilityIcon fontSize="small" />
+                              </IconButton>
+                            </Tooltip>
+                          </TableCell>
+                        </StyledTableRow>
+                      ))}
+                    </TableBody>
+                  </Table>
+                </StyledTableContainer>
+              )}
+            </Box>
 
-        {/* Action Buttons */}
-        <Grid container spacing={2} sx={{ mt: 4 }} justifyContent="flex-end">
-          <Grid item>
-            <Button variant="contained" color="primary" onClick={handleExport}>
-              Xem PDF
-            </Button>
-          </Grid>
-          <Grid item>
-            <Button
-              variant="contained"
-              color="primary"
-              onClick={handleExport}
-              // Disable nút Gửi nếu chưa có kết quả khám
-              disabled={!appointment?.result}
-            >
-              Gửi
-            </Button>
-          </Grid>
-        </Grid>
+            {/* Action Buttons */}
+            <Box sx={{ display: "flex", justifyContent: "flex-end", gap: 2 }}>
+              <StyledButton
+                variant="outlined"
+                startIcon={<PictureAsPdfIcon />}
+                onClick={handleExport}
+                disabled={loading}
+              >
+                Xem PDF
+              </StyledButton>
+              <StyledButton
+                variant="contained"
+                color="primary"
+                onClick={handleExport}
+                disabled={!appointment?.result || loading}
+                endIcon={<SendIcon />}
+                startIcon={
+                  loading ? (
+                    <CircularProgress size={20} color="inherit" />
+                  ) : null
+                }
+              >
+                Gửi
+              </StyledButton>
+            </Box>
+          </StyledPaper>
 
-        {/* Cập nhật Snackbar */}
-        <Snackbar
-          open={openSnackbar}
-          autoHideDuration={2000}
-          onClose={handleCloseSnackbar}
-          anchorOrigin={{ vertical: "top", horizontal: "right" }}
-        >
-          <Alert
+          {/* Snackbar */}
+          <Snackbar
+            open={openSnackbar}
+            autoHideDuration={3000}
             onClose={handleCloseSnackbar}
-            severity={snackbarSeverity}
-            variant="filled"
-            sx={{ width: "100%" }}
+            anchorOrigin={{ vertical: "top", horizontal: "right" }}
           >
-            {snackbarMessage}
-          </Alert>
-        </Snackbar>
+            <Alert
+              onClose={handleCloseSnackbar}
+              severity={snackbarSeverity}
+              variant="filled"
+              sx={{ width: "100%" }}
+            >
+              {snackbarMessage}
+            </Alert>
+          </Snackbar>
 
-        {/* PDF Modal */}
-        <Dialog open={openPdf} onClose={handleClosePdf} fullWidth maxWidth="md">
-          <DialogContent>
-            <iframe
-              src={pdfUrl}
-              width="100%"
-              height="600px"
-              title="Prescription PDF"
-            />
-          </DialogContent>
-        </Dialog>
-      </Paper>
-    </Container>
+          {/* PDF Modal */}
+          <StyledDialog
+            open={openPdf}
+            onClose={handleClosePdf}
+            fullWidth
+            maxWidth="md"
+          >
+            <DialogContent sx={{ p: 0 }}>
+              <iframe
+                src={pdfUrl}
+                width="100%"
+                height="600px"
+                title="Prescription PDF"
+                frameBorder="0"
+              />
+            </DialogContent>
+          </StyledDialog>
+        </Container>
+      </Box>
+    </Box>
   );
 };
 

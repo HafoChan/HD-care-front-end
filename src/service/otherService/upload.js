@@ -7,7 +7,7 @@ class UploadFilesService {
       formData.append("file", file); // Ensure the key matches what the backend expects
     });
 
-    return axiosClient.post("patient/upload", formData, {
+    return axiosClient.post("/patient/upload", formData, {
       headers: {
         "Content-Type": "multipart/form-data",
       },

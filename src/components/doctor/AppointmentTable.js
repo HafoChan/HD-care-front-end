@@ -16,9 +16,73 @@ import {
   DialogContent,
   DialogActions,
   TextField,
+  alpha,
+  Box,
+  styled,
+  Chip,
 } from "@mui/material";
 import { toast } from "react-toastify";
 import { appointment } from "../../api/appointment";
+
+// Styled components for consistent table styling
+const StyledTableContainer = styled(TableContainer)(({ theme }) => ({
+  borderRadius: "12px",
+  overflow: "hidden",
+  boxShadow: "0 4px 20px rgba(0,0,0,0.05)",
+  border: "1px solid rgba(224, 224, 224, 0.3)",
+  backgroundColor: "rgba(255, 255, 255, 0.8)",
+  backdropFilter: "blur(10px)",
+  transition: "all 0.2s ease",
+  "&:hover": {
+    boxShadow: "0 6px 24px rgba(0,0,0,0.08)",
+  },
+}));
+
+const StyledTableHead = styled(TableHead)(() => ({
+  backgroundColor: "rgba(245, 245, 245, 0.8)",
+}));
+
+const StyledTableRow = styled(TableRow)(({ selected }) => ({
+  cursor: "pointer",
+  transition: "all 0.2s ease",
+  backgroundColor: selected
+    ? "rgba(237, 244, 252, 1) !important"
+    : "transparent",
+  borderLeft: selected ? "4px solid #1976d2" : "4px solid transparent",
+  "&:hover": {
+    backgroundColor: "rgba(240, 240, 240, 0.8) !important",
+  },
+  "&:last-child td, &:last-child th": {
+    borderBottom: 0,
+  },
+}));
+
+const StyledTableCell = styled(TableCell)(() => ({
+  padding: "12px 16px",
+  borderBottom: "1px solid rgba(224, 224, 224, 0.3)",
+  fontSize: "0.875rem",
+}));
+
+const StyledHeaderCell = styled(TableCell)(() => ({
+  padding: "14px 16px",
+  fontWeight: 600,
+  fontSize: "0.875rem",
+  color: "#333",
+  borderBottom: "1px solid rgba(224, 224, 224, 0.5)",
+}));
+
+const StatusButton = styled(Button)(({ color }) => ({
+  fontSize: "0.75rem",
+  fontWeight: 600,
+  padding: "4px 10px",
+  borderRadius: "6px",
+  textTransform: "uppercase",
+  minWidth: "100px",
+  boxShadow: "none",
+  "&:hover": {
+    boxShadow: "0 4px 12px rgba(0,0,0,0.1)",
+  },
+}));
 
 const AppointmentTable = ({
   appointments,
@@ -46,6 +110,7 @@ const AppointmentTable = ({
       );
       setRowStatuses(initialStatuses);
     }
+    console.log(appointments);
   }, [appointments]);
 
   const getStatusColor = (status) => {
@@ -75,6 +140,8 @@ const AppointmentTable = ({
       status: newStatus,
       note: `Cập nhật trạng thái ${newStatus} cho cuộc hẹn thành công`,
     };
+
+    console.log(data);
 
     try {
       await changeStatusFetchApi(selectedRow, data);
@@ -166,61 +233,80 @@ const AppointmentTable = ({
 
   return (
     <>
-      <TableContainer component={Paper}>
+      <StyledTableContainer>
         <Table>
-          <TableHead>
-            <TableRow sx={{ backgroundColor: "#f5f5f5" }}>
-              <TableCell sx={{ fontWeight: "bold" }}>ID bệnh nhân</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Họ và tên</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Ngày khám</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Thời gian</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Tiêu đề</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Email LH</TableCell>
-              <TableCell sx={{ fontWeight: "bold" }}>Trạng thái</TableCell>
+          <StyledTableHead>
+            <TableRow>
+              <StyledHeaderCell>Họ và tên</StyledHeaderCell>
+              <StyledHeaderCell>Ngày khám</StyledHeaderCell>
+              <StyledHeaderCell>Thời gian</StyledHeaderCell>
+              <StyledHeaderCell>Tiêu đề</StyledHeaderCell>
+              <StyledHeaderCell>Email LH</StyledHeaderCell>
+              <StyledHeaderCell>Trạng thái</StyledHeaderCell>
             </TableRow>
-          </TableHead>
+          </StyledTableHead>
           <TableBody>
             {appointments?.content?.map((appointment) => (
-              <TableRow
+              <StyledTableRow
                 key={appointment.id}
-                sx={{
-                  cursor: "pointer",
-                  fontWeight:
-                    selectedRow === appointment.id ? "bold" : "normal",
-                  backgroundColor:
-                    selectedRow === appointment.id
-                      ? "#edf4fc !important"
-                      : "transparent",
-                  "&:hover": {
-                    backgroundColor: "#f0f0f0 !important",
-                    fontWeight: "bold",
-                  },
-                }}
+                selected={selectedRow === appointment.id}
                 onClick={() => handleRowClick(appointment)}
               >
-                <TableCell>{appointment.id}</TableCell>
-                <TableCell>{appointment.name}</TableCell>
-                <TableCell>{appointment.start.split(" ")[0]}</TableCell>
-                <TableCell>
+                <StyledTableCell>
+                  <Box
+                    sx={{
+                      maxWidth: 200,
+                      whiteSpace: "normal",
+                      wordWrap: "break-word",
+                      "& > *": { whiteSpace: "normal" },
+                    }}
+                  >
+                    {appointment.name}
+                  </Box>
+                </StyledTableCell>
+                <StyledTableCell>
+                  {appointment.start.split(" ")[0]}
+                </StyledTableCell>
+                <StyledTableCell>
                   {appointment.start.split(" ")[1]} -{" "}
                   {appointment.end.split(" ")[1]}
-                </TableCell>
-                <TableCell>{appointment.title}</TableCell>
-                <TableCell>{appointment.email}</TableCell>
-                <TableCell>
-                  <Button
+                </StyledTableCell>
+                <StyledTableCell>
+                  <Box
+                    sx={{
+                      maxWidth: 200,
+                      whiteSpace: "normal",
+                      wordWrap: "break-word",
+                      "& > *": { whiteSpace: "normal" },
+                    }}
+                  >
+                    {appointment.title}
+                  </Box>
+                </StyledTableCell>
+                <StyledTableCell>
+                  <Box
+                    sx={{
+                      maxWidth: 200,
+                      whiteSpace: "normal",
+                      wordWrap: "break-word",
+                      "& > *": { whiteSpace: "normal" },
+                    }}
+                  >
+                    {appointment.email}
+                  </Box>
+                </StyledTableCell>
+                <StyledTableCell>
+                  <StatusButton
                     variant="contained"
                     color={getStatusColor(rowStatuses[appointment.id])}
                     onClick={(e) =>
-                      // Chỉ mở menu nếu trạng thái không phải COMPLETED hoặc CANCELLED
                       ["PENDING", "CONFIRMED"].includes(
                         rowStatuses[appointment.id]
                       ) && handleMenuClick(e, appointment.id)
                     }
                   >
                     {rowStatuses[appointment.id] || appointment.status}
-                  </Button>
-                  {/* Ẩn menu nếu trạng thái là COMPLETED hoặc CANCELLED */}
+                  </StatusButton>
                   {["COMPLETED", "CANCELLED"].includes(
                     rowStatuses[appointment.id]
                   ) ? null : (
@@ -228,6 +314,14 @@ const AppointmentTable = ({
                       anchorEl={anchorEl}
                       open={Boolean(anchorEl && selectedRow === appointment.id)}
                       onClose={handleMenuClose}
+                      elevation={3}
+                      PaperProps={{
+                        sx: {
+                          borderRadius: "8px",
+                          minWidth: "120px",
+                          boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
+                        },
+                      }}
                     >
                       {(() => {
                         const currentStatus = rowStatuses[appointment.id];
@@ -248,6 +342,14 @@ const AppointmentTable = ({
                           <MenuItem
                             key={status}
                             onClick={() => handleStatusClick(status)}
+                            sx={{
+                              fontSize: "0.875rem",
+                              py: 1,
+                              transition: "background-color 0.2s ease",
+                              "&:hover": {
+                                backgroundColor: alpha("#1976d2", 0.08),
+                              },
+                            }}
                           >
                             {status}
                           </MenuItem>
@@ -255,12 +357,12 @@ const AppointmentTable = ({
                       })()}
                     </Menu>
                   )}
-                </TableCell>
-              </TableRow>
+                </StyledTableCell>
+              </StyledTableRow>
             ))}
           </TableBody>
         </Table>
-      </TableContainer>
+      </StyledTableContainer>
 
       {/* Dialog xác nhận hủy lịch */}
       <Dialog
@@ -268,8 +370,17 @@ const AppointmentTable = ({
         onClose={handleCloseCancelDialog}
         maxWidth="sm"
         fullWidth
+        PaperProps={{
+          sx: {
+            borderRadius: "12px",
+            p: 1,
+            boxShadow: "0 10px 40px rgba(0,0,0,0.1)",
+          },
+        }}
       >
-        <DialogTitle>Xác nhận hủy lịch hẹn</DialogTitle>
+        <DialogTitle sx={{ fontWeight: 600, fontSize: "1.2rem" }}>
+          Xác nhận hủy lịch hẹn
+        </DialogTitle>
         <DialogContent>
           <TextField
             autoFocus
@@ -281,16 +392,39 @@ const AppointmentTable = ({
             value={cancelReason}
             onChange={(e) => setCancelReason(e.target.value)}
             required
+            sx={{
+              mt: 2,
+              "& .MuiOutlinedInput-root": {
+                borderRadius: "8px",
+              },
+            }}
           />
         </DialogContent>
-        <DialogActions>
-          <Button onClick={handleCloseCancelDialog} color="primary">
+        <DialogActions sx={{ px: 3, pb: 2 }}>
+          <Button
+            onClick={handleCloseCancelDialog}
+            variant="outlined"
+            sx={{
+              borderRadius: "8px",
+              textTransform: "none",
+              fontWeight: 600,
+            }}
+          >
             Hủy bỏ
           </Button>
           <Button
             onClick={handleCancelSubmit}
             color="error"
             variant="contained"
+            sx={{
+              borderRadius: "8px",
+              textTransform: "none",
+              fontWeight: 600,
+              boxShadow: "0 4px 8px rgba(211, 47, 47, 0.2)",
+              "&:hover": {
+                boxShadow: "0 6px 12px rgba(211, 47, 47, 0.3)",
+              },
+            }}
           >
             Xác nhận hủy
           </Button>

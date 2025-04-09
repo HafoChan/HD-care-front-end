@@ -11,6 +11,16 @@ export const doctor = {
     }
   },
 
+  updateDoctor(data) {
+    try {
+      const response = axiosClient.put(`/doctor/${data.id}`, data);
+      console.log(response);
+      return response;
+    } catch (error) {
+      console.error("Error:", error);
+    }
+  },
+
   filterDoctor(page, name, district, city, sorted) {
     try {
       const query = [
@@ -92,17 +102,15 @@ export const doctor = {
   getAllByAdmin(page) {
     try {
       const response = axiosClient.get(`/doctor/get-all-by-admin?page=${page}`);
-      console.log(response);
       return response;
     } catch (error) {
       console.error("Error:", error);
     }
   },
 
-  updateEnableDoctor(doctorId) {
+  updateBlockDoctor(doctorId) {
     try {
       const response = axiosClient.post(`/doctor/active/${doctorId}`);
-      console.log(`/doctor/active/${doctorId}`);
       return response;
     } catch (error) {
       console.error("Error:", error);
@@ -113,6 +121,8 @@ export const doctor = {
     try {
       const response = axiosClient.get(`/doctor/statistic`);
       return response;
-    } catch (error) {}
+    } catch (error) {
+      console.error("Error:", error);
+    }
   },
 };

@@ -25,8 +25,10 @@ import UploadFiles from "../../components/patient/uploadFile";
 import { getImg, setImg } from "../../service/otherService/localStorage";
 import { ToastContainer, toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { alpha, useTheme } from "@mui/material/styles";
 
 function UserDetail() {
+  const theme = useTheme();
   const [isEditing, setIsEditing] = useState(false);
   const [refresh, setRefresh] = useState(false);
   const [snackBarOpen, setSnackBarOpen] = useState(false);
@@ -153,7 +155,7 @@ function UserDetail() {
       <Divider
         orientation="horizontal"
         flexItem
-        style={{ maxWidth: "1200px" }}
+        style={{ maxWidth: "1400px" }}
       />
 
       <Container
@@ -162,6 +164,7 @@ function UserDetail() {
           flexDirection: "column",
           alignItems: "center",
           margin: "0 auto",
+          mb: 4,
         }}
       >
         <ToastContainer
@@ -179,9 +182,20 @@ function UserDetail() {
           sx={{
             display: "flex",
             width: "100%",
-            padding: 2,
-            boxShadow: "none",
-            mt: 4,
+            padding: 3,
+            mt: 3,
+            borderRadius: 3,
+            bgcolor: alpha(theme.palette.background.paper, 0.8),
+            backdropFilter: "blur(20px)",
+            border: "1px solid",
+            borderColor:
+              theme.palette.mode === "dark"
+                ? alpha(theme.palette.common.white, 0.12)
+                : alpha(theme.palette.common.black, 0.08),
+            transition: "transform 0.2s",
+            "&:hover": {
+              transform: "translateY(-4px)",
+            },
           }}
         >
           <UploadFiles askUrl={handleFileUpload} allowAvatarUpload={true} />
@@ -217,18 +231,48 @@ function UserDetail() {
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              sx={{ marginBottom: 6 }}
+              sx={{
+                marginBottom: 6,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.background.paper, 0.9),
+                  },
+                  "&.Mui-focused": {
+                    boxShadow: `0 0 0 2px ${alpha(
+                      theme.palette.primary.main,
+                      0.2
+                    )}`,
+                  },
+                },
+              }}
               InputProps={{ readOnly: !isEditing }}
             />
             <TextField
-              label="Birthday"
+              label="Ngày sinh"
               type="date"
               name="dob"
               value={userInfo?.dob || ""}
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              sx={{ marginBottom: 2 }}
+              sx={{
+                marginBottom: 2,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.background.paper, 0.9),
+                  },
+                  "&.Mui-focused": {
+                    boxShadow: `0 0 0 2px ${alpha(
+                      theme.palette.primary.main,
+                      0.2
+                    )}`,
+                  },
+                },
+              }}
               InputProps={{ readOnly: !isEditing }}
             />
             <Box display={"flex"} alignItems={"center"}>
@@ -262,7 +306,22 @@ function UserDetail() {
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              sx={{ marginBottom: 6 }}
+              sx={{
+                marginBottom: 6,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.background.paper, 0.9),
+                  },
+                  "&.Mui-focused": {
+                    boxShadow: `0 0 0 2px ${alpha(
+                      theme.palette.primary.main,
+                      0.2
+                    )}`,
+                  },
+                },
+              }}
               InputProps={{ readOnly: !isEditing }}
             />
             <TextField
@@ -272,7 +331,22 @@ function UserDetail() {
               onChange={handleInputChange}
               fullWidth
               InputLabelProps={{ shrink: true }}
-              sx={{ marginBottom: 2 }}
+              sx={{
+                marginBottom: 2,
+                "& .MuiOutlinedInput-root": {
+                  borderRadius: 2,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    bgcolor: alpha(theme.palette.background.paper, 0.9),
+                  },
+                  "&.Mui-focused": {
+                    boxShadow: `0 0 0 2px ${alpha(
+                      theme.palette.primary.main,
+                      0.2
+                    )}`,
+                  },
+                },
+              }}
               InputProps={{ readOnly: !isEditing }}
             />
           </Box>
@@ -289,6 +363,7 @@ function UserDetail() {
                 color="warning"
                 startIcon={<EditIcon />}
                 onClick={() => setIsEditing(true)}
+                sx={{ borderRadius: 2 }}
               >
                 Chỉnh sửa thông tin
               </Button>

@@ -8,6 +8,15 @@ import {
   Snackbar,
   Alert,
   Paper,
+  Grid,
+  Card,
+  CardContent,
+  useTheme,
+  alpha,
+  InputAdornment,
+  IconButton,
+  Divider,
+  Fade,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import "../../css/user/login_register.css";
@@ -15,23 +24,29 @@ import { useNavigate } from "react-router-dom";
 import images from "../../constants/images";
 import axiosClient from "../../api/axios-instance";
 import { setItem, setRole } from "../../service/otherService/localStorage";
-import { BorderLeft, BorderLeftOutlined } from "@mui/icons-material";
 import { OAuthConfig } from "../../configuration/configuration";
 import GoogleIcon from "@mui/icons-material/Google";
+import EmailIcon from "@mui/icons-material/Email";
+import LockIcon from "@mui/icons-material/Lock";
+import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import { toast } from "react-toastify";
 
 const Login = () => {
+  const theme = useTheme();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-
+  const [showPassword, setShowPassword] = useState(false);
   const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [snackBarMessage, setSnackBarMessage] = useState("");
   const [snackType, setSnackType] = useState("error");
   const navigate = useNavigate();
+
   const handleCloseSnackBar = (event, reason) => {
     if (reason === "clickaway") {
       return;
     }
-
     setSnackBarOpen(false);
   };
 
@@ -57,37 +72,66 @@ const Login = () => {
     )}&response_type=code&client_id=${googleClientId}&scope=openid%20email%20profile`;
 
     console.log(targetUrl);
-
     window.location.href = targetUrl;
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    const data = await axiosClient.post("auth/login", {
-      username: email,
-      password: password,
-    });
-
     try {
+      const data = await axiosClient.post("auth/login", {
+        username: email,
+        password: password,
+      });
+
       if (data.code != 1000) {
         console.log(data.message);
         throw new Error(data.message);
       }
-      showSuccess(data.message);
-      setItem(
-        data.result.accessToken,
-        data.result.refreshToken,
-        data.result.userResponse.img
-      );
-      setRole(data.result.roles);
-      // navigate("/home");
+      if (data.code === 1000 && !data?.result) {
+        toast.warning(data.message);
+      } else {
+        showSuccess(data.message);
+        setItem(
+          data.result.accessToken,
+          data.result.refreshToken,
+          data.result.userResponse.img
+        );
+        setRole(data.result.roles);
+        // navigate("/home");
+      }
     } catch (error) {
       showError(error.message);
     }
   };
 
+  const handleTogglePasswordVisibility = () => {
+    setShowPassword(!showPassword);
+  };
+
   return (
-    <div className="login-container bg-login-register">
+    <Box
+      className="login-container bg-login-register"
+      sx={{
+        minHeight: "100vh",
+        display: "flex",
+        alignItems: "center",
+        position: "relative",
+        overflow: "hidden",
+        "&::before": {
+          content: '""',
+          position: "absolute",
+          top: 0,
+          left: 0,
+          right: 0,
+          height: "100vh",
+          background: `linear-gradient(135deg, ${alpha(
+            theme.palette.primary.dark,
+            0.2
+          )} 0%, ${alpha(theme.palette.primary.light, 0)} 100%)`,
+          zIndex: -1,
+        },
+      }}
+    >
       <Snackbar
         open={snackBarOpen}
         onClose={handleCloseSnackBar}
@@ -103,121 +147,278 @@ const Login = () => {
           {snackBarMessage}
         </Alert>
       </Snackbar>
-      <Container
-        component="main"
-        maxWidth="lg"
-        style={{
-          display: "flex",
-          height: "50%",
-          justifyContent: "center",
-        }}
-      >
-        <img
-          src={images.login_img}
-          alt="Side"
-          className="side-image"
-          style={{
-            borderTopRightRadius: 0,
-            borderBottomRightRadius: 0,
-            borderBottomLeftRadius: 10,
-            borderTopLeftRadius: 10,
-          }}
-        />
-        <Paper
-          elevation={3}
-          style={{
-            padding: "20px",
-            boxShadow: "none",
-            borderTopRightRadius: 10,
-            borderBottomRightRadius: 10,
-            borderBottomLeftRadius: 0,
-            borderTopLeftRadius: 0,
-          }}
-        >
-          <Typography variant="h5" align="center">
-            Welcome to our professional skincare service!
-          </Typography>
-          <Typography
-            variant="body2"
-            align="center"
-            style={{ marginBottom: "20px", marginTop: "10px" }}
+
+      <Container maxWidth="lg" sx={{ py: 5 }}>
+        <Fade in timeout={800}>
+          <Card
+            elevation={6}
+            sx={{
+              borderRadius: 4,
+              overflow: "hidden",
+              maxWidth: "1000px",
+              mx: "auto",
+              boxShadow: "0 8px 40px rgba(0,0,0,0.12)",
+              background: theme.palette.background.paper,
+            }}
           >
-            Log in to book an appointment and enjoy radiant skin today.
-          </Typography>
-          <form onSubmit={handleSubmit}>
-            <TextField
-              label="Email or Username"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              required
-            />
-            <TextField
-              label="Password"
-              variant="outlined"
-              fullWidth
-              margin="normal"
-              type="password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              required
-            />
-            <Button
-              variant="contained"
-              color="primary"
-              type="submit"
-              style={{ marginTop: "10px" }}
-              fullWidth
-            >
-              Log In
-            </Button>
-          </form>
-          <Box display="flex" justifyContent="flex-end">
-            <Box style={{ marginTop: "15px" }}>
-              <Link to="/register" style={{ textDecoration: "none" }}>
-                <Button
-                  color="primary"
-                  sx={{ textTransform: "none", fontSize: 15 }}
-                >
-                  Don't have an account? Sign up
-                </Button>
-              </Link>
-              <Button
-                variant="outlined"
-                onClick={handleLoginGoogle}
-                startIcon={<GoogleIcon />}
+            <Grid container>
+              <Grid
+                item
+                xs={12}
+                md={6}
                 sx={{
-                  textTransform: "none",
-                  backgroundColor: "#ffffff",
-                  color: "#444444",
-                  borderColor: "#dadce0",
-                  boxShadow: "0 2px 4px 0 rgba(0,0,0,.25)",
-                  "&:hover": {
-                    backgroundColor: "#f8f9fa",
-                    boxShadow: "0 2px 8px 0 rgba(0,0,0,.25)",
-                    borderColor: "#dadce0",
-                  },
-                  marginLeft: "10px",
-                  fontSize: 15,
-                  padding: "8px 16px",
-                  fontWeight: 500,
-                  "& .MuiButton-startIcon": {
-                    marginRight: "12px",
-                  },
-                  "& .MuiSvgIcon-root": {
-                    color: "#4285f4", // Màu xanh của Google
-                  },
+                  position: "relative",
+                  display: { xs: "none", md: "block" },
                 }}
               >
-                Sign in with Google
-              </Button>
-            </Box>
-          </Box>
-        </Paper>
+                <Box
+                  component="img"
+                  src={images.login_img}
+                  alt="Healthcare Services"
+                  sx={{
+                    height: "100%",
+                    width: "100%",
+                    objectFit: "cover",
+                    objectPosition: "center",
+                  }}
+                />
+                <Box
+                  sx={{
+                    position: "absolute",
+                    bottom: 0,
+                    left: 0,
+                    right: 0,
+                    p: 3,
+                    background: "linear-gradient(transparent, rgba(0,0,0,0.7))",
+                  }}
+                >
+                  <Typography
+                    variant="h5"
+                    fontWeight={700}
+                    color="white"
+                    sx={{ textShadow: "0 2px 4px rgba(0,0,0,0.3)" }}
+                  >
+                    HD-Care
+                  </Typography>
+                  <Typography
+                    variant="body2"
+                    color="white"
+                    sx={{
+                      opacity: 0.9,
+                      textShadow: "0 1px 2px rgba(0,0,0,0.3)",
+                    }}
+                  >
+                    Chăm sóc sức khỏe làn da của bạn
+                  </Typography>
+                </Box>
+              </Grid>
+
+              <Grid item xs={12} md={6}>
+                <CardContent sx={{ p: 4, height: "100%" }}>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      mb: 1,
+                    }}
+                  >
+                    <Button
+                      component={Link}
+                      to="/"
+                      startIcon={<ArrowBackIcon />}
+                      sx={{
+                        mr: "auto",
+                        textTransform: "none",
+                        mb: 2,
+                        fontWeight: 500,
+                        color: theme.palette.text.secondary,
+                        "&:hover": {
+                          backgroundColor: "transparent",
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                    >
+                      Quay lại trang chủ
+                    </Button>
+                  </Box>
+
+                  <Typography
+                    variant="h4"
+                    gutterBottom
+                    fontWeight={700}
+                    color="primary.main"
+                    sx={{ mb: 1 }}
+                  >
+                    Đăng nhập
+                  </Typography>
+
+                  <Typography
+                    variant="body1"
+                    color="text.secondary"
+                    sx={{ mb: 4 }}
+                  >
+                    Chào mừng trở lại! Vui lòng đăng nhập để tiếp tục.
+                  </Typography>
+
+                  <form onSubmit={handleSubmit}>
+                    <TextField
+                      label="Tài khoản"
+                      variant="outlined"
+                      fullWidth
+                      placeholder="Email hoặc tên đăng nhập"
+                      margin="normal"
+                      value={email}
+                      onChange={(e) => setEmail(e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <EmailIcon color="primary" />
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          borderRadius: 2,
+                        },
+                      }}
+                    />
+
+                    <TextField
+                      label="Mật khẩu"
+                      variant="outlined"
+                      placeholder="Mật khẩu của bạn"
+                      fullWidth
+                      margin="normal"
+                      type={showPassword ? "text" : "password"}
+                      value={password}
+                      onChange={(e) => setPassword(e.target.value)}
+                      required
+                      InputProps={{
+                        startAdornment: (
+                          <InputAdornment position="start">
+                            <LockIcon color="primary" />
+                          </InputAdornment>
+                        ),
+                        endAdornment: (
+                          <InputAdornment position="end">
+                            <IconButton
+                              onClick={handleTogglePasswordVisibility}
+                              edge="end"
+                            >
+                              {showPassword ? (
+                                <VisibilityOffIcon />
+                              ) : (
+                                <VisibilityIcon />
+                              )}
+                            </IconButton>
+                          </InputAdornment>
+                        ),
+                        sx: {
+                          borderRadius: 2,
+                        },
+                      }}
+                      sx={{ mb: 1 }}
+                    />
+
+                    <Box
+                      sx={{
+                        display: "flex",
+                        justifyContent: "flex-end",
+                        mb: 2,
+                      }}
+                    >
+                      <Typography
+                        variant="body2"
+                        component={Link}
+                        to="/forgot-password"
+                        sx={{
+                          color: theme.palette.primary.main,
+                          textDecoration: "none",
+                          "&:hover": {
+                            textDecoration: "underline",
+                          },
+                        }}
+                      >
+                        Quên mật khẩu?
+                      </Typography>
+                    </Box>
+
+                    <Button
+                      variant="contained"
+                      color="primary"
+                      type="submit"
+                      fullWidth
+                      size="large"
+                      sx={{
+                        py: 1.2,
+                        borderRadius: 2,
+                        textTransform: "none",
+                        fontWeight: 600,
+                        mb: 3,
+                      }}
+                    >
+                      Đăng nhập
+                    </Button>
+
+                    <Divider sx={{ mb: 3 }}>
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          color: theme.palette.text.secondary,
+                          px: 1,
+                        }}
+                      >
+                        Hoặc đăng nhập với
+                      </Typography>
+                    </Divider>
+
+                    <Button
+                      variant="outlined"
+                      fullWidth
+                      onClick={handleLoginGoogle}
+                      startIcon={<GoogleIcon sx={{ color: "#4285f4" }} />}
+                      sx={{
+                        textTransform: "none",
+                        backgroundColor: "#ffffff",
+                        color: "#444444",
+                        borderColor: "#dadce0",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.08)",
+                        py: 1.2,
+                        borderRadius: 2,
+                        fontWeight: 500,
+                        mb: 3,
+                        "&:hover": {
+                          backgroundColor: "#f8f9fa",
+                          boxShadow: "0 2px 6px rgba(0,0,0,0.12)",
+                          borderColor: "#dadce0",
+                        },
+                      }}
+                    >
+                      Đăng nhập với Google
+                    </Button>
+
+                    <Box sx={{ textAlign: "center", mt: 1 }}>
+                      <Typography variant="body2" color="text.secondary">
+                        Chưa có tài khoản?{" "}
+                        <Link
+                          to="/register"
+                          style={{
+                            textDecoration: "none",
+                            color: theme.palette.primary.main,
+                            fontWeight: 600,
+                          }}
+                        >
+                          Đăng ký
+                        </Link>
+                      </Typography>
+                    </Box>
+                  </form>
+                </CardContent>
+              </Grid>
+            </Grid>
+          </Card>
+        </Fade>
       </Container>
-    </div>
+    </Box>
   );
 };
 
