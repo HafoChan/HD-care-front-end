@@ -44,6 +44,7 @@ import CreateNewsPage from "./pages/news/CreatePage";
 import EditNewsPage from "./pages/news/EditPage";
 import SavedNewsPage from "./pages/news/SavedNewsPage";
 import MyArticlesPage from "./pages/news/MyArticlesPage";
+import PostDetailPage from "./pages/social-network/PostDetailPage";
 
 const PrivateRoute = ({ children }) => {
   const role = getRole();
@@ -136,6 +137,7 @@ const AppRouter = () => {
 
       {/* Social Network Routes */}
       <Route path="/social-network" element={<PostPage />} />
+      <Route path="/social-network/post/:postId" element={<PostDetailPage />} />
       <Route path="/social-network/create-post" element={<CreatePostPage />} />
       <Route path="/social-network/saved-posts" element={<SavedPostsPage />} />
       <Route path="/social-network/follow" element={<FollowPage />} />

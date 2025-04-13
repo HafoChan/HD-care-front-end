@@ -54,13 +54,24 @@ import {
 import PostCard from "../../components/social-network/PostCardComponent";
 import { Link } from "react-router-dom";
 import HeaderComponent from "../../components/patient/HeaderComponent";
+import { px } from "framer-motion";
+import { ToastContainer, toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 const PostPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedType, setFeedType] = useState("discover");
-  const [page, setPage] = useState(0);
-  const [hasMore, setHasMore] = useState(true);
+
+  // Separate pagination states for each feed type
+  const [discoverPage, setDiscoverPage] = useState(0);
+  const [latestPage, setLatestPage] = useState(0);
+  const [followingPage, setFollowingPage] = useState(0);
+
+  const [hasMoreDiscover, setHasMoreDiscover] = useState(true);
+  const [hasMoreLatest, setHasMoreLatest] = useState(true);
+  const [hasMoreFollowing, setHasMoreFollowing] = useState(true);
+
   const [suggestedUsers, setSuggestedUsers] = useState([]);
   const [showAllSuggestions, setShowAllSuggestions] = useState(false);
   const [suggestedUsersPage, setSuggestedUsersPage] = useState(0);
@@ -72,39 +83,102 @@ const PostPage = () => {
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isMedium = useMediaQuery(theme.breakpoints.down("md"));
 
+  const [isFollowingActionInProgress, setIsFollowingActionInProgress] =
+    useState(false);
+
+  // Function to get current page based on feed type
+  const getCurrentPage = () => {
+    switch (feedType) {
+      case "discover":
+        return discoverPage;
+      case "latest":
+        return latestPage;
+      case "following":
+        return followingPage;
+      default:
+        return discoverPage;
+    }
+  };
+
+  // Function to get has more flag based on feed type
+  const getHasMore = () => {
+    switch (feedType) {
+      case "discover":
+        return hasMoreDiscover;
+      case "latest":
+        return hasMoreLatest;
+      case "following":
+        return hasMoreFollowing;
+      default:
+        return hasMoreDiscover;
+    }
+  };
+
+  // Function to update page based on feed type
+  const updatePage = (value) => {
+    switch (feedType) {
+      case "discover":
+        setDiscoverPage(value);
+        break;
+      case "latest":
+        setLatestPage(value);
+        break;
+      case "following":
+        setFollowingPage(value);
+        break;
+    }
+  };
+
+  // Function to update hasMore based on feed type
+  const updateHasMore = (value) => {
+    switch (feedType) {
+      case "discover":
+        setHasMoreDiscover(value);
+        break;
+      case "latest":
+        setHasMoreLatest(value);
+        break;
+      case "following":
+        setHasMoreFollowing(value);
+        break;
+    }
+  };
+
   // Function to fetch posts based on feed type
   const fetchPosts = async (reset = false) => {
     if (reset) {
-      setPage(0);
-      setHasMore(true);
+      updatePage(0);
+      updateHasMore(true);
       setPosts([]);
     }
 
-    if (!hasMore && !reset) return;
+    if (!getHasMore() && !reset) return;
 
     setLoading(true);
     try {
       let data;
+      const currentPage = reset ? 0 : getCurrentPage();
+
       switch (feedType) {
         case "discover":
-          data = await discoverPosts(page, 10);
+          data = await discoverPosts(currentPage, 10);
           break;
         case "latest":
-          data = await getLatestPosts(page, 10);
+          data = await getLatestPosts(currentPage, 10);
           break;
         case "following":
-          data = await getPostsFromFollowers(page, 10);
+          data = await getPostsFromFollowers(currentPage, 10);
           break;
         default:
-          data = await discoverPosts(page, 10);
+          data = await discoverPosts(currentPage, 10);
       }
 
       if (data && data.length > 0) {
         setPosts((prev) => (reset ? data : [...prev, ...data]));
-        setHasMore(data.length === 10);
-        setPage((prev) => prev + 1);
+        updateHasMore(data.length === 10);
+        updatePage(currentPage + 1);
       } else {
-        setHasMore(false);
+        updateHasMore(false);
       }
     } catch (error) {
       console.error("Error fetching posts:", error);
@@ -115,6 +189,9 @@ const PostPage = () => {
 
   // Function to fetch suggested users
   const fetchSuggestedUsers = async (reset = false) => {
+    // Calculate the current page to use
+    const pageToFetch = reset ? 0 : suggestedUsersPage;
+
     if (reset) {
       setSuggestedUsersPage(0);
       setHasMoreSuggestions(true);
@@ -125,11 +202,13 @@ const PostPage = () => {
 
     setLoadingSuggestions(true);
     try {
-      const data = await suggestUsersToFollow(suggestedUsersPage, 10);
+      // Use the determined page instead of reading from state
+      const data = await suggestUsersToFollow(pageToFetch, 10);
       if (data && data.length > 0) {
         setSuggestedUsers((prev) => (reset ? data : [...prev, ...data]));
         setHasMoreSuggestions(data.length === 10);
-        setSuggestedUsersPage((prev) => prev + 1);
+        // Only increment if we're getting new data
+        setSuggestedUsersPage(pageToFetch + 1);
       } else {
         setHasMoreSuggestions(false);
       }
@@ -146,13 +225,13 @@ const PostPage = () => {
       if (loading) return;
       if (observer.current) observer.current.disconnect();
       observer.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMore) {
+        if (entries[0].isIntersecting && getHasMore()) {
           fetchPosts();
         }
       });
       if (node) observer.current.observe(node);
     },
-    [loading, hasMore, feedType]
+    [loading, feedType, hasMoreDiscover, hasMoreLatest, hasMoreFollowing]
   );
 
   // Intersection Observer for suggested users infinite scrolling
@@ -160,11 +239,18 @@ const PostPage = () => {
     (node) => {
       if (loadingSuggestions) return;
       if (suggestionsObserver.current) suggestionsObserver.current.disconnect();
+
       suggestionsObserver.current = new IntersectionObserver((entries) => {
-        if (entries[0].isIntersecting && hasMoreSuggestions) {
-          fetchSuggestedUsers();
+        // Only trigger if actually intersecting and we have more data to load
+        if (
+          entries[0].isIntersecting &&
+          hasMoreSuggestions &&
+          !loadingSuggestions
+        ) {
+          fetchSuggestedUsers(false);
         }
       });
+
       if (node) suggestionsObserver.current.observe(node);
     },
     [loadingSuggestions, hasMoreSuggestions]
@@ -184,23 +270,60 @@ const PostPage = () => {
     setFeedType(newValue);
   };
 
-  const handleFollowUser = async (userId) => {
+  // Function to handle following a user
+  const handleFollowUser = async (userId, isFollowing = false) => {
+    if (isFollowingActionInProgress) return; // Prevent further actions if one is in progress
+    setIsFollowingActionInProgress(true); // Set the flag to true
+
     try {
+      // Update UI immediately for optimistic updates
+      setSuggestedUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, isFollowing: !isFollowing } : user
+        )
+      );
+
+      // Call API
       await followUser(userId);
-      // Refresh suggested users after following
-      fetchSuggestedUsers(true);
     } catch (error) {
-      console.error("Error following user:", error);
+      console.error("Error following/unfollowing user:", error);
+
+      // Revert UI change on error
+      setSuggestedUsers((prev) =>
+        prev.map((user) =>
+          user.id === userId ? { ...user, isFollowing: isFollowing } : user
+        )
+      );
+
+      // Only show toast if the modal is not open
+      if (!showAllSuggestions) {
+        toast.error("Không thể thay đổi trạng thái theo dõi");
+      }
+    } finally {
+      setIsFollowingActionInProgress(false); // Reset the flag
     }
   };
 
   const handleOpenSuggestionsModal = () => {
+    // First set the state to show modal
     setShowAllSuggestions(true);
-    fetchSuggestedUsers(true);
+
+    // Reset page and suggestions before fetching
+    setSuggestedUsersPage(0);
+    setSuggestedUsers([]);
+    setHasMoreSuggestions(true);
+
+    // Use setTimeout to ensure state updates have been processed
+    setTimeout(() => {
+      fetchSuggestedUsers(true);
+    }, 0);
   };
 
   const handleCloseSuggestionsModal = () => {
     setShowAllSuggestions(false);
+    // Reset pagination on close
+    setSuggestedUsersPage(0);
+    setHasMoreSuggestions(true);
   };
 
   // Mock data for community features
@@ -276,6 +399,12 @@ const PostPage = () => {
         overflow: "hidden",
         border: "1px solid",
         borderColor: alpha(theme.palette.divider, 0.1),
+        boxShadow: `0 4px 12px ${alpha(theme.palette.common.black, 0.05)}`,
+        transition: "transform 0.2s, box-shadow 0.2s",
+        "&:hover": {
+          transform: "translateY(-4px)",
+          boxShadow: `0 8px 20px ${alpha(theme.palette.common.black, 0.08)}`,
+        },
       }}
     >
       <CardContent>
@@ -295,14 +424,26 @@ const PostPage = () => {
               display: "flex",
               alignItems: "center",
               mb: 2,
-              p: 1,
+              p: 1.5,
               borderRadius: 2,
+              transition: "all 0.2s ease",
               "&:hover": {
                 bgcolor: alpha(theme.palette.primary.main, 0.05),
               },
             }}
           >
-            <Avatar src={user.avatar} sx={{ width: 40, height: 40, mr: 2 }}>
+            <Avatar
+              src={user.avatar}
+              sx={{
+                width: 45,
+                height: 45,
+                mr: 2,
+                boxShadow: `0 2px 8px ${alpha(
+                  theme.palette.common.black,
+                  0.1
+                )}`,
+              }}
+            >
               {user.name ? user.name[0].toUpperCase() : "U"}
             </Avatar>
             <Box sx={{ flexGrow: 1 }}>
@@ -315,12 +456,19 @@ const PostPage = () => {
             </Box>
             <Button
               size="small"
-              variant="outlined"
+              variant={user.isFollowing ? "contained" : "outlined"}
               color="primary"
-              onClick={() => handleFollowUser(user.id)}
-              sx={{ borderRadius: 5, textTransform: "none" }}
+              onClick={() => handleFollowUser(user.id, user.isFollowing)}
+              sx={{
+                borderRadius: 6,
+                textTransform: "none",
+                minHeight: "36px",
+                maxHeight: "36px",
+                minWidth: user.isFollowing ? "120px" : "90px",
+                px: 2,
+              }}
             >
-              Theo dõi
+              {user.isFollowing ? "Đang theo dõi" : "Theo dõi"}
             </Button>
           </Box>
         ))}
@@ -331,7 +479,7 @@ const PostPage = () => {
             variant="text"
             color="primary"
             onClick={handleOpenSuggestionsModal}
-            sx={{ mt: 1, textTransform: "none" }}
+            sx={{ mt: 1.5, textTransform: "none", borderRadius: 2 }}
           >
             Xem tất cả
           </Button>
@@ -347,14 +495,19 @@ const PostPage = () => {
       onClose={handleCloseSuggestionsModal}
       maxWidth="sm"
       fullWidth
+      PaperProps={{
+        sx: { borderRadius: 3, maxHeight: "80vh" },
+      }}
     >
-      <DialogTitle>
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 2 }}>
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <PersonAddIcon color="primary" sx={{ mr: 1 }} />
-          <Typography variant="h6">Đề xuất theo dõi</Typography>
+          <PersonAddIcon color="primary" sx={{ mr: 1.5 }} />
+          <Typography variant="h5" fontWeight={600}>
+            Đề xuất theo dõi
+          </Typography>
         </Box>
       </DialogTitle>
-      <DialogContent dividers>
+      <DialogContent dividers sx={{ p: 0 }}>
         <List sx={{ width: "100%" }}>
           {suggestedUsers.map((user, index) => (
             <React.Fragment key={user.id}>
@@ -364,68 +517,159 @@ const PostPage = () => {
                     ? lastSuggestionElementRef
                     : null
                 }
-                alignItems="flex-start"
-                sx={{ py: 2 }}
+                alignItems="center"
+                sx={{
+                  py: 2,
+                  px: 3,
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                  },
+                }}
               >
                 <ListItemAvatar>
-                  <Avatar src={user.avatar}>
+                  <Avatar
+                    src={user.avatar}
+                    sx={{
+                      width: 50,
+                      height: 50,
+                      boxShadow: `0 2px 10px ${alpha(
+                        theme.palette.common.black,
+                        0.1
+                      )}`,
+                    }}
+                  >
                     {user.name ? user.name[0].toUpperCase() : "U"}
                   </Avatar>
                 </ListItemAvatar>
                 <ListItemText
-                  primary={user.name}
-                  secondary={user.role || "Người dùng"}
+                  primary={
+                    <Typography variant="subtitle1" fontWeight={600}>
+                      {user.name}
+                    </Typography>
+                  }
+                  secondary={
+                    <Typography variant="body2" color="text.secondary">
+                      {user.role || "Người dùng"}
+                    </Typography>
+                  }
+                  sx={{ ml: 1 }}
                 />
                 <ListItemSecondaryAction>
                   <Button
                     size="small"
-                    variant="outlined"
+                    variant={user.isFollowing ? "contained" : "outlined"}
                     color="primary"
-                    onClick={() => handleFollowUser(user.id)}
-                    sx={{ borderRadius: 5, textTransform: "none" }}
+                    onClick={() => handleFollowUser(user.id, user.isFollowing)}
+                    sx={{
+                      borderRadius: 6,
+                      textTransform: "none",
+                      px: 2,
+                      py: 0.8,
+                    }}
                   >
-                    Theo dõi
+                    {user.isFollowing ? "Đang theo dõi" : "Theo dõi"}
                   </Button>
                 </ListItemSecondaryAction>
               </ListItem>
-              {index < suggestedUsers.length - 1 && (
-                <Divider variant="inset" component="li" />
-              )}
+              {index < suggestedUsers.length - 1 && <Divider sx={{ mx: 3 }} />}
             </React.Fragment>
           ))}
           {loadingSuggestions && (
-            <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-              <CircularProgress size={24} />
+            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+              <CircularProgress size={30} />
             </Box>
           )}
         </List>
       </DialogContent>
-      <DialogActions>
-        <Button onClick={handleCloseSuggestionsModal} color="primary">
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={handleCloseSuggestionsModal}
+          variant="contained"
+          color="primary"
+          sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+        >
           Đóng
         </Button>
       </DialogActions>
     </Dialog>
   );
 
+  // Add optimistic update for likes and saves
+  const handlePostInteraction = (postId, action) => {
+    // Create a deep copy of the posts array
+    const updatedPosts = posts.map((post) => {
+      if (post.id === postId) {
+        if (action === "like") {
+          return {
+            ...post,
+            liked: !post.liked,
+            countLikes: post.liked ? post.countLikes - 1 : post.countLikes + 1,
+          };
+        } else if (action === "save") {
+          return {
+            ...post,
+            saved: !post.saved,
+          };
+        }
+      }
+      return post;
+    });
+
+    setPosts(updatedPosts);
+  };
+
   return (
     <Box
       sx={{
-        opacity: 1,
-        transition: "opacity 0.6s ease-in-out",
-        bgcolor: "#f5f7fa",
+        backgroundColor: "#f5f7fa",
         minHeight: "100vh",
+        display: "flex",
+        flexDirection: "column",
       }}
     >
-      {/* Include HeaderComponent */}
-      <HeaderComponent />
+      {/* Fixed Header */}
+      <Box sx={{ position: "sticky", top: 0, zIndex: 10 }}>
+        <HeaderComponent />
+      </Box>
+
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
 
       {/* Page Content */}
-      <Container maxWidth="lg" sx={{ pt: 3, pb: 6 }}>
-        <Grid container spacing={3}>
+      <Container
+        maxWidth="xl"
+        sx={{
+          pt: 3,
+          pb: 6,
+          flexGrow: 1,
+          display: "flex",
+          flexDirection: "column",
+        }}
+      >
+        <Grid container spacing={3} sx={{ px: 8, flexGrow: 1 }}>
           {/* Left Sidebar (Hidden on Mobile) */}
           {!isMobile && (
-            <Grid item xs={12} md={3}>
+            <Grid
+              item
+              xs={12}
+              md={3}
+              sx={{
+                position: "sticky",
+                top: 80,
+                height: "fit-content",
+                alignSelf: "flex-start",
+              }}
+            >
               <Box
                 sx={{
                   opacity: 1,
@@ -538,7 +782,13 @@ const PostPage = () => {
           )}
 
           {/* Main Content */}
-          <Grid item xs={12} md={6}>
+          <Grid
+            item
+            xs={12}
+            md={6}
+            sx={{ display: "flex", flexDirection: "column" }}
+          >
+            {/* Fixed Tabs */}
             <Paper
               elevation={0}
               sx={{
@@ -547,6 +797,10 @@ const PostPage = () => {
                 border: "1px solid",
                 borderColor: alpha(theme.palette.divider, 0.1),
                 mb: 3,
+                position: "sticky",
+                top: 80,
+                zIndex: 5,
+                backgroundColor: "#fff",
               }}
             >
               <Tabs
@@ -583,114 +837,84 @@ const PostPage = () => {
               </Tabs>
             </Paper>
 
-            {loading && posts.length === 0 ? (
-              renderPostsSkeleton()
-            ) : (
-              <Box>
-                {posts.map((post, index) => (
-                  <div
-                    key={post.id}
-                    ref={index === posts.length - 1 ? lastPostElementRef : null}
-                  >
-                    <PostCard post={post} onRefresh={() => fetchPosts(true)} />
-                  </div>
-                ))}
-                {loading && posts.length > 0 && (
-                  <Box sx={{ display: "flex", justifyContent: "center", p: 2 }}>
-                    <CircularProgress size={24} />
-                  </Box>
-                )}
-                {!loading && posts.length === 0 && (
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "center",
-                      justifyContent: "center",
-                      p: 4,
-                      textAlign: "center",
-                    }}
-                  >
-                    <WhatshotIcon
-                      sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
-                    />
-                    <Typography variant="h6" gutterBottom>
-                      Chưa có bài viết nào
-                    </Typography>
-                    <Typography variant="body2" color="text.secondary">
-                      Hãy tạo bài viết đầu tiên hoặc theo dõi người dùng khác để
-                      xem bài viết của họ
-                    </Typography>
-                    <Button
-                      component={Link}
-                      to="/social-network/create-post"
-                      variant="contained"
-                      startIcon={<ExploreIcon />}
-                      sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}
+            {/* Scrollable Content */}
+            <Box sx={{ flexGrow: 1, overflow: "auto" }}>
+              {loading && posts.length === 0 ? (
+                renderPostsSkeleton()
+              ) : (
+                <Box>
+                  {posts.map((post, index) => (
+                    <div
+                      key={post.id}
+                      ref={
+                        index === posts.length - 1 ? lastPostElementRef : null
+                      }
                     >
-                      Tạo bài viết
-                    </Button>
-                  </Box>
-                )}
-              </Box>
-            )}
+                      <PostCard
+                        post={post}
+                        onRefresh={() => fetchPosts(true)}
+                        onLike={() => handlePostInteraction(post.id, "like")}
+                        onSave={() => handlePostInteraction(post.id, "save")}
+                      />
+                    </div>
+                  ))}
+                  {loading && posts.length > 0 && (
+                    <Box
+                      sx={{ display: "flex", justifyContent: "center", p: 2 }}
+                    >
+                      <CircularProgress size={24} />
+                    </Box>
+                  )}
+                  {!loading && posts.length === 0 && (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        p: 4,
+                        textAlign: "center",
+                      }}
+                    >
+                      <WhatshotIcon
+                        sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
+                      />
+                      <Typography variant="h6" gutterBottom>
+                        Chưa có bài viết nào
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Hãy tạo bài viết đầu tiên hoặc theo dõi người dùng khác
+                        để xem bài viết của họ
+                      </Typography>
+                      <Button
+                        component={Link}
+                        to="/social-network/create-post"
+                        variant="contained"
+                        startIcon={<ExploreIcon />}
+                        sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}
+                      >
+                        Tạo bài viết
+                      </Button>
+                    </Box>
+                  )}
+                </Box>
+              )}
+            </Box>
           </Grid>
 
           {/* Right Sidebar (Hidden on Mobile) */}
           {!isMobile && (
-            <Grid item xs={12} md={3}>
-              {/* <Card
-                elevation={0}
-                sx={{
-                  borderRadius: 3,
-                  overflow: "hidden",
-                  border: "1px solid",
-                  borderColor: alpha(theme.palette.divider, 0.1),
-                }}
-              >
-                <CardContent>
-                  <Typography variant="h6" fontWeight={600} gutterBottom>
-                    Tìm kiếm
-                  </Typography>
-                  <TextField
-                    fullWidth
-                    placeholder="Tìm kiếm bài viết, người dùng..."
-                    variant="outlined"
-                    size="small"
-                    InputProps={{
-                      startAdornment: (
-                        <InputAdornment position="start">
-                          <SearchIcon color="action" />
-                        </InputAdornment>
-                      ),
-                    }}
-                    sx={{ mb: 3 }}
-                  />
-
-                  <Typography variant="h6" fontWeight={600} gutterBottom>
-                    Bộ lọc
-                  </Typography>
-                  <Stack direction="row" spacing={1} sx={{ mb: 3 }}>
-                    <Chip
-                      label="Tất cả"
-                      color="primary"
-                      variant="filled"
-                      sx={{ borderRadius: 1 }}
-                    />
-                    <Chip
-                      label="Bài viết"
-                      variant="outlined"
-                      sx={{ borderRadius: 1 }}
-                    />
-                    <Chip
-                      label="Người dùng"
-                      variant="outlined"
-                      sx={{ borderRadius: 1 }}
-                    />
-                  </Stack>
-                </CardContent>
-              </Card> */}
-              {/* Suggested Users */}
+            <Grid
+              item
+              xs={12}
+              md={3}
+              sx={{
+                position: "sticky",
+                top: 80,
+                height: "fit-content",
+                alignSelf: "flex-start",
+              }}
+            >
               {renderSuggestedUsers()}
             </Grid>
           )}

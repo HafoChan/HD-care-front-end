@@ -1,5 +1,5 @@
 // src/pages/social-network/CreatePostPage.js
-import React, { useState } from "react";
+import React, { useState, useRef } from "react";
 import {
   Container,
   TextField,
@@ -18,11 +18,10 @@ import {
   useTheme,
   useMediaQuery,
   Tooltip,
-  Stepper,
-  Step,
-  StepLabel,
   Card,
   CardContent,
+  ImageList,
+  ImageListItem,
 } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -36,46 +35,68 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { createPost } from "../../api/socialNetworkApi";
 import { useNavigate } from "react-router-dom";
+import UploadFilesService from "../../service/otherService/upload";
 
 const CreatePostPage = () => {
   const navigate = useNavigate();
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isMedium = useMediaQuery(theme.breakpoints.down("md"));
+  const fileInputRef = useRef(null);
 
   const [step, setStep] = useState(0); // 0: content, 1: preview
   const [content, setContent] = useState("");
-  const [image, setImage] = useState(null);
-  const [imagePreview, setImagePreview] = useState(null);
+  const [images, setImages] = useState([]);
+  const [imagePreviews, setImagePreviews] = useState([]);
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [error, setError] = useState("");
-  const [visibility, setVisibility] = useState("public"); // "public", "friends", "private"
+  const [isHidden, setIsHidden] = useState(false); // corresponds to "private" visibility
   const [tags, setTags] = useState([]);
   const [tagInput, setTagInput] = useState("");
   const [location, setLocation] = useState("");
+  const [uploadProgress, setUploadProgress] = useState(0);
 
-  const handleImageChange = (event) => {
-    const file = event.target.files[0];
-    if (file) {
-      if (file.size > 5000000) {
-        // 5MB limit
-        setError("Image size exceeds 5MB limit");
-        return;
-      }
+  const handleImagesChange = (event) => {
+    const files = Array.from(event.target.files);
 
-      setImage(file);
+    // Check size limit for each file (5MB)
+    const oversizedFiles = files.filter((file) => file.size > 5000000);
+    if (oversizedFiles.length > 0) {
+      setError(`${oversizedFiles.length} image(s) exceed the 5MB size limit`);
+      return;
+    }
+
+    // Check total number of images (max 10)
+    if (images.length + files.length > 10) {
+      setError("Maximum 10 images allowed");
+      return;
+    }
+
+    // Add new files to the existing images array
+    setImages((prevImages) => [...prevImages, ...files]);
+
+    // Generate previews for the new images
+    files.forEach((file) => {
       const reader = new FileReader();
       reader.onloadend = () => {
-        setImagePreview(reader.result);
+        setImagePreviews((prevPreviews) => [...prevPreviews, reader.result]);
       };
       reader.readAsDataURL(file);
-      setError("");
+    });
+
+    setError("");
+
+    // Reset the file input value so the same file can be selected again if needed
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
     }
   };
 
-  const handleClearImage = () => {
-    setImage(null);
-    setImagePreview(null);
+  const handleRemoveImage = (index) => {
+    setImages((prevImages) => prevImages.filter((_, i) => i !== index));
+    setImagePreviews((prevPreviews) =>
+      prevPreviews.filter((_, i) => i !== index)
+    );
   };
 
   const handleAddTag = (e) => {
@@ -98,8 +119,8 @@ const CreatePostPage = () => {
   };
 
   const handleNext = () => {
-    if (!content && !image) {
-      setError("Please add some content or an image to your post");
+    if (!content && images.length === 0) {
+      setError("Please add some content or at least one image to your post");
       return;
     }
     setError("");
@@ -111,42 +132,47 @@ const CreatePostPage = () => {
   };
 
   const handleSubmit = async () => {
-    if (!content && !image) {
-      setError("Please add some content or an image to your post");
+    if (!content && images.length === 0) {
+      setError("Please add some content or at least one image to your post");
       return;
     }
 
     setIsSubmitting(true);
     setError("");
-
-    // In a real app, you'd need to upload the image to a server first
-    // and then pass the URL to the post creation API
-    // Here we're simulating that process
-    const formData = new FormData();
-    formData.append("content", content);
-    if (image) {
-      formData.append("image", image);
-    }
-
-    // Add the extra metadata
-    formData.append("visibility", visibility);
-    formData.append("tags", JSON.stringify(tags));
-    formData.append("location", location);
+    setUploadProgress(0);
 
     try {
+      // First, upload the images if any
+      let uploadedImageUrls = [];
+      if (images.length > 0) {
+        const uploadResponse = await UploadFilesService.upload(
+          images,
+          (event) => {
+            setUploadProgress(Math.round((100 * event.loaded) / event.total));
+          }
+        );
+
+        // Extract the image URLs from the response
+        uploadedImageUrls = uploadResponse.result || [];
+      }
+
+      // Format images as required by the API
+      const postImages = uploadedImageUrls.map((url) => ({
+        imageUrl: url,
+      }));
+
+      // Create post with the uploaded images
       await createPost({
         content,
-        imageUrl: imagePreview,
-        visibility,
-        tags,
-        location,
+        images: postImages,
+        isHidden, // use the isHidden flag directly
       });
 
       // Reset form fields and navigate back to feed
       setContent("");
-      setImage(null);
-      setImagePreview(null);
-      setVisibility("public");
+      setImages([]);
+      setImagePreviews([]);
+      setIsHidden(false);
       setTags([]);
       setLocation("");
       setStep(0);
@@ -158,21 +184,49 @@ const CreatePostPage = () => {
       setError("Failed to create post. Please try again.");
     } finally {
       setIsSubmitting(false);
+      setUploadProgress(0);
     }
   };
 
-  const getVisibilityIcon = () => {
-    switch (visibility) {
-      case "public":
-        return <PublicIcon fontSize="small" />;
-      case "friends":
-        return <GroupIcon fontSize="small" />;
-      case "private":
-        return <LockIcon fontSize="small" />;
-      default:
-        return <PublicIcon fontSize="small" />;
-    }
-  };
+  const renderImagePreviews = () => (
+    <ImageList
+      sx={{ width: "100%", maxHeight: 400 }}
+      cols={images.length > 1 ? 2 : 1}
+      rowHeight={200}
+    >
+      {imagePreviews.map((preview, index) => (
+        <ImageListItem key={index} sx={{ position: "relative" }}>
+          <img
+            src={preview}
+            alt={`Preview ${index + 1}`}
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: 8,
+            }}
+          />
+          <IconButton
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              bgcolor: "rgba(0,0,0,0.6)",
+              color: "#fff",
+              "&:hover": {
+                bgcolor: "rgba(0,0,0,0.8)",
+              },
+            }}
+            onClick={() => handleRemoveImage(index)}
+          >
+            <ClearIcon fontSize="small" />
+          </IconButton>
+        </ImageListItem>
+      ))}
+    </ImageList>
+  );
 
   const renderPostPreview = () => (
     <Card
@@ -198,22 +252,12 @@ const CreatePostPage = () => {
         </Box>
       </Box>
 
-      {imagePreview && (
-        <Box
-          component="img"
-          src={imagePreview}
-          alt="Post preview"
-          sx={{
-            width: "100%",
-            maxHeight: 500,
-            objectFit: "contain",
-            bgcolor: "#f0f0f0",
-          }}
-        />
-      )}
-
       <CardContent>
         <Typography variant="body2">{content}</Typography>
+
+        {imagePreviews.length > 0 && (
+          <Box sx={{ mt: 2 }}>{renderImagePreviews()}</Box>
+        )}
 
         {tags.length > 0 && (
           <Box sx={{ mt: 2, display: "flex", flexWrap: "wrap", gap: 0.5 }}>
@@ -232,8 +276,8 @@ const CreatePostPage = () => {
 
         <Box sx={{ mt: 2, display: "flex", alignItems: "center" }}>
           <Chip
-            icon={getVisibilityIcon()}
-            label={visibility.charAt(0).toUpperCase() + visibility.slice(1)}
+            icon={isHidden ? <LockIcon /> : <PublicIcon />}
+            label={isHidden ? "Riêng tư" : "Công khai"}
             size="small"
             color="default"
             variant="outlined"
@@ -284,14 +328,14 @@ const CreatePostPage = () => {
               variant="h6"
               sx={{ fontWeight: "600", color: "text.primary", flex: 1 }}
             >
-              {step === 0 ? "Create New Post" : "Preview Post"}
+              {step === 0 ? "Tạo bài viết mới" : "Xem trước bài viết"}
             </Typography>
             {step === 0 ? (
               <Button
                 variant="contained"
                 color="primary"
                 onClick={handleNext}
-                disabled={(!content && !image) || isSubmitting}
+                disabled={(!content && images.length === 0) || isSubmitting}
                 sx={{
                   borderRadius: 8,
                   textTransform: "none",
@@ -299,7 +343,7 @@ const CreatePostPage = () => {
                   px: 3,
                 }}
               >
-                Next
+                Tiếp theo
               </Button>
             ) : (
               <Button
@@ -317,7 +361,7 @@ const CreatePostPage = () => {
                 {isSubmitting ? (
                   <CircularProgress size={24} sx={{ color: "#fff" }} />
                 ) : (
-                  "Share"
+                  "Đăng bài"
                 )}
               </Button>
             )}
@@ -357,7 +401,7 @@ const CreatePostPage = () => {
                         minRows={4}
                         maxRows={8}
                         variant="outlined"
-                        placeholder="What's on your mind?"
+                        placeholder="Bạn đang nghĩ gì?"
                         value={content}
                         onChange={(e) => setContent(e.target.value)}
                         sx={{
@@ -372,36 +416,27 @@ const CreatePostPage = () => {
                       />
                     </Box>
 
-                    {imagePreview ? (
-                      <Box sx={{ position: "relative", mb: 3 }}>
-                        <Box
-                          component="img"
-                          src={imagePreview}
-                          alt="Post preview"
-                          sx={{
-                            width: "100%",
-                            maxHeight: "400px",
-                            objectFit: "contain",
-                            borderRadius: 2,
-                            border: "1px solid #e0e0e0",
-                          }}
-                        />
-                        <IconButton
-                          size="small"
-                          sx={{
-                            position: "absolute",
-                            top: 8,
-                            right: 8,
-                            bgcolor: "rgba(0,0,0,0.6)",
-                            color: "#fff",
-                            "&:hover": {
-                              bgcolor: "rgba(0,0,0,0.8)",
-                            },
-                          }}
-                          onClick={handleClearImage}
+                    {imagePreviews.length > 0 ? (
+                      <Box sx={{ mb: 3 }}>
+                        {renderImagePreviews()}
+                        <Button
+                          variant="outlined"
+                          component="label"
+                          startIcon={<AddIcon />}
+                          sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}
+                          disabled={images.length >= 10}
                         >
-                          <ClearIcon fontSize="small" />
-                        </IconButton>
+                          Thêm ảnh{" "}
+                          {images.length > 0 ? `(${images.length}/10)` : ""}
+                          <input
+                            ref={fileInputRef}
+                            type="file"
+                            hidden
+                            accept="image/*"
+                            multiple
+                            onChange={handleImagesChange}
+                          />
+                        </Button>
                       </Box>
                     ) : (
                       <Box
@@ -432,10 +467,12 @@ const CreatePostPage = () => {
                         component="label"
                       >
                         <input
+                          ref={fileInputRef}
                           accept="image/*"
                           type="file"
                           hidden
-                          onChange={handleImageChange}
+                          multiple
+                          onChange={handleImagesChange}
                         />
                         <AddAPhotoIcon
                           sx={{
@@ -448,14 +485,14 @@ const CreatePostPage = () => {
                           color="text.secondary"
                           sx={{ fontWeight: 500 }}
                         >
-                          Click to upload a photo
+                          Nhấn để tải ảnh lên
                         </Typography>
                         <Typography
                           variant="caption"
                           color="text.secondary"
                           sx={{ mt: 0.5 }}
                         >
-                          Max file size: 5MB
+                          Tối đa 10 ảnh, mỗi ảnh không quá 5MB
                         </Typography>
                       </Box>
                     )}
@@ -468,54 +505,32 @@ const CreatePostPage = () => {
                     variant="subtitle1"
                     sx={{ fontWeight: 600, mb: 2 }}
                   >
-                    Post Options
+                    Tùy chọn bài viết
                   </Typography>
 
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                      Visibility
+                      Quyền riêng tư
                     </Typography>
                     <Box sx={{ display: "flex", gap: 1 }}>
-                      <Tooltip title="Public - Anyone can see this post">
+                      <Tooltip title="Công khai - Mọi người có thể thấy bài viết này">
                         <Chip
                           icon={<PublicIcon />}
-                          label="Public"
+                          label="Công khai"
                           clickable
-                          color={
-                            visibility === "public" ? "primary" : "default"
-                          }
-                          onClick={() => setVisibility("public")}
-                          variant={
-                            visibility === "public" ? "filled" : "outlined"
-                          }
+                          color={!isHidden ? "primary" : "default"}
+                          onClick={() => setIsHidden(false)}
+                          variant={!isHidden ? "filled" : "outlined"}
                         />
                       </Tooltip>
-                      <Tooltip title="Friends only - Only your followers can see this post">
-                        <Chip
-                          icon={<GroupIcon />}
-                          label="Friends"
-                          clickable
-                          color={
-                            visibility === "friends" ? "primary" : "default"
-                          }
-                          onClick={() => setVisibility("friends")}
-                          variant={
-                            visibility === "friends" ? "filled" : "outlined"
-                          }
-                        />
-                      </Tooltip>
-                      <Tooltip title="Private - Only you can see this post">
+                      <Tooltip title="Riêng tư - Chỉ bạn mới có thể thấy bài viết này">
                         <Chip
                           icon={<LockIcon />}
-                          label="Private"
+                          label="Riêng tư"
                           clickable
-                          color={
-                            visibility === "private" ? "primary" : "default"
-                          }
-                          onClick={() => setVisibility("private")}
-                          variant={
-                            visibility === "private" ? "filled" : "outlined"
-                          }
+                          color={isHidden ? "primary" : "default"}
+                          onClick={() => setIsHidden(true)}
+                          variant={isHidden ? "filled" : "outlined"}
                         />
                       </Tooltip>
                     </Box>
@@ -523,12 +538,12 @@ const CreatePostPage = () => {
 
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                      Location
+                      Vị trí
                     </Typography>
                     <TextField
                       fullWidth
                       size="small"
-                      placeholder="Add location"
+                      placeholder="Thêm vị trí"
                       value={location}
                       onChange={(e) => setLocation(e.target.value)}
                       InputProps={{
@@ -547,12 +562,12 @@ const CreatePostPage = () => {
 
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                      Tags
+                      Thẻ
                     </Typography>
                     <TextField
                       fullWidth
                       size="small"
-                      placeholder="Add a tag (press Enter to add)"
+                      placeholder="Thêm thẻ (nhấn Enter để thêm)"
                       value={tagInput}
                       onChange={(e) => setTagInput(e.target.value)}
                       onKeyDown={handleAddTag}
@@ -603,7 +618,7 @@ const CreatePostPage = () => {
                 variant="subtitle1"
                 sx={{ fontWeight: 600, mb: 2, textAlign: "center" }}
               >
-                Preview how your post will appear
+                Xem trước bài viết của bạn
               </Typography>
               {renderPostPreview()}
             </Box>
@@ -612,10 +627,23 @@ const CreatePostPage = () => {
       </Container>
 
       <Backdrop
-        sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }}
+        sx={{
+          color: "#fff",
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: "column",
+        }}
         open={isSubmitting}
       >
-        <CircularProgress color="inherit" />
+        <CircularProgress
+          color="inherit"
+          variant={uploadProgress > 0 ? "determinate" : "indeterminate"}
+          value={uploadProgress}
+        />
+        {uploadProgress > 0 && (
+          <Typography variant="body2" sx={{ mt: 2, color: "white" }}>
+            Đang tải ảnh lên: {uploadProgress}%
+          </Typography>
+        )}
       </Backdrop>
     </Box>
   );

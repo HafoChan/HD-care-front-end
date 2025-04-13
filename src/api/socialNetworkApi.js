@@ -34,9 +34,9 @@ export const getPostById = async (postId) => {
 };
 
 // API lấy danh sách bài post của user hiện tại (userId lấy từ JWT ở backend)
-export const getAllPostsByUser = async (page = 0, size = 10) => {
+export const getAllPostsByUser = async (page = 0, size = 10, userId) => {
   try {
-    const response = await axiosClient.get(`social/users/posts`, {
+    const response = await axiosClient.get(`social/users/${userId}/posts`, {
       params: { page, size },
     });
     return response.result;
@@ -145,9 +145,9 @@ export const followUser = async (targetUserId) => {
 };
 
 // API lấy danh sách user đang theo dõi (following) của người dùng hiện tại
-export const getAllFollowingUsers = async (page = 0, size = 10) => {
+export const getAllFollowingUsers = async (page = 0, size = 10, userId) => {
   try {
-    const response = await axiosClient.get("social/users/following", {
+    const response = await axiosClient.get(`social/users/${userId}/following`, {
       params: { page, size },
     });
     return response.result;
@@ -157,9 +157,9 @@ export const getAllFollowingUsers = async (page = 0, size = 10) => {
 };
 
 // API lấy danh sách user theo dõi (followers) của người dùng hiện tại
-export const getAllFollowers = async (page = 0, size = 10) => {
+export const getAllFollowers = async (page = 0, size = 10, userId) => {
   try {
-    const response = await axiosClient.get("social/users/followers", {
+    const response = await axiosClient.get(`social/users/${userId}/followers`, {
       params: { page, size },
     });
     return response.result;
@@ -238,7 +238,7 @@ export const getLatestPosts = async (page = 0, size = 10) => {
 // API lấy danh sách bài post từ người theo dõi (phân trang)
 export const getPostsFromFollowers = async (page = 0, size = 10) => {
   try {
-    const response = await axiosClient.get(`social/posts/from-followers`, {
+    const response = await axiosClient.get(`social/posts/from-following`, {
       params: { page, size },
     });
     return response.result;
