@@ -26,7 +26,6 @@ import FiberNewIcon from "@mui/icons-material/FiberNew";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
 import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
-import AddIcon from "@mui/icons-material/Add";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
 import FavoriteIcon from "@mui/icons-material/Favorite";
@@ -506,24 +505,6 @@ const NewsHomePage = () => {
                 professionals.
               </Typography>
               <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <Button
-                  component={Link}
-                  to="/news/create"
-                  variant="contained"
-                  color="secondary"
-                  startIcon={<AddIcon />}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    px: 3,
-                    py: 1.2,
-                    borderRadius: 8,
-                    fontSize: "1rem",
-                    boxShadow: 3,
-                  }}
-                >
-                  Write an Article
-                </Button>
                 <Button
                   component={Link}
                   to="/news/saved"

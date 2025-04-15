@@ -164,3 +164,67 @@ export const getAllFavoriteNews = async (page = 0, size = 10) => {
     throw error;
   }
 };
+
+// Lấy tin tức theo bác sĩ và trạng thái (draft, approved, rejected, review)
+export const getNewsByDoctorAndStatus = async (status, page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get("news/doctor", {
+      params: { status, page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy tin tức đã được phê duyệt bởi một bác sĩ cụ thể
+export const getNewsByDoctorId = async (doctorId, page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get(`news/doctor/${doctorId}`, {
+      params: { page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy danh sách tin tức được giao cho bác sĩ hiện tại để duyệt
+export const getAssignedNewsToDoctor = async (page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get("news/doctor/assigned", {
+      params: { page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy danh sách tin tức đã được bác sĩ hiện tại duyệt (đã chấp nhận hoặc từ chối)
+export const getNewsReviewedByDoctor = async (
+  approved,
+  page = 0,
+  size = 10
+) => {
+  try {
+    const response = await axiosClient.get("news/doctor/reviewed", {
+      params: { approved, page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Lấy danh sách tin tức đang chờ duyệt (dành cho admin)
+export const getPendingNews = async (page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get("news/pending", {
+      params: { page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};

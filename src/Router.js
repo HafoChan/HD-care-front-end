@@ -46,10 +46,36 @@ import SavedNewsPage from "./pages/news/SavedNewsPage";
 import MyArticlesPage from "./pages/news/MyArticlesPage";
 import PostDetailPage from "./pages/social-network/PostDetailPage";
 
+// New news management pages
+import DoctorNewsManagementPage from "./pages/doctor/NewsManagementPage";
+import DoctorNewsReviewPage from "./pages/doctor/NewsReviewPage";
+import AdminNewsManagementPage from "./pages/admin/NewsManagementPage";
+import DoctorArticlesPage from "./pages/news/DoctorArticlesPage";
+
 const PrivateRoute = ({ children }) => {
   const role = getRole();
 
   if (!role || role !== "DOCTOR") {
+    return <Navigate to="/not-found" replace />;
+  }
+
+  return children;
+};
+
+const AdminRoute = ({ children }) => {
+  const role = getRole();
+
+  if (!role || role !== "ADMIN") {
+    return <Navigate to="/not-found" replace />;
+  }
+
+  return children;
+};
+
+const DoctorOrAdminRoute = ({ children }) => {
+  const role = getRole();
+
+  if (!role || (role !== "DOCTOR" && role !== "ADMIN")) {
     return <Navigate to="/not-found" replace />;
   }
 
@@ -62,6 +88,14 @@ const AppRouter = () => {
       <Route path="/admin" element={<AdminDashboard />} />
       <Route path="/admin/doctor-detail" element={<DoctorDetailAdmin />} />
       <Route path="/admin/patient-detail" element={<PatientDetailAdmin />} />
+      <Route
+        path="/admin/news-management"
+        element={
+          <AdminRoute>
+            <AdminNewsManagementPage />
+          </AdminRoute>
+        }
+      />
 
       <Route index element={<Navigate to="/home" replace />} />
       <Route path="/evaluate" element={<EvaluateForm />} />
@@ -97,6 +131,22 @@ const AppRouter = () => {
           </PrivateRoute>
         }
       />
+      <Route
+        path="/doctor/news-management"
+        element={
+          <PrivateRoute>
+            <DoctorNewsManagementPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/doctor/news-review"
+        element={
+          <PrivateRoute>
+            <DoctorNewsReviewPage />
+          </PrivateRoute>
+        }
+      />
 
       <Route
         element={
@@ -129,10 +179,32 @@ const AppRouter = () => {
 
       {/* News Routes - Order matters: specific routes first, then dynamic routes */}
       <Route path="/news" element={<NewsHomePage />} />
-      <Route path="/news/create" element={<CreateNewsPage />} />
+      <Route
+        path="/news/create"
+        element={
+          <PrivateRoute>
+            <CreateNewsPage />
+          </PrivateRoute>
+        }
+      />
       <Route path="/news/saved" element={<SavedNewsPage />} />
-      <Route path="/news/my-articles" element={<MyArticlesPage />} />
-      <Route path="/news/edit/:id" element={<EditNewsPage />} />
+      <Route
+        path="/news/my-articles"
+        element={
+          <PrivateRoute>
+            <MyArticlesPage />
+          </PrivateRoute>
+        }
+      />
+      <Route
+        path="/news/edit/:id"
+        element={
+          <PrivateRoute>
+            <EditNewsPage />
+          </PrivateRoute>
+        }
+      />
+      <Route path="/news/doctor/:doctorId" element={<DoctorArticlesPage />} />
       <Route path="/news/:id" element={<NewsDetailPage />} />
 
       {/* Social Network Routes */}

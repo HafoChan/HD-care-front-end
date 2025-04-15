@@ -23,6 +23,8 @@ import HistoryIcon from "@mui/icons-material/History";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import ArticleIcon from "@mui/icons-material/Article";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 import { remove } from "../../service/otherService/localStorage";
 import images from "../../constants/images";
 
@@ -66,6 +68,16 @@ function Sidebar() {
       title: "Quản lý đơn thuốc",
       path: "/doctor/prescription-management",
       icon: <MedicalServicesIcon />,
+    },
+    {
+      title: "Quản lý bài viết",
+      path: "/doctor/news-management",
+      icon: <ArticleIcon />,
+    },
+    {
+      title: "Duyệt bài viết",
+      path: "/doctor/news-review",
+      icon: <RateReviewIcon />,
     },
   ];
 
