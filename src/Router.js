@@ -36,6 +36,9 @@ import CreatePostPage from "./pages/social-network/CreatePostPage";
 import SavedPostsPage from "./pages/social-network/SavedPostsPage";
 import FollowPage from "./pages/social-network/FollowPage";
 import FollowRequestsPage from "./pages/social-network/FollowRequestsPage";
+import VideoCall from "./pages/patient/VideoCall";
+import Chat from "./pages/patient/Chat";
+import ChatDoctor from "./pages/doctor/Chat"
 
 // News pages
 import NewsHomePage from "./pages/news/HomePage";
@@ -69,6 +72,7 @@ const AppRouter = () => {
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
       <Route path="/doctor/:id" element={<DoctorDetail />} />
+      <Route path="/video-call/:doctorId" element={<VideoCall />} />
       <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
       <Route path="/profile" element={<Profile />} />
       <Route path="/user-detail" element={<UserDetail />} />
@@ -124,6 +128,11 @@ const AppRouter = () => {
           path="/doctor/appointment-management/:id"
           element={<AppointmentDetail />}
         />
+          <Route
+          path="/doctor_chat"
+          element={<ChatDoctor />}
+        />
+      
       </Route>
 
       {/* News Routes - Order matters: specific routes first, then dynamic routes */}
@@ -143,6 +152,8 @@ const AppRouter = () => {
         path="/social-network/follow-requests"
         element={<FollowRequestsPage />}
       />
+
+      <Route path="/chat/:doctorId" element={<Chat />} />
     </Routes>
   );
 };

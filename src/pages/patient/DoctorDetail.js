@@ -25,6 +25,7 @@ import {
   Zoom,
   IconButton,
   Tooltip,
+  Fab,
 } from "@mui/material";
 import { schedule } from "../../api/schedule";
 import reviewApi from "../../api/reviewApi";
@@ -35,6 +36,9 @@ import VerifiedUserIcon from "@mui/icons-material/VerifiedUser";
 import FilterListIcon from "@mui/icons-material/FilterList";
 import SortIcon from "@mui/icons-material/Sort";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import ChatIcon from '@mui/icons-material/Chat';
+import { useNavigate } from "react-router-dom";
 
 function ReviewSection() {
   const theme = useTheme();
@@ -165,10 +169,10 @@ function ReviewSection() {
                     textShadow: "0 2px 10px rgba(0,0,0,0.15)",
                   }}
                 >
-                  {reviews.countAvg || "0.0"}
+                  {reviews?.countAvg || "0.0"}
                 </Typography>
                 <Rating
-                  value={parseFloat(reviews.countAvg) || 0}
+                  value={parseFloat(reviews?.countAvg) || 0}
                   precision={0.1}
                   readOnly
                   size="large"
@@ -185,7 +189,7 @@ function ReviewSection() {
                   }}
                 />
                 <Typography sx={{ fontSize: "0.95rem", opacity: 0.9 }}>
-                  ({reviews.countReview || 0} đánh giá)
+                  ({reviews?.countReview || 0} đánh giá)
                 </Typography>
               </Box>
             </Fade>
@@ -240,7 +244,7 @@ function ReviewSection() {
                       <Box
                         sx={{
                           width: `${
-                            reviews.countReview
+                            reviews?.countReview
                               ? (getStarCount(star) / reviews.countReview) * 100
                               : 0
                           }%`,
@@ -737,6 +741,7 @@ function OtherDoctorsSection() {
 
 function DoctorDetail() {
   const theme = useTheme();
+  const navigate = useNavigate();
   const [doctorInfo, setDoctorInfo] = useState();
   const [doctorSchedule, setDoctorSchedule] = useState([]);
   const [selectedDate, setSelectedDate] = useState("");
@@ -803,12 +808,21 @@ function DoctorDetail() {
     }
   };
 
+  const handleVideoCall = () => {
+    navigate(`/video-call/${doctorId}`);
+  };
+
+  const handleChat = () => {
+    navigate(`/chat/${doctorId}`);
+  };
+
   return (
     <Box
       sx={{
         width: "100%",
         minHeight: "100vh",
         backgroundColor: theme.palette.background.default,
+        position: "relative",
       }}
     >
       <HeaderComponent />
@@ -1181,6 +1195,48 @@ function DoctorDetail() {
 
       {/* Other Doctors Section */}
       <OtherDoctorsSection />
+
+      {/* Video Call Button */}
+      <Fab
+        color="primary"
+        aria-label="video call"
+        onClick={handleVideoCall}
+        sx={{
+          position: "fixed",
+          bottom: 24,
+          right: 24,
+          zIndex: 1000,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+          "&:hover": {
+            transform: "scale(1.05)",
+            boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+          },
+          transition: "all 0.3s ease",
+        }}
+      >
+        <VideocamIcon />
+      </Fab>
+
+      {/* Chat Button */}
+      <Fab
+        color="secondary"
+        aria-label="chat"
+        onClick={handleChat}
+        sx={{
+          position: "fixed",
+          bottom: 24,
+          right: 90,
+          zIndex: 1000,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+          "&:hover": {
+            transform: "scale(1.05)",
+            boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+          },
+          transition: "all 0.3s ease",
+        }}
+      >
+        <ChatIcon />
+      </Fab>
     </Box>
   );
 }

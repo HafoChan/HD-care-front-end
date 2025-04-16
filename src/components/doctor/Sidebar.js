@@ -23,6 +23,7 @@ import HistoryIcon from "@mui/icons-material/History";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import MedicalServicesIcon from "@mui/icons-material/MedicalServices";
+import ChatIcon from "@mui/icons-material/Chat";
 import { remove } from "../../service/otherService/localStorage";
 import images from "../../constants/images";
 
@@ -66,6 +67,11 @@ function Sidebar() {
       title: "Quản lý đơn thuốc",
       path: "/doctor/prescription-management",
       icon: <MedicalServicesIcon />,
+    },
+    {
+      title: "Tin nhắn",
+      path: "/doctor_chat",
+      icon: <ChatIcon />,
     },
   ];
 
