@@ -91,12 +91,15 @@ const Login = () => {
         toast.warning(data.message);
       } else {
         showSuccess(data.message);
+        console.log(data.result)
         setItem(
           data.result.accessToken,
           data.result.refreshToken,
-          data.result.userResponse.img
+          data.result.userResponse.img,
+          data.result.userResponse.username
         );
         setRole(data.result.roles);
+        console.log("data" , data.result.userResponse.username)
         // navigate("/home");
       }
     } catch (error) {
