@@ -38,7 +38,7 @@ import FollowPage from "./pages/social-network/FollowPage";
 import FollowRequestsPage from "./pages/social-network/FollowRequestsPage";
 import VideoCall from "./pages/patient/VideoCall";
 import Chat from "./pages/patient/Chat";
-import ChatDoctor from "./pages/doctor/Chat"
+import ChatDoctor from "./pages/doctor/Chat";
 
 // News pages
 import NewsHomePage from "./pages/news/HomePage";
@@ -48,6 +48,7 @@ import EditNewsPage from "./pages/news/EditPage";
 import SavedNewsPage from "./pages/news/SavedNewsPage";
 import MyArticlesPage from "./pages/news/MyArticlesPage";
 import PostDetailPage from "./pages/social-network/PostDetailPage";
+import NewsDetailUnrestrictedPage from "./pages/news/NewsDetailUnrestrictedPage";
 
 // New news management pages
 import DoctorNewsManagementPage from "./pages/doctor/NewsManagementPage";
@@ -179,11 +180,7 @@ const AppRouter = () => {
           path="/doctor/appointment-management/:id"
           element={<AppointmentDetail />}
         />
-          <Route
-          path="/doctor_chat"
-          element={<ChatDoctor />}
-        />
-      
+        <Route path="/doctor_chat" element={<ChatDoctor />} />
       </Route>
 
       {/* News Routes - Order matters: specific routes first, then dynamic routes */}
@@ -215,6 +212,16 @@ const AppRouter = () => {
       />
       <Route path="/news/doctor/:doctorId" element={<DoctorArticlesPage />} />
       <Route path="/news/:id" element={<NewsDetailPage />} />
+
+      {/* Restricted News routes for doctors and admins */}
+      <Route
+        path="/news/review/:id"
+        element={
+          <DoctorOrAdminRoute>
+            <NewsDetailUnrestrictedPage />
+          </DoctorOrAdminRoute>
+        }
+      />
 
       {/* Social Network Routes */}
       <Route path="/social-network" element={<PostPage />} />

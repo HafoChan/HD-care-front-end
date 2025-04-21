@@ -80,7 +80,7 @@ function ScheduleManagement() {
       <Box
         sx={{
           flexGrow: 1,
-          ml: { xs: 0, md: "280px" },
+          ml: { xs: 0 },
           transition: "margin 0.2s ease",
           py: 4,
           px: { xs: 2, sm: 4 },

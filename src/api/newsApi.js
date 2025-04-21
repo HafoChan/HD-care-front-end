@@ -228,3 +228,25 @@ export const getPendingNews = async (page = 0, size = 10) => {
     throw error;
   }
 };
+
+// Lấy danh sách tất cả bác sĩ (dùng cho option)
+export const getAllDoctors = async (keyword) => {
+  try {
+    const response = await axiosClient.get("news/doctors", {
+      params: keyword ? { keyword } : {}, // Corrected line
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// Xem bài viết bất chấp trạng thái (dùng cho admin và bác sĩ duyệt)
+export const getNewsUnrestricted = async (newsId) => {
+  try {
+    const response = await axiosClient.get(`news/review/${newsId}`);
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};

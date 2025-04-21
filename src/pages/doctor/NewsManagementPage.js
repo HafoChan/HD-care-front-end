@@ -32,6 +32,7 @@ import {
   getNewsByDoctorAndStatus,
   createNews,
   deleteNews,
+  getAllDoctors,
 } from "../../api/newsApi";
 import { format } from "date-fns";
 import Layout from "../../components/doctor/Layout";
@@ -46,15 +47,26 @@ import CancelIcon from "@mui/icons-material/Cancel";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { toast } from "react-toastify";
 import RichTextEditor from "../../components/news/RichTextEditor";
+import DOMPurify from "dompurify";
 
 const NewsManagementPage = () => {
   const [news, setNews] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeTab, setActiveTab] = useState("draft");
   const [currentPage, setCurrentPage] = useState(0);
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState("");
   const pageSize = 5;
   const theme = useTheme();
   const navigate = useNavigate();
+
+  // Function to strip HTML tags
+  const stripHtmlTags = (html) => {
+    if (!html) return "";
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || "";
+  };
 
   // State for create news dialog
   const [openCreateDialog, setOpenCreateDialog] = useState(false);
@@ -118,41 +130,41 @@ const NewsManagementPage = () => {
       case "approved":
         return (
           <Chip
-            icon={<CheckCircleIcon />}
+            icon={<CheckCircleIcon sx={{ pl: 1 }} fontSize="small" />}
             label="Đã duyệt"
             color="success"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
       case "rejected":
         return (
           <Chip
-            icon={<CancelIcon />}
+            icon={<CancelIcon sx={{ pl: 1 }} fontSize="small" />}
             label="Từ chối"
             color="error"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
       case "review":
         return (
           <Chip
-            icon={<RateReviewIcon />}
+            icon={<RateReviewIcon sx={{ pl: 1 }} fontSize="small" />}
             label="Đang xét duyệt"
             color="warning"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
       case "draft":
         return (
           <Chip
-            icon={<DraftsIcon />}
+            icon={<DraftsIcon sx={{ pl: 1 }} fontSize="small" />}
             label="Bản nháp"
             color="default"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
       default:
@@ -188,6 +200,7 @@ const NewsManagementPage = () => {
 
   const handleCloseCreateDialog = () => {
     setOpenCreateDialog(false);
+    setSelectedDoctor("");
     setNewArticle({
       title: "",
       content: "",
@@ -221,7 +234,12 @@ const NewsManagementPage = () => {
         return;
       }
 
-      await createNews(newArticle);
+      const articleData = {
+        ...newArticle,
+        reviewerDoctorId: selectedDoctor || null,
+      };
+
+      await createNews(articleData);
       toast.success("Tạo bài viết thành công");
       handleCloseCreateDialog();
       fetchNews();
@@ -243,6 +261,7 @@ const NewsManagementPage = () => {
       const publishedArticle = {
         ...newArticle,
         isDraft: false,
+        reviewerDoctorId: selectedDoctor || null,
       };
 
       await createNews(publishedArticle);
@@ -419,8 +438,12 @@ const NewsManagementPage = () => {
                             component="div"
                             sx={{ mb: 2 }}
                           >
-                            {item.content?.substring(0, 150)}
-                            {item.content?.length > 150 ? "..." : ""}
+                            {stripHtmlTags(item.content)
+                              ? stripHtmlTags(item.content).substring(0, 300)
+                              : ""}
+                            {stripHtmlTags(item.content)?.length > 150
+                              ? "..."
+                              : ""}
                           </Typography>
                         </CardContent>
                         <Box sx={{ flexGrow: 1 }} />

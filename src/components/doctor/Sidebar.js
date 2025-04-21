@@ -65,11 +65,11 @@ function Sidebar() {
       path: "/doctor/manage-appointment-history",
       icon: <HistoryIcon />,
     },
-    {
-      title: "Quản lý đơn thuốc",
-      path: "/doctor/prescription-management",
-      icon: <MedicalServicesIcon />,
-    },
+    // {
+    //   title: "Quản lý đơn thuốc",
+    //   path: "/doctor/prescription-management",
+    //   icon: <MedicalServicesIcon />,
+    // },
     {
       title: "Quản lý bài viết",
       path: "/doctor/news-management",
@@ -79,6 +79,8 @@ function Sidebar() {
       title: "Duyệt bài viết",
       path: "/doctor/news-review",
       icon: <RateReviewIcon />,
+    },
+    {
       title: "Tin nhắn",
       path: "/doctor_chat",
       icon: <ChatIcon />,

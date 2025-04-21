@@ -25,11 +25,13 @@ import {
 } from "../../api/newsApi";
 import { format } from "date-fns";
 import Layout from "../../components/doctor/Layout";
-import { toast } from "react-toastify";
+import VisibilityIcon from "@mui/icons-material/Visibility";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
+import RateReviewIcon from "@mui/icons-material/RateReview";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
-import VisibilityIcon from "@mui/icons-material/Visibility";
+import PersonIcon from "@mui/icons-material/Person";
+import { toast } from "react-toastify";
 
 const NewsReviewPage = () => {
   const [news, setNews] = useState([]);
@@ -39,6 +41,14 @@ const NewsReviewPage = () => {
   const pageSize = 5;
   const theme = useTheme();
 
+  // Function to strip HTML tags
+  const stripHtmlTags = (html) => {
+    if (!html) return "";
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || "";
+  };
+
   useEffect(() => {
     fetchNews();
   }, [activeTab, currentPage]);
@@ -46,14 +56,20 @@ const NewsReviewPage = () => {
   const fetchNews = async () => {
     try {
       setLoading(true);
-      let data = [];
+      let data;
 
-      if (activeTab === "assigned") {
-        data = await getAssignedNewsToDoctor(currentPage, pageSize);
-      } else if (activeTab === "approved") {
-        data = await getNewsReviewedByDoctor(true, currentPage, pageSize);
-      } else if (activeTab === "rejected") {
-        data = await getNewsReviewedByDoctor(false, currentPage, pageSize);
+      switch (activeTab) {
+        case "assigned":
+          data = await getAssignedNewsToDoctor(currentPage, pageSize);
+          break;
+        case "approved":
+          data = await getNewsReviewedByDoctor(true, currentPage, pageSize);
+          break;
+        case "rejected":
+          data = await getNewsReviewedByDoctor(false, currentPage, pageSize);
+          break;
+        default:
+          data = [];
       }
 
       setNews(data || []);
@@ -65,51 +81,58 @@ const NewsReviewPage = () => {
     }
   };
 
-  const handleApproveNews = async (newsId, isApprove) => {
+  const handleApproveNews = async (newsId) => {
     try {
-      await approveNews(newsId, isApprove);
-      toast.success(
-        isApprove
-          ? "Đã duyệt tin tức thành công"
-          : "Đã từ chối tin tức thành công"
-      );
+      await approveNews(newsId, true);
+      toast.success("Bài viết đã được duyệt thành công");
       fetchNews();
     } catch (error) {
-      console.error("Error approving/rejecting news:", error);
-      toast.error("Không thể thực hiện thao tác. Vui lòng thử lại sau.");
+      console.error("Error approving news:", error);
+      toast.error("Không thể duyệt bài viết. Vui lòng thử lại sau.");
+    }
+  };
+
+  const handleRejectNews = async (newsId) => {
+    try {
+      await approveNews(newsId, false);
+      toast.success("Bài viết đã bị từ chối");
+      fetchNews();
+    } catch (error) {
+      console.error("Error rejecting news:", error);
+      toast.error("Không thể từ chối bài viết. Vui lòng thử lại sau.");
     }
   };
 
   const getStatusChip = (status) => {
     switch (status) {
-      case "approved":
+      case "APPROVED":
         return (
           <Chip
-            icon={<CheckCircleIcon />}
+            icon={<CheckCircleIcon sx={{ pl: 1 }} fontSize="small" />}
             label="Đã duyệt"
             color="success"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
-      case "rejected":
+      case "REJECTED":
         return (
           <Chip
-            icon={<CancelIcon />}
-            label="Từ chối"
+            icon={<CancelIcon sx={{ pl: 1 }} fontSize="small" />}
+            label="Đã từ chối"
             color="error"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
-      case "assigned":
+      case "REVIEW":
         return (
           <Chip
-            icon={<AccessTimeIcon />}
-            label="Đang chờ duyệt"
-            color="info"
+            icon={<RateReviewIcon sx={{ pl: 1 }} fontSize="small" />}
+            label="Đang xét duyệt"
+            color="warning"
             variant="outlined"
-            size="small"
+            size="medium"
           />
         );
       default:
@@ -141,9 +164,18 @@ const NewsReviewPage = () => {
   return (
     <Layout>
       <Box sx={{ p: 3 }}>
-        <Typography variant="h4" fontWeight={600} mb={3} color="primary.main">
-          Duyệt bài viết
-        </Typography>
+        <Box
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            mb: 3,
+          }}
+        >
+          <Typography variant="h4" fontWeight={600} color="primary.main">
+            Duyệt bài viết
+          </Typography>
+        </Box>
 
         <Paper elevation={0} sx={{ mb: 3, p: 1, borderRadius: 2 }}>
           <Tabs
@@ -160,7 +192,7 @@ const NewsReviewPage = () => {
               },
             }}
           >
-            <Tab value="assigned" label="Đang chờ duyệt" />
+            <Tab value="assigned" label="Chờ duyệt" />
             <Tab value="approved" label="Đã duyệt" />
             <Tab value="rejected" label="Đã từ chối" />
           </Tabs>
@@ -243,7 +275,26 @@ const NewsReviewPage = () => {
                             >
                               {item.title}
                             </Typography>
-                            {getStatusChip(activeTab)}
+                            {getStatusChip(item.status)}
+                          </Box>
+
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              mb: 1,
+                            }}
+                          >
+                            <PersonIcon
+                              sx={{
+                                fontSize: 16,
+                                mr: 0.5,
+                                color: "text.secondary",
+                              }}
+                            />
+                            <Typography variant="body2" color="text.secondary">
+                              Tác giả: {item.author?.name || "N/A"}
+                            </Typography>
                           </Box>
 
                           <Typography
@@ -251,8 +302,7 @@ const NewsReviewPage = () => {
                             color="text.secondary"
                             mb={1}
                           >
-                            Tác giả: {item.author?.fullName || "N/A"} • Danh
-                            mục: {item.category}
+                            Danh mục: {item.category}
                           </Typography>
 
                           <Box
@@ -282,8 +332,12 @@ const NewsReviewPage = () => {
                             component="div"
                             sx={{ mb: 2 }}
                           >
-                            {item.content?.substring(0, 150)}
-                            {item.content?.length > 150 ? "..." : ""}
+                            {stripHtmlTags(item.content)
+                              ? stripHtmlTags(item.content).substring(0, 150)
+                              : ""}
+                            {stripHtmlTags(item.content)?.length > 150
+                              ? "..."
+                              : ""}
                           </Typography>
                         </CardContent>
                         <Box sx={{ flexGrow: 1 }} />
@@ -291,7 +345,7 @@ const NewsReviewPage = () => {
                         <CardActions sx={{ px: 2, py: 1.5 }}>
                           <Button
                             component={Link}
-                            to={`/news/${item.id}`}
+                            to={`/news/review/${item.id}`}
                             startIcon={<VisibilityIcon />}
                             variant="outlined"
                             size="small"
@@ -304,22 +358,20 @@ const NewsReviewPage = () => {
                             <>
                               <Button
                                 startIcon={<CheckCircleIcon />}
-                                variant="contained"
+                                variant="outlined"
                                 color="success"
                                 size="small"
-                                onClick={() => handleApproveNews(item.id, true)}
+                                onClick={() => handleApproveNews(item.id)}
                                 sx={{ ml: 1, borderRadius: 8 }}
                               >
                                 Duyệt
                               </Button>
                               <Button
                                 startIcon={<CancelIcon />}
-                                variant="contained"
+                                variant="outlined"
                                 color="error"
                                 size="small"
-                                onClick={() =>
-                                  handleApproveNews(item.id, false)
-                                }
+                                onClick={() => handleRejectNews(item.id)}
                                 sx={{ ml: 1, borderRadius: 8 }}
                               >
                                 Từ chối

@@ -25,7 +25,11 @@ import {
   alpha,
   useTheme,
 } from "@mui/material";
-import { getPendingNews, assignNewsToDoctor } from "../../api/newsApi";
+import {
+  getPendingNews,
+  assignNewsToDoctor,
+  getAllDoctors,
+} from "../../api/newsApi";
 import { format } from "date-fns";
 import { toast } from "react-toastify";
 import { Link } from "react-router-dom";
@@ -46,6 +50,13 @@ const NewsManagementPage = () => {
   const pageSize = 5;
   const theme = useTheme();
 
+  const stripHtmlTags = (html) => {
+    if (!html) return "";
+    const temp = document.createElement("div");
+    temp.innerHTML = html;
+    return temp.textContent || temp.innerText || "";
+  };
+
   useEffect(() => {
     fetchPendingNews();
     fetchDoctors();
@@ -65,12 +76,13 @@ const NewsManagementPage = () => {
   };
 
   const fetchDoctors = async () => {
-    // Mocking doctors for now - in real app would fetch from API
-    setDoctors([
-      { id: "doctor1", name: "Bác sĩ A" },
-      { id: "doctor2", name: "Bác sĩ B" },
-      { id: "doctor3", name: "Bác sĩ C" },
-    ]);
+    try {
+      const data = await getAllDoctors();
+      console.log(data);
+      setDoctors(data || []);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
   };
 
   const openAssignModal = (newsId) => {
@@ -271,8 +283,12 @@ const NewsManagementPage = () => {
                             color="text.secondary"
                             sx={{ mb: 2 }}
                           >
-                            {item.content?.substring(0, 200)}
-                            {item.content?.length > 200 ? "..." : ""}
+                            {stripHtmlTags(item.content)
+                              ? stripHtmlTags(item.content).substring(0, 300)
+                              : ""}
+                            {stripHtmlTags(item.content)?.length > 150
+                              ? "..."
+                              : ""}
                           </Typography>
                         </CardContent>
 

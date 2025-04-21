@@ -12,7 +12,6 @@ const Layout = ({ children }) => {
         sx={{
           flexGrow: 1,
           marginLeft: "280px",
-          padding: "20px",
           backgroundColor: "#f5f5f5",
         }}
       >
