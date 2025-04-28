@@ -930,10 +930,7 @@ function Chat() {
         setShowError(true);
         throw error; // Re-throw to be caught by the caller
       }
-    };
-
-    // const getMessageHistory = async (zim) => {
-    //   console.log("Starting to fetch message history using ZegoCloud API");
+    };    //   console.log("Starting to fetch message history using ZegoCloud API");
       
     //   // Bảo đảm có ID của người nhận
     //   let convId = conversationId;
