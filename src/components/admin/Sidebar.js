@@ -12,6 +12,8 @@ import {
 } from "@mui/material";
 import { MdDashboard, MdLocalHospital, MdPeople } from "react-icons/md";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
+import ArticleIcon from "@mui/icons-material/Article";
+import { useNavigate } from "react-router-dom";
 
 const StyledDrawer = styled("div")(() => ({
   minWidth: 280,
@@ -87,6 +89,12 @@ const SectionLabel = styled(Typography)(() => ({
 }));
 
 const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
+  const navigate = useNavigate();
+
+  const handleNavigateToNews = () => {
+    navigate("/admin/news-management");
+  };
+
   return (
     <StyledDrawer sx={{ overflowX: "hidden" }}>
       <LogoSection>
@@ -179,6 +187,33 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                   fontWeight: activeTab === "patients" ? 600 : 400,
                   fontSize: "0.95rem",
                   color: activeTab === "patients" ? "#1976d2" : "inherit",
+                },
+              }}
+            />
+          </StyledListItem>
+
+          <SectionLabel variant="caption">Quản lý nội dung</SectionLabel>
+
+          <StyledListItem
+            button
+            selected={activeTab === "news"}
+            onClick={handleNavigateToNews}
+          >
+            <IconWrapper active={activeTab === "news"}>
+              <ArticleIcon
+                fontSize="small"
+                sx={{ color: activeTab === "news" ? "#1976d2" : "#666" }}
+              />
+            </IconWrapper>
+            <ListItemText
+              primary="Quản lý tin tức"
+              sx={{
+                ml: 1.5,
+                maxWidth: "100%",
+                "& .MuiListItemText-primary": {
+                  fontWeight: activeTab === "news" ? 600 : 400,
+                  fontSize: "0.95rem",
+                  color: activeTab === "news" ? "#1976d2" : "inherit",
                 },
               }}
             />
