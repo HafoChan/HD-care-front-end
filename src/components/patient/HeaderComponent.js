@@ -38,6 +38,7 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import images from "../../constants/images";
 import React, { useEffect, useState } from "react";
+import notificationApi from "../../api/notification";
 import {
   remove,
   getImg,
@@ -45,6 +46,11 @@ import {
   getAccessToken,
 } from "../../service/otherService/localStorage";
 import { useNavigate } from "react-router-dom";
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { notification } from "antd";
+import { getAllCommentsByPost } from "../../api/socialNetworkApi";
+dayjs.extend(relativeTime);
 
 const HeaderComponent = ({ userInfo }) => {
   const navigate = useNavigate();
@@ -100,22 +106,35 @@ const HeaderComponent = ({ userInfo }) => {
   };
 
   const markAllAsRead = () => {
-    setNotifications(notifications.map(notification => ({ ...notification, read: true })));
+    updateAllStatusRead()
     setUnreadCount(0);
   };
 
-  const handleNotificationClick = (id) => {
+  const updateStatusRead = async (id) => {
+    await notificationApi.putNotification(id)
+    getPageNotification()
+  }
+
+  const updateAllStatusRead = async () => {
+    await notificationApi.updateAllStatusRead()
+    getPageNotification()
+  }
+
+  const handleNotificationClick = (notification) => {
     // Mark specific notification as read
-    setNotifications(
-      notifications.map(notification => 
-        notification.id === id ? { ...notification ,read: true } : notification      
-      )
-    );
-    navigate(`/appointment-list/${id}`)
+    updateStatusRead(notification.id)
+    console.log("notification", notification)
+    if (notification.event_type == "Đặt lịch khám") {
+      navigate(`/appointment-list/${notification.idReference}`)
+    }
+    else{
+      console.log(notification)
+      navigate(`/social-network/post/${notification.idReference}`)
+    }
 
     
     // Update unread count
-    const updatedUnreadCount = notifications.filter(n => !n.read && n.id !== id).length;
+    const updatedUnreadCount = notifications.filter(n => !n.read && n.id !== notification.id).length;
     setUnreadCount(updatedUnreadCount);
     
     
@@ -177,7 +196,7 @@ const HeaderComponent = ({ userInfo }) => {
           console.log("Received notification:", data);
           
           // Add new notification to state
-          setNotifications(prev => [data.data, ...prev]);
+          setNotifications(prev => [data, ...prev]);
           
           // Increase unread count
           setUnreadCount(prev => prev + 1);
@@ -191,6 +210,21 @@ const HeaderComponent = ({ userInfo }) => {
         newEventSource.close();
       };
 
+      // eventSource.addEventListener("social", (event) => {
+      //   try {
+      //     console.log("receive")
+      //     const data = JSON.parse(event.data);
+      //     console.log("Received notification:", data);
+          
+      //     // Add new notification to state
+      //     setNotifications(prev => [data.data, ...prev]);
+          
+      //     // Increase unread count
+      //     setUnreadCount(prev => prev + 1);
+      //   } catch (error) {
+      //     console.error("Error parsing SSE message:", error);
+      //   }      });
+      
       setEventSource(newEventSource);
     }
   };
@@ -217,8 +251,24 @@ const HeaderComponent = ({ userInfo }) => {
     return location.pathname === path;
   };
 
+  const getAllNotification = async () => {
+    const page =  await notificationApi.getAllNotification()
+    console.log(page)
+    setNotifications(page.result)
+  }
+
+  const getPageNotification = async () => {
+    const page =  await notificationApi.getPageNotification()
+    setNotifications(page.result.content)
+    console.log(page.result.content)
+    const unreadCount = page.result.content.filter(n => !n.read).length;
+    setUnreadCount(unreadCount);  
+  }
   useEffect(() => {
+    
     getInfo();
+    getPageNotification()
+
   }, [userInfo, img]);
 
   // Cleanup SSE connection on component unmount
@@ -720,7 +770,7 @@ const HeaderComponent = ({ userInfo }) => {
                   color: theme.palette.primary.main
                 }}
               >
-                Đánh dấu đã đọc
+                Đánh dấu đã đọc rồi
               </Button>
             )}
           </Box>
@@ -732,7 +782,7 @@ const HeaderComponent = ({ userInfo }) => {
               <React.Fragment key={notification.id || index}>
                 <ListItem 
                   button 
-                  onClick={() => handleNotificationClick(notification.id)}
+                  onClick={() => handleNotificationClick(notification)}
                   sx={{ 
                     py: 1.5,
                     backgroundColor: notification.read ? 'transparent' : 'rgba(250, 196, 28, 0.08)',
@@ -750,7 +800,9 @@ const HeaderComponent = ({ userInfo }) => {
                         color: notification.read ? theme.palette.text.primary : theme.palette.primary.main,
                       }}
                     >
-                      {notification.title || 'Thông báo mới'}
+                      <Typography variant="body2" sx={{ fontWeight: 600, color : theme.palette.primary.main }}>
+                        {notification.event_type || 'Thông báo mới'}
+                      </Typography>
                     </Typography>
                     <Typography 
                       variant="body2" 
@@ -764,7 +816,7 @@ const HeaderComponent = ({ userInfo }) => {
                         WebkitBoxOrient: 'vertical',
                       }}
                     >
-                      {"Bạn có hẹn lịch khám với " + notification.nameDoctor + " vào lúc " + notification.start || notification.content || 'Bạn có thông báo mới'}
+                      {notification.message}
                     </Typography>
                     <Typography 
                       variant="caption" 
@@ -775,7 +827,7 @@ const HeaderComponent = ({ userInfo }) => {
                         fontSize: '0.75rem',
                       }}
                     >
-                      {notification.time || 'Vừa xong'}
+                      {notification.createdAt? dayjs(notification.createdAt).fromNow(): 'Vừa xong'}
                     </Typography>
                   </Box>
                 </ListItem>
@@ -797,8 +849,7 @@ const HeaderComponent = ({ userInfo }) => {
               fullWidth
               size="small"
               onClick={() => {
-                handleNotificationClose();
-                navigate('/notifications');
+                getAllNotification();
               }}
               sx={{ 
                 textTransform: 'none',
