@@ -124,7 +124,7 @@ const HeaderComponent = ({ userInfo }) => {
     // Mark specific notification as read
     updateStatusRead(notification.id)
     console.log("notification", notification)
-    if (notification.event_type == "Đặt lịch khám") {
+    if (notification.event_type == "Đặt lịch khám" || notification.event_type == "Thay đổi lịch") {
       navigate(`/appointment-list/${notification.idReference}`)
     }
     else{
