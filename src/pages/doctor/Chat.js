@@ -18,7 +18,9 @@ import {
   Grid,
   TextField,
   InputAdornment,
-  Card
+  Card,
+  alpha,
+  useTheme
 } from '@mui/material';
 import { useNavigate, useParams } from 'react-router-dom';
 import { ZIM } from 'zego-zim-web';
@@ -34,6 +36,50 @@ import MessageIcon from '@mui/icons-material/Message';
 import AccessTimeIcon from '@mui/icons-material/AccessTime';
 import RefreshIcon from '@mui/icons-material/Refresh';
 import VideocamIcon from '@mui/icons-material/Videocam';
+import { styled } from '@mui/material/styles';
+
+// Styled components for modern chat
+const ChatBubble = styled(Paper)(({ theme, isSelf }) => ({
+  padding: theme.spacing(1.5, 2),
+  borderRadius: isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
+  maxWidth: '75%',
+  marginBottom: theme.spacing(1),
+  backgroundColor: isSelf ? theme.palette.primary.main : alpha(theme.palette.background.paper, 0.9),
+  color: isSelf ? theme.palette.primary.contrastText : theme.palette.text.primary,
+  alignSelf: isSelf ? 'flex-end' : 'flex-start',
+  boxShadow: isSelf 
+    ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}` 
+    : '0 1px 3px rgba(0,0,0,0.08)',
+  wordBreak: 'break-word',
+  animation: 'fadeIn 0.3s ease-out',
+  '&:hover': {
+    boxShadow: isSelf 
+      ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` 
+      : '0 3px 8px rgba(0,0,0,0.1)',
+  },
+  transition: 'box-shadow 0.2s ease-in-out',
+  '@keyframes fadeIn': {
+    from: { opacity: 0, transform: 'translateY(10px)' },
+    to: { opacity: 1, transform: 'translateY(0)' }
+  }
+}));
+
+const MessageTime = styled(Typography)(({ theme, isSelf }) => ({
+  fontSize: '0.7rem',
+  opacity: 0.7,
+  marginTop: 4,
+  textAlign: isSelf ? 'right' : 'left',
+  color: isSelf ? alpha(theme.palette.primary.contrastText, 0.85) : theme.palette.text.secondary
+}));
+
+const StyledAvatar = styled(Avatar)(({ theme }) => ({
+  border: `2px solid ${theme.palette.background.paper}`,
+  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+  transition: 'transform 0.2s ease',
+  '&:hover': {
+    transform: 'scale(1.05)'
+  }
+}));
 
 function Chat() {
   const navigate = useNavigate();
@@ -58,6 +104,8 @@ function Chat() {
 
   // New state for auto-refresh
   const [autoRefreshing, setAutoRefreshing] = useState(false);
+
+  const theme = useTheme();
 
   // Initialize ZIM to activate account
   useEffect(() => {
@@ -388,7 +436,8 @@ function Chat() {
   return (
     <Box sx={{ 
       display: 'flex',
-      minHeight: '100vh'
+      minHeight: '100vh',
+      bgcolor: theme => alpha(theme.palette.background.default, 0.95)
     }}>
       <Sidebar />
       
@@ -412,41 +461,23 @@ function Chat() {
           <Typography variant="h5" fontWeight="bold">
             Tin nhắn
           </Typography>
-          <Box sx={{ flexGrow: 1 }} />
-          <Badge badgeContent={unreadCount} color="error" sx={{ mr: 2 }}>
-            <MessageIcon color="primary" />
-          </Badge>
-          <Typography variant="body2" color="text.secondary">
-            {connected ? 'Đã kết nối' : 'Đã kết nối'}
-          </Typography>
         </Box>
         
         <Grid container spacing={3}>
-          {/* Danh sách hội thoại */}
+          {/* Chat list */}
           <Grid item xs={12} md={4}>
-            <Card sx={{ height: '100%', minHeight: 500, display: 'flex', flexDirection: 'column' }}>
-              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider', display: 'flex', alignItems: 'center' }}>
-                <Typography variant="h6" sx={{ flexGrow: 1 }}>
-                  Danh sách tin nhắn
-                </Typography>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
-                  {autoRefreshing && (
-                    <CircularProgress size={20} sx={{ mr: 1 }} />
-                  )}
-                  <IconButton 
-                    size="small" 
-                    onClick={handleRefreshConversations}
-                    disabled={loadingConversations}
-                  >
-                    {loadingConversations ? <CircularProgress size={20} /> : <RefreshIcon />}
-                  </IconButton>
-                </Box>
-              </Box>
-              
+            <Card sx={{ 
+              height: '100%', 
+              minHeight: 500, 
+              display: 'flex', 
+              flexDirection: 'column',
+              borderRadius: 2,
+              boxShadow: theme => `0 4px 20px ${alpha(theme.palette.common.black, 0.05)}`
+            }}>
               <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
                 <TextField
                   fullWidth
-                  placeholder="Tìm người dùng..."
+                  placeholder="Tìm kiếm..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
                   InputProps={{
@@ -457,6 +488,15 @@ function Chat() {
                     ),
                   }}
                   size="small"
+                  sx={{
+                    '& .MuiOutlinedInput-root': {
+                      borderRadius: '20px',
+                      backgroundColor: theme => alpha(theme.palette.background.paper, 0.8),
+                      '&:hover': {
+                        backgroundColor: theme => alpha(theme.palette.background.paper, 0.9),
+                      }
+                    }
+                  }}
                 />
               </Box>
               
@@ -464,9 +504,6 @@ function Chat() {
                 {loadingConversations && conversations.length === 0 ? (
                   <Box sx={{ p: 3, textAlign: 'center' }}>
                     <CircularProgress size={30} />
-                    <Typography variant="body2" sx={{ mt: 1 }}>
-                      Đang tải danh sách...
-                    </Typography>
                   </Box>
                 ) : filteredConversations.length > 0 ? (
                   filteredConversations.map((conversation) => (
@@ -476,59 +513,40 @@ function Chat() {
                       onClick={() => handleViewConversation(conversation)}
                       sx={{
                         cursor: 'pointer',
-                        backgroundColor: selectedConversation?.conversationID === conversation.conversationID ? 'rgba(0, 0, 0, 0.04)' : 'transparent',
-                        borderRadius: '8px',
+                        backgroundColor: selectedConversation?.conversationID === conversation.conversationID 
+                          ? alpha(theme.palette.primary.main, 0.08)
+                          : 'transparent',
+                        borderRadius: '12px',
                         my: 0.5,
+                        mx: 1,
                         '&:hover': {
-                          backgroundColor: 'rgba(0, 0, 0, 0.08)',
+                          backgroundColor: alpha(theme.palette.primary.main, 0.04),
                         },
                       }}
                     >
                       <ListItemAvatar>
-                        <Avatar>{conversation.conversationName[0].toUpperCase()}</Avatar>
+                        <StyledAvatar>
+                          {conversation.conversationName[0].toUpperCase()}
+                        </StyledAvatar>
                       </ListItemAvatar>
                       <ListItemText
                         primary={conversation.conversationName}
                         secondary={
-                          <>
-                            <Typography
-                              component="span"
-                              variant="body2"
-                              color="text.primary"
-                              sx={{ 
-                                display: 'block', 
-                                maxWidth: '100%',
-                                overflow: 'hidden',
-                                textOverflow: 'ellipsis',
-                                whiteSpace: 'nowrap'
-                              }}
-                            >
-                              {conversation.lastMessage?.message || 'Chưa có tin nhắn'}
-                            </Typography>
-                            {renderSpecialMessage(conversation)}
-                            <Typography
-                              component="span"
-                              variant="caption"
-                              color="text.secondary"
-                              sx={{ display: 'flex', alignItems: 'center', mt: 0.5 }}
-                            >
-                              <AccessTimeIcon sx={{ fontSize: 12, mr: 0.5 }} />
-                              {conversation.lastMessage?.timestamp 
-                                ? new Date(conversation.lastMessage.timestamp).toLocaleString('vi-VN', {
-                                    hour: '2-digit', 
-                                    minute: '2-digit',
-                                    day: '2-digit',
-                                    month: '2-digit',
-                                    year: 'numeric'
-                                  })
-                                : ''}
-                            </Typography>
-                          </>
+                          <Typography
+                            variant="body2"
+                            color="text.secondary"
+                            sx={{ 
+                              display: 'block', 
+                              maxWidth: '100%',
+                              overflow: 'hidden',
+                              textOverflow: 'ellipsis',
+                              whiteSpace: 'nowrap'
+                            }}
+                          >
+                            {conversation.lastMessage?.message || 'Chưa có tin nhắn'}
+                          </Typography>
                         }
                       />
-                      {conversation.unreadMessageCount > 0 && (
-                        <Badge badgeContent={conversation.unreadMessageCount} color="primary" sx={{ ml: 1 }} />
-                      )}
                     </ListItem>
                   ))
                 ) : (
@@ -542,10 +560,10 @@ function Chat() {
             </Card>
           </Grid>
           
-          {/* Khung thông tin và hướng dẫn */}
+          {/* Chat preview */}
           <Grid item xs={12} md={8}>
             <Paper 
-              elevation={3} 
+              elevation={0}
               sx={{ 
                 p: 4, 
                 borderRadius: 2, 
@@ -554,68 +572,38 @@ function Chat() {
                 display: 'flex',
                 flexDirection: 'column',
                 justifyContent: 'center',
-                alignItems: 'center'
+                alignItems: 'center',
+                bgcolor: theme => alpha(theme.palette.background.paper, 0.6),
+                backdropFilter: 'blur(10px)'
               }}
             >
               <Box sx={{ 
-                width: 100, 
-                height: 100, 
+                width: 80, 
+                height: 80, 
                 borderRadius: '50%', 
-                bgcolor: connected ? 'success.main' : 'grey.400',
+                bgcolor: 'primary.main',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
-                mb: 4,
+                mb: 3,
                 color: 'white',
-                fontSize: 40,
-                fontWeight: 'bold'
+                boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.3)}`
               }}>
-                <ChatIcon sx={{ fontSize: 50 }} />
+                <ChatIcon sx={{ fontSize: 40 }} />
               </Box>
               
               <Typography variant="h6" gutterBottom>
-                Trung tâm tin nhắn
+                Chọn một cuộc trò chuyện
               </Typography>
               
-              <Typography variant="body1" sx={{ mb: 3, color: 'text.secondary', textAlign: 'center', maxWidth: 500 }}>
-                {loggedIn 
-                  ? 'Chọn một cuộc trò chuyện từ danh sách bên trái để xem tin nhắn chi tiết và trả lời bệnh nhân.'
-                  : 'Đang kết nối tới dịch vụ tin nhắn. Vui lòng đợi...'}
+              <Typography variant="body1" sx={{ 
+                mb: 3, 
+                color: 'text.secondary', 
+                textAlign: 'center', 
+                maxWidth: 400 
+              }}>
+                Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu chat
               </Typography>
-              
-              <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, alignItems: 'center', mt: 3 }}>
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <PersonIcon color="primary" />
-                  <Typography variant="body2">
-                    Tổng số cuộc trò chuyện: {conversations.length}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <MessageIcon color="primary" />
-                  <Typography variant="body2">
-                    Tin nhắn chưa đọc: {unreadCount}
-                  </Typography>
-                </Box>
-                
-                <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
-                  <AccessTimeIcon color="primary" />
-                  <Typography variant="body2">
-                    Cập nhật lần cuối: {new Date().toLocaleTimeString()}
-                  </Typography>
-                </Box>
-              </Box>
-              
-              <Button
-                variant="contained"
-                color="primary"
-                startIcon={<RefreshIcon />}
-                sx={{ mt: 4 }}
-                onClick={handleRefreshConversations}
-                disabled={loadingConversations}
-              >
-                {loadingConversations ? 'Đang cập nhật...' : 'Cập nhật danh sách'}
-              </Button>
             </Paper>
           </Grid>
         </Grid>
@@ -630,7 +618,11 @@ function Chat() {
         <Alert 
           onClose={() => setShowError(false)} 
           severity="error" 
-          sx={{ width: '100%' }}
+          sx={{ 
+            width: '100%',
+            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
+            borderRadius: 2
+          }}
         >
           {error}
         </Alert>

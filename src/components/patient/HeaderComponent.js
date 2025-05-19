@@ -128,7 +128,7 @@ const HeaderComponent = ({ userInfo }) => {
       navigate(`/appointment-list/${notification.idReference}`)
     }
     else{
-      console.log(notification)
+      console.log("notification", notification)
       navigate(`/social-network/post/${notification.idReference}`)
     }
 
@@ -195,8 +195,8 @@ const HeaderComponent = ({ userInfo }) => {
           const data = JSON.parse(event.data);
           console.log("Received notification:", data);
           
-          // Add new notification to state
-          setNotifications(prev => [data, ...prev]);
+          // // Add new notification to state
+          // setNotifications(prev => [data, ...prev]);
           
           // Increase unread count
           setUnreadCount(prev => prev + 1);
