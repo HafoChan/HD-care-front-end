@@ -19,6 +19,7 @@ import {
   ListItemIcon,
   ListItemText,
   Collapse,
+  Popover,
 } from "@mui/material";
 import { Link, useLocation } from "react-router-dom";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
@@ -37,12 +38,19 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import images from "../../constants/images";
 import React, { useEffect, useState } from "react";
+import notificationApi from "../../api/notification";
 import {
   remove,
   getImg,
   getRefreshToken,
+  getAccessToken,
 } from "../../service/otherService/localStorage";
 import { useNavigate } from "react-router-dom";
+import dayjs from 'dayjs';
+import relativeTime from 'dayjs/plugin/relativeTime';
+import { notification } from "antd";
+import { getAllCommentsByPost } from "../../api/socialNetworkApi";
+dayjs.extend(relativeTime);
 
 const HeaderComponent = ({ userInfo }) => {
   const navigate = useNavigate();
@@ -55,6 +63,12 @@ const HeaderComponent = ({ userInfo }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [socialOpen, setSocialOpen] = useState(false);
+  
+  // Notification related states
+  const [notifications, setNotifications] = useState([]);
+  const [unreadCount, setUnreadCount] = useState(0);
+  const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
+  const [eventSource, setEventSource] = useState(null);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -66,6 +80,11 @@ const HeaderComponent = ({ userInfo }) => {
 
   const handleLogout = () => {
     console.log("Đang thực hiện đăng xuất...");
+    // Close SSE connection if it exists
+    if (eventSource) {
+      eventSource.close();
+      setEventSource(null);
+    }
     setCheckLogin(false);
     remove();
     handleMenuClose();
@@ -75,6 +94,54 @@ const HeaderComponent = ({ userInfo }) => {
   const viewInfo = () => {
     navigate("/profile");
     handleMenuClose();
+  };
+
+  // Notification handlers
+  const handleNotificationOpen = (event) => {
+    setNotificationAnchorEl(event.currentTarget);
+  };
+
+  const handleNotificationClose = () => {
+    setNotificationAnchorEl(null);
+  };
+
+  const markAllAsRead = () => {
+    updateAllStatusRead()
+    setUnreadCount(0);
+  };
+
+  const updateStatusRead = async (id) => {
+    await notificationApi.putNotification(id)
+    getPageNotification()
+  }
+
+  const updateAllStatusRead = async () => {
+    await notificationApi.updateAllStatusRead()
+    getPageNotification()
+  }
+
+  const handleNotificationClick = (notification) => {
+    // Mark specific notification as read
+    updateStatusRead(notification.id)
+    console.log("notification", notification)
+    if (notification.event_type == "Đặt lịch khám" || notification.event_type == "Thay đổi lịch") {
+      navigate(`/appointment-list/${notification.idReference}`)
+    }
+    else{
+      console.log("notification", notification)
+      navigate(`/social-network/post/${notification.idReference}`)
+    }
+
+    
+    // Update unread count
+    const updatedUnreadCount = notifications.filter(n => !n.read && n.id !== notification.id).length;
+    setUnreadCount(updatedUnreadCount);
+    
+    
+    // Navigate based on notification type if needed
+    // navigate(notification.redirectUrl);
+    
+    // handleNotificationClose();
   };
 
   const getInfo = () => {
@@ -89,8 +156,76 @@ const HeaderComponent = ({ userInfo }) => {
           "https://kasfaa.com/wp-content/uploads/2023/05/Generic-Avatar.jpg"
         );
       }
+
+      // Setup SSE connection if authenticated
+      setupSSEConnection();
     } else {
       setCheckLogin(false);
+    }
+  };
+
+  const setupSSEConnection = () => {
+    if (checkLogin && !eventSource) {
+      const token = getAccessToken();
+      
+      // Close existing connection if any
+      if (eventSource) {
+        eventSource.close();
+      }
+
+      // Create new SSE connection with auth token
+      const newEventSource = new EventSource(`http://localhost:8082/api/v1/sse/subscribe?token=${token}`);
+
+            
+
+      newEventSource.onerror = (event) => {
+        console.error("Error occurred: ", event);
+        if (newEventSource.readyState === EventSource.CLOSED) {
+            // Kết nối bị đóng, thử kết nối lại nếu cần
+            console.log("Reconnecting...");
+            // Có thể gọi lại API để tạo kết nối mới hoặc xử lý thông báo
+        }
+    };
+    console.log("EventSource readyState:", newEventSource.readyState);
+
+
+      newEventSource.onmessage = (event) => {
+        try {
+          console.log("receive")
+          const data = JSON.parse(event.data);
+          console.log("Received notification:", data);
+          
+          // // Add new notification to state
+          // setNotifications(prev => [data, ...prev]);
+          
+          // Increase unread count
+          setUnreadCount(prev => prev + 1);
+        } catch (error) {
+          console.error("Error parsing SSE message:", error);
+        }
+      };
+
+      newEventSource.onerror = (error) => {
+        console.error("SSE connection error:", error);
+        newEventSource.close();
+      };
+
+      // eventSource.addEventListener("social", (event) => {
+      //   try {
+      //     console.log("receive")
+      //     const data = JSON.parse(event.data);
+      //     console.log("Received notification:", data);
+          
+      //     // Add new notification to state
+      //     setNotifications(prev => [data.data, ...prev]);
+          
+      //     // Increase unread count
+      //     setUnreadCount(prev => prev + 1);
+      //   } catch (error) {
+      //     console.error("Error parsing SSE message:", error);
+      //   }      });
+      
+      setEventSource(newEventSource);
     }
   };
 
@@ -116,9 +251,27 @@ const HeaderComponent = ({ userInfo }) => {
     return location.pathname === path;
   };
 
+  const getAllNotification = async () => {
+    const page =  await notificationApi.getAllNotification()
+    console.log(page)
+    setNotifications(page.result)
+  }
+
+  const getPageNotification = async () => {
+    const page =  await notificationApi.getPageNotification()
+    setNotifications(page.result.content)
+    console.log(page.result.content)
+    const unreadCount = page.result.content.filter(n => !n.read).length;
+    setUnreadCount(unreadCount);  
+  }
   useEffect(() => {
+    
     getInfo();
+    getPageNotification()
+
   }, [userInfo, img]);
+
+  // Cleanup SSE connection on component unmount
 
   const NavButton = ({ to, label, active }) => (
     <Link to={to} style={{ textDecoration: "none" }}>
@@ -520,8 +673,12 @@ const HeaderComponent = ({ userInfo }) => {
             )}
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <IconButton color="primary" sx={{ mr: 1 }}>
-                <Badge badgeContent={2} color="error">
+              <IconButton 
+                color="primary" 
+                sx={{ mr: 1 }}
+                onClick={handleNotificationOpen}
+              >
+                <Badge badgeContent={unreadCount} color="error">
                   <NotificationsNoneIcon />
                 </Badge>
               </IconButton>
@@ -574,6 +731,136 @@ const HeaderComponent = ({ userInfo }) => {
           </Toolbar>
         </Container>
       </AppBar>
+
+      {/* Notification Popover */}
+      <Popover
+        anchorEl={notificationAnchorEl}
+        open={Boolean(notificationAnchorEl)}
+        onClose={handleNotificationClose}
+        anchorOrigin={{
+          vertical: 'bottom',
+          horizontal: 'right',
+        }}
+        transformOrigin={{
+          vertical: 'top',
+          horizontal: 'right',
+        }}
+        PaperProps={{
+          sx: {
+            width: 320,
+            maxHeight: 400,
+            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            borderRadius: 2,
+            mt: 1.5,
+          }
+        }}
+      >
+        <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
+          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography variant="h6" sx={{ fontWeight: 600 }}>
+              Thông báo
+            </Typography>
+            {unreadCount > 0 && (
+              <Button 
+                size="small" 
+                onClick={markAllAsRead}
+                sx={{ 
+                  textTransform: 'none',
+                  fontWeight: 500,
+                  color: theme.palette.primary.main
+                }}
+              >
+                Đánh dấu đã đọc rồi
+              </Button>
+            )}
+          </Box>
+        </Box>
+        
+        <List sx={{ py: 0, maxHeight: 300, overflowY: 'auto' }}>
+          {notifications.length > 0 ? (
+            notifications.map((notification, index) => (
+              <React.Fragment key={notification.id || index}>
+                <ListItem 
+                  button 
+                  onClick={() => handleNotificationClick(notification)}
+                  sx={{ 
+                    py: 1.5,
+                    backgroundColor: notification.read ? 'transparent' : 'rgba(250, 196, 28, 0.08)',
+                    '&:hover': {
+                      backgroundColor: 'rgba(250, 196, 28, 0.15)',
+                    }
+                  }}
+                >
+                  <Box sx={{ width: '100%' }}>
+                    <Typography 
+                      variant="body2" 
+                      sx={{ 
+                        fontWeight: notification.read ? 400 : 600,
+                        mb: 0.5,
+                        color: notification.read ? theme.palette.text.primary : theme.palette.primary.main,
+                      }}
+                    >
+                      <Typography variant="body2" sx={{ fontWeight: 600, color : theme.palette.primary.main }}>
+                        {notification.event_type || 'Thông báo mới'}
+                      </Typography>
+                    </Typography>
+                    <Typography 
+                      variant="body2" 
+                      color="text.secondary"
+                      sx={{ 
+                        fontSize: '0.875rem',
+                        overflow: 'hidden',
+                        textOverflow: 'ellipsis',
+                        display: '-webkit-box',
+                        WebkitLineClamp: 2,
+                        WebkitBoxOrient: 'vertical',
+                      }}
+                    >
+                      {notification.message}
+                    </Typography>
+                    <Typography 
+                      variant="caption" 
+                      color="text.secondary"
+                      sx={{ 
+                        display: 'block',
+                        mt: 0.5,
+                        fontSize: '0.75rem',
+                      }}
+                    >
+                      {notification.createdAt? dayjs(notification.createdAt).fromNow(): 'Vừa xong'}
+                    </Typography>
+                  </Box>
+                </ListItem>
+                {index < notifications.length - 1 && <Divider component="li" />}
+              </React.Fragment>
+            ))
+          ) : (
+            <Box sx={{ py: 4, textAlign: 'center' }}>
+              <Typography color="text.secondary">
+                Không có thông báo nào
+              </Typography>
+            </Box>
+          )}
+        </List>
+        
+        {notifications.length > 0 && (
+          <Box sx={{ p: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+            <Button
+              fullWidth
+              size="small"
+              onClick={() => {
+                getAllNotification();
+              }}
+              sx={{ 
+                textTransform: 'none',
+                fontWeight: 500,
+              }}
+            >
+              Xem tất cả thông báo
+            </Button>
+          </Box>
+        )}
+      </Popover>
 
       <Menu
         anchorEl={anchorEl}

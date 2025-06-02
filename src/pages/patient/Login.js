@@ -99,6 +99,7 @@ const Login = () => {
           data.result.userResponse.username
         );
         setRole(data.result.roles);
+        
         console.log("data" , data.result.userResponse.username)
         // navigate("/home");
       }

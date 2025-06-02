@@ -20,7 +20,8 @@ import { generateToken } from "../../service/patientService/ZimSerivce";
 import { getUsername, getRole, getName } from '../../service/otherService/localStorage';
 import { doctor } from '../../api/doctor';
 import HeaderComponent from "../../components/patient/HeaderComponent";
-
+import { chatApi } from '../../api/chat';
+import { message } from 'antd';
 // Styled components for modern chat
 const ChatContainer = styled(Box)(({ theme }) => ({
   display: 'flex',
@@ -230,76 +231,73 @@ function Chat() {
   const zimRef = useRef(null);
   const messagesEndRef = useRef(null);
   const [showScrollBottom, setShowScrollBottom] = useState(false);
+  const [historyMessages, setHistoryMessages] = useState([]);
   
   // Refs for message pagination
   const hasMoreMessages = useRef(true);
   const isLoadingMore = useRef(false);
   const nextMessageRef = useRef(null);
   
-  // Add function to save messages to localStorage
-  const saveMessagesToLocalStorage = (msgs) => {
+  // Function to fetch message history using ZIM API
+  const fetchMessageHistory = async (zim, conversationID, nextMessage = null) => {
     try {
-      const key = `chat_messages_${getUsername()}`; // Use username as part of the key
-      const currentMessages = JSON.parse(localStorage.getItem(key) || '{}');
-      currentMessages[conversationId] = msgs;
-      localStorage.setItem(key, JSON.stringify(currentMessages));
-      console.log("Messages saved to localStorage for user:", getUsername());
-    } catch (error) {
-      console.error("Error saving messages to localStorage:", error);
-    }
-  };
-
-  // Add function to load messages from localStorage
-  const loadMessagesFromLocalStorage = () => {
-    try {
-      const key = `chat_messages_${getUsername()}`;
-      const savedMessages = localStorage.getItem(key);
-      if (savedMessages) {
-        const allMessages = JSON.parse(savedMessages);
-        const conversationMessages = allMessages[conversationId] || [];
-        // Convert string timestamps back to Date objects
-        const messagesWithDates = conversationMessages.map(msg => ({
-          ...msg,
-          timestamp: new Date(msg.timestamp)
+      if (!zim || !conversationID) {
+        console.error("Missing required parameters for fetchMessageHistory:", { zim, conversationID });
+        return [];
+      }
+  
+      const conversationType = 0; // 0 = ZIMConversationType.Peer (1:1 chat)
+      const config = {
+        count: 20,
+        reverse: true, // để lấy tin nhắn mới nhất trước
+        nextMessage // dùng cho phân trang nếu có
+      };
+  
+      console.log("Fetching message history with queryHistoryMessage:", {
+        conversationID,
+        conversationType,
+        config
+      });
+  
+      const result = await zim.queryHistoryMessage(conversationID, conversationType, config);
+  
+      console.log("Fetched messages:", result);
+  
+      if (result.messageList && result.messageList.length > 0) {
+        const formattedMessages = result.messageList.map(msg => ({
+          id: msg.messageID,
+          receiver: msg.conversationID,
+          content: msg.message,
+          sender: msg.senderUserID,
+          timestamp: new Date(msg.timestamp),
+          checkSelf: msg.senderUserID === getUsername(),
+          extendedData: msg.extendedData,
+          hasVideoCall: !msg.extendedData &&
+                        msg.message &&
+                        msg.message.includes('tham gia phòng khám') &&
+                        msg.message.includes('http')
         }));
-        console.log("Loaded messages from localStorage:", messagesWithDates.length);
-        return messagesWithDates;
+  
+        nextMessageRef.current = result.nextMessage;
+  
+        if (result.messageList.length < 20) {
+          hasMoreMessages.current = false;
+        }
+  
+        return formattedMessages;
       }
+  
+      return [];
     } catch (error) {
-      console.error("Error loading messages from localStorage:", error);
-    }
-    return [];
-  };
-
-  // Add function to clear all chat history for the current user
-  const clearAllChatHistory = () => {
-    try {
-      const key = `chat_messages_${getUsername()}`;
-      localStorage.removeItem(key);
-      console.log("Cleared all chat history for user:", getUsername());
-    } catch (error) {
-      console.error("Error clearing chat history:", error);
+      console.error("❌ Error fetching history with queryHistoryMessage:", error);
+      setError("Không thể tải lịch sử tin nhắn. Vui lòng thử lại sau.");
+      setShowError(true);
+      return [];
     }
   };
+  
 
-  // Add function to handle logout
-  const handleLogout = () => {
-    clearAllChatHistory();
-    // Add your logout logic here
-  };
-
-  // Update useEffect to load messages from localStorage when component mounts
-  useEffect(() => {
-    if (conversationId) {
-      const savedMessages = loadMessagesFromLocalStorage();
-      if (savedMessages.length > 0) {
-        console.log("Setting messages from localStorage");
-        setMessages(savedMessages);
-      }
-    }
-  }, [conversationId]);
-
-  // Update loadMoreMessages to save messages to localStorage
+  // Update loadMoreMessages to use ZIM API
   const loadMoreMessages = useCallback(async () => {
     if (!zimRef.current || !conversationId || isLoadingMore.current || !hasMoreMessages.current) {
       return;
@@ -309,57 +307,12 @@ function Chat() {
     console.log("Loading more historical messages...");
     
     try {
-      // Make sure we have a valid nextMessage reference
-      if (!nextMessageRef.current) {
-        console.log("No next message reference available, cannot load more");
-        hasMoreMessages.current = false;
-        return;
-      }
+      const newMessages = await fetchMessageHistory(zimRef.current, conversationId, nextMessageRef.current);
       
-      // API signature: zim.queryHistoryMessage(params)
-      const result = await zimRef.current.queryHistoryMessage({
-        conversationID: conversationId,
-        conversationType: 0, // One-to-one chat
-        count: 30,
-        reverse: true,
-        nextMessage: nextMessageRef.current
-      });
-      
-      console.log("Additional messages result:", result);
-      
-      if (result.messageList && result.messageList.length > 0) {
-        // Format the messages
-        const formattedMessages = result.messageList.map(msg => ({
-          id: msg.messageID,
-          content: msg.message,
-          sender: msg.senderUserID,
-          timestamp: new Date(msg.timestamp),
-          isSelf: msg.senderUserID === getUsername(),
-          extendedData: msg.extendedData,
-          hasVideoCall: !msg.extendedData && 
-                       msg.message && 
-                       msg.message.includes('tham gia phòng khám') && 
-                       msg.message.includes('http')
-        }));
-        
-        // Update the nextMessage for future pagination
-        if (result.messageList.length > 0) {
-          nextMessageRef.current = result.messageList[0];
-        }
-        
-        // If we got fewer messages than requested, we've reached the end
-        if (result.messageList.length < 30) {
-          hasMoreMessages.current = false;
-        }
-        
+      if (newMessages.length > 0) {
         // Add messages to the beginning of the list (they're older)
-        setMessages(prev => {
-          const newMessages = [...formattedMessages.reverse(), ...prev];
-          saveMessagesToLocalStorage(newMessages);
-          return newMessages;
-        });
+        setMessages(prev => [...newMessages.reverse(), ...prev]);
       } else {
-        // No more messages to load
         hasMoreMessages.current = false;
       }
     } catch (error) {
@@ -380,58 +333,34 @@ function Chat() {
   // Helper function to render message time safely
   const renderMessageTime = (timestamp) => {
     try {
+      // If timestamp is a string, try to parse it
+      if (typeof timestamp === 'string') {
+        timestamp = new Date(timestamp);
+      }
+      
+      // If timestamp is a number (milliseconds), create Date object
+      if (typeof timestamp === 'number') {
+        timestamp = new Date(timestamp);
+      }
+
+      // Check if timestamp is valid
       if (!isValidDate(timestamp)) {
+        console.error("Invalid timestamp:", timestamp);
         return "Thời gian không xác định";
       }
-      return timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+      // Format the time in Vietnamese locale
+      return timestamp.toLocaleTimeString('vi-VN', { 
+        hour: '2-digit', 
+        minute: '2-digit',
+        hour12: false 
+      });
     } catch (e) {
-      console.error("Error rendering message time:", e);
+      console.error("Error rendering message time:", e, "Timestamp:", timestamp);
       return "Thời gian không xác định";
     }
   };
 
-  // Group messages by date with safer handling
-  const groupMessagesByDate = () => {
-    const grouped = {};
-    
-    messages.forEach(message => {
-      try {
-        // Make sure timestamp is a valid date object
-        let timestamp = message.timestamp;
-        let dateKey;
-        
-        if (!isValidDate(timestamp)) {
-          console.log("Invalid timestamp detected, using current date:", timestamp);
-          timestamp = new Date(); // Fallback to current date
-        }
-        
-        // Get date string in a consistent format (YYYY-MM-DD)
-        dateKey = timestamp.toISOString().split('T')[0];
-        
-        if (!grouped[dateKey]) {
-          grouped[dateKey] = [];
-        }
-        
-        grouped[dateKey].push({
-          ...message,
-          timestamp // Ensure the timestamp is valid
-        });
-      } catch (e) {
-        console.error("Error grouping message by date:", e, message);
-        // Use a fallback group for messages with invalid dates
-        const fallbackDateKey = "invalid-date";
-        if (!grouped[fallbackDateKey]) {
-          grouped[fallbackDateKey] = [];
-        }
-        grouped[fallbackDateKey].push({
-          ...message,
-          timestamp: new Date() // Fallback timestamp
-        });
-      }
-    });
-    
-    return grouped;
-  };
 
   // Format date for dividers
   const formatDateDivider = (dateKey) => {
@@ -484,8 +413,22 @@ function Chat() {
     }
   };
 
-  // Process grouped messages
-  const groupedMessages = groupMessagesByDate();
+  // Add this function after the formatDateDivider function
+  const groupMessagesByDate = () => {
+    const groups = {};
+    
+    messages.forEach(message => {
+      const date = new Date(message.timestamp);
+      const dateKey = date.toDateString();
+      
+      if (!groups[dateKey]) {
+        groups[dateKey] = [];
+      }
+      groups[dateKey].push(message);
+    });
+    
+    return groups;
+  };
 
   // Render loading indicator at the top of the messages when loading more
   const renderLoadMoreIndicator = () => {
@@ -553,7 +496,7 @@ function Chat() {
         // Nếu là lời mời tham gia video
         if (extendedData && extendedData.type === 'video_invitation') {
           return (
-            <SpecialMessageContainer isSelf={message.isSelf}>
+            <SpecialMessageContainer isSelf={message.checkSelf}>
               <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -572,7 +515,7 @@ function Chat() {
                     Lời mời tham gia phòng khám
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    Từ: {message.isSelf ? 'Bạn' : (extendedData.patientName || message.sender)}
+                    Từ: {message.checkSelf ? 'Bạn' : (extendedData.patientName || message.sender)}
                   </Typography>
                 </Box>
               </Box>
@@ -608,7 +551,7 @@ function Chat() {
                 Tham gia phòng khám
               </JoinVideoButton>
               
-              <MessageTime isSelf={message.isSelf} sx={{ mt: 1.5, textAlign: 'right' }}>
+              <MessageTime isSelf={message.checkSelf} sx={{ mt: 1.5, textAlign: 'right' }}>
                 {renderMessageTime(timestamp)}
               </MessageTime>
             </SpecialMessageContainer>
@@ -623,7 +566,7 @@ function Chat() {
         if (urlMatch) {
           const roomUrl = urlMatch[0];
           return (
-            <SpecialMessageContainer isSelf={message.isSelf}>
+            <SpecialMessageContainer isSelf={message.checkSelf}>
               <Box sx={{ 
                 display: 'flex', 
                 alignItems: 'center', 
@@ -642,7 +585,7 @@ function Chat() {
                     Lời mời tham gia phòng khám
                   </Typography>
                   <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                    Từ: {message.isSelf ? 'Bạn' : 'Người gửi'}
+                    Từ: {message.checkSelf ? 'Bạn' : 'Người gửi'}
                   </Typography>
                 </Box>
               </Box>
@@ -678,7 +621,7 @@ function Chat() {
                 Tham gia phòng khám
               </JoinVideoButton>
               
-              <MessageTime isSelf={message.isSelf} sx={{ mt: 1.5, textAlign: 'right' }}>
+              <MessageTime isSelf={message.checkSelf} sx={{ mt: 1.5, textAlign: 'right' }}>
                 {renderMessageTime(timestamp)}
               </MessageTime>
             </SpecialMessageContainer>
@@ -692,11 +635,11 @@ function Chat() {
           sx={{ 
             display: 'flex', 
             flexDirection: 'column', 
-            alignItems: message.isSelf ? 'flex-end' : 'flex-start',
+            alignItems: message.checkSelf ? 'flex-end' : 'flex-start',
             mb: 1
           }}
         >
-          <MessageBubble isSelf={message.isSelf}>
+          <MessageBubble isSelf={message.checkSelf}>
             <Typography 
               variant="body2" 
               component="div"
@@ -709,7 +652,7 @@ function Chat() {
                 </React.Fragment>
               ))}
             </Typography>
-            <MessageTime isSelf={message.isSelf}>
+            <MessageTime isSelf={message.checkSelf}>
               {renderMessageTime(timestamp)}
             </MessageTime>
           </MessageBubble>
@@ -718,9 +661,9 @@ function Chat() {
     } catch (error) {
       console.error("Error rendering message:", error);
       return (
-        <MessageBubble isSelf={message.isSelf}>
+        <MessageBubble isSelf={message.checkSelf}>
           <Typography variant="body1">{message.content || "Không có nội dung"}</Typography>
-          <MessageTime isSelf={message.isSelf}>
+          <MessageTime isSelf={message.checkSelf}>
             {renderMessageTime(message.timestamp)}
           </MessageTime>
         </MessageBubble>
@@ -759,6 +702,9 @@ function Chat() {
           // Thiết lập conversation ID trực tiếp
           setConversationId(doctorId);
           
+          // Load messages from localStorage
+      
+          
           // Kết thúc loading
           setLoading(false);
         } else {
@@ -777,11 +723,9 @@ function Chat() {
                                 doctorId;
             
             setConversationId(docUserName);
-          } else {
-            console.error("No doctor info in response:", response);
-            setError('Không thể tải thông tin bác sĩ. Vui lòng thử lại sau.');
-            setShowError(true);
-          }
+            
+           
+          } 
         }
       } catch (error) {
         console.error('Error in role checking or fetching info:', error);
@@ -793,15 +737,15 @@ function Chat() {
     checkRoleAndFetchInfo();
   }, [doctorId]); // Chỉ chạy khi doctorId thay đổi, không chạy lại khi navigate
 
+  // Add effect to load messages when conversationId changes
+   
+
   // Then initialize ZIM after info is loaded
   useEffect(() => {
     // Chỉ tiếp tục nếu đã có thông tin cần thiết
     if (userRole === 'DOCTOR' && !patientUsername) return;
     if (userRole === 'PATIENT' && !doctorInfo) return;
 
-    // Kiểm tra xem đã có tin nhắn được load từ state chưa
-    const hasLoadedMessages = sessionStorage.getItem('hasLoadedMessages') === 'true';
-    
     let zimInstance = null;
 
     const initZIM = async () => {
@@ -836,7 +780,6 @@ function Chat() {
         });
 
         zim.on('peerMessageReceived', (zim, { messageList, fromConversationID }) => {
-          
           console.log("Message received from:", fromConversationID, messageList);
           
           // Determine if we should accept this message based on role
@@ -845,30 +788,18 @@ function Chat() {
             : true; // Nếu là patient, chấp nhận tất cả tin nhắn
           
           if (shouldAcceptMessage) {
-            const newMessages = messageList.map(msg => {
-              // Log full details of the received message for debugging
-              console.log("Full received message details:", msg);
-              
-              // Check for video call info in message content if extendedData is not available
-              const hasVideoCall = !msg.extendedData && 
-                                   msg.message && 
-                                   msg.message.includes('tham gia phòng khám') && 
-                                   msg.message.includes('http');
-              
-              if (hasVideoCall) {
-                console.log("Message contains video call URL without extendedData:", msg.message);
-              }
-              
-              return {
-                id: msg.messageID,
-                content: msg.message,
-                sender: fromConversationID,
-                timestamp: new Date(msg.timestamp),
-                isSelf: false,
-                extendedData: msg.extendedData,
-                hasVideoCall
-              };
-            });
+            const newMessages = messageList.map(msg => ({
+              id: msg.messageID,
+              content: msg.message,
+              sender: fromConversationID,
+              timestamp: new Date(msg.timestamp),
+              checkSelf: false,
+              extendedData: msg.extendedData,
+              hasVideoCall: !msg.extendedData && 
+                           msg.message && 
+                           msg.message.includes('tham gia phòng khám') && 
+                           msg.message.includes('http')
+            }));
             
             setMessages(prev => [...prev, ...newMessages]);
           } else {
@@ -879,12 +810,19 @@ function Chat() {
         // Login
         await loginZIM(zim);
         
-        // Chỉ lấy tin nhắn lịch sử nếu chưa có tin nhắn từ state
-        // if (!hasLoadedMessages) {
-        //   await getMessageHistory(zim);
-        // } else {
-        //   console.log("Skipping message history fetch as messages were loaded from state");
-        // }
+        // Load message history after successful login
+        if (conversationId) {
+          console.log("Loading initial message history for conversation:", conversationId);
+          const initialMessages = await fetchMessageHistory(zim, conversationId);
+          if (initialMessages.length > 0) {
+            console.log("Setting initial messages:", initialMessages);
+            setMessages(initialMessages);
+          } else {
+            console.log("No initial messages found");
+          }
+        } else {
+          console.log("No conversationId available for message history");
+        }
         
         setLoading(false);
       } catch (error) {
@@ -921,9 +859,6 @@ function Chat() {
         await zim.login(userInfo, token);
         console.log('Logged in successfully');
         setLoggedIn(true);
-        
-        // Get conversation history after successful login
-        // await getMessageHistory(zim);
       } catch (error) {
         console.error('Login failed:', error);
         setError('Đăng nhập thất bại. Vui lòng thử lại sau.');
@@ -931,265 +866,6 @@ function Chat() {
         throw error; // Re-throw to be caught by the caller
       }
     };
-
-    // const getMessageHistory = async (zim) => {
-    //   console.log("Starting to fetch message history using ZegoCloud API");
-      
-    //   // Bảo đảm có ID của người nhận
-    //   let convId = conversationId;
-      
-    //   if (!convId) {
-    //     // Xác định conversationID dựa trên role
-    //     if (userRole === 'DOCTOR') {
-    //       convId = patientUsername;
-    //     } else {
-    //       // Logic cho patient
-    //       if (doctorInfo?.userName) {
-    //         convId = doctorInfo.userName;
-    //       } else if (doctorInfo?.username) {
-    //         convId = doctorInfo.username;
-    //       } else if (doctorInfo?.userId) {
-    //         convId = doctorInfo.userId;
-    //       } else if (doctorId) {
-    //         convId = doctorId;
-    //       }
-    //     }
-        
-    //     if (convId) {
-    //       setConversationId(convId);
-    //     }
-    //   }
-      
-    //   console.log("Using conversation ID for history:", convId);
-      
-    //   if (!convId) {
-    //     console.error("Could not determine valid conversationID for message history");
-    //     return;
-    //   }
-      
-    //   // Hiển thị loading trạng thái tải tin nhắn
-    //   setLoading(true);
-      
-    //   try {
-    //     // Kiểm tra xem cuộc trò chuyện có tồn tại không
-    //     console.log("Checking if conversation exists...");
-    //     const conversationResult = await zim.queryConversationList({
-    //       count: 100
-    //     });
-        
-    //     console.log("Conversation list result:", conversationResult);
-        
-    //     const conversationExists = conversationResult.conversationList.some(
-    //       conv => conv.conversationID === convId
-    //     );
-        
-    //     if (!conversationExists) {
-    //       console.log("Conversation doesn't exist yet. It will be created with first message.");
-    //       setMessages([]);
-    //       setLoading(false);
-    //       return;
-    //     }
-        
-    //     // Reset pagination variables
-    //     hasMoreMessages.current = true;
-    //     nextMessageRef.current = null;
-        
-    //     // Truy vấn tin nhắn sử dụng queryHistoryMessage với pagination
-    //     console.log("Retrieving initial messages...");
-        
-    //     try {
-    //       // Validate conversationID before making the API call
-    //       if (!convId || typeof convId !== 'string' || convId.trim() === '') {
-    //         throw new Error("Invalid conversationID: " + convId);
-    //       }
-          
-    //       // Ensure conversationID is properly formatted - must be a non-empty string
-    //       const safeConvId = convId.trim();
-          
-    //       // Log the exact conversationID we're using
-    //       console.log("Using exact conversationID for query:", safeConvId);
-          
-    //       // Configure pagination parameters
-    //       const config = {
-    //         nextMessage: null, // Start from the latest message
-    //         count: 30,
-    //         reverse: true
-    //       };
-          
-    //       // Function to handle message query results
-    //       const handleMessageQuery = async (result) => {
-    //         console.log("Message query result:", result);
-            
-    //         if (result?.messageList?.length > 0) {
-    //           console.log(`Retrieved ${result.messageList.length} messages`);
-              
-    //           // Format messages for UI
-    //           const formattedMessages = result.messageList.map(msg => ({
-    //             id: msg.messageID,
-    //             content: msg.message,
-    //             sender: msg.senderUserID,
-    //             timestamp: new Date(msg.timestamp),
-    //             isSelf: msg.senderUserID === getUsername(),
-    //             extendedData: msg.extendedData,
-    //             hasVideoCall: !msg.extendedData && 
-    //                         msg.message && 
-    //                         msg.message.includes('tham gia phòng khám') && 
-    //                         msg.message.includes('http')
-    //           }));
-              
-    //           // Store next message reference for pagination
-    //           if (result.messageList.length > 0) {
-    //             nextMessageRef.current = result.messageList[0];
-    //           }
-              
-    //           // If fewer messages than requested, we've reached the end
-    //           if (result.messageList.length < 30) {
-    //             hasMoreMessages.current = false;
-    //           }
-              
-    //           // Update messages state
-    //           setMessages(prev => [...formattedMessages.reverse(), ...prev]);
-              
-    //           // If we have more messages to load and pagination is enabled
-    //           if (hasMoreMessages.current && result.messageList.length === 30) {
-    //             // Update config for next page
-    //             config.nextMessage = result.messageList[0];
-                
-    //             // Load next page
-    //             const nextResult = await zim.queryHistoryMessage({
-    //               conversationID: safeConvId,
-    //               conversationType: 0,
-    //               ...config
-    //             });
-                
-    //             // Process next page
-    //             await handleMessageQuery(nextResult);
-    //           }
-    //         } else {
-    //           console.log("No more messages found");
-    //           hasMoreMessages.current = false;
-    //         }
-    //       };
-          
-    //       // Initial query
-    //       console.log("Starting initial history query with params:", {
-    //         conversationID: safeConvId,
-    //         conversationType: 0,
-    //         count: config.count,
-    //         reverse: config.reverse
-    //       });
-          
-    //       const initialResult = await zim.queryHistoryMessage({
-    //         conversationID: safeConvId,
-    //         conversationType: 0,
-    //         ...config
-    //       });
-          
-    //       // Process initial results
-    //       await handleMessageQuery(initialResult);
-          
-    //     } catch (error) {
-    //       console.error("Error querying history messages:", error);
-          
-    //       // Try querying specific messages as fallback
-    //       try {
-    //         console.log("Trying to query specific messages...");
-            
-    //         // Create a valid messageSeqs array with a single dummy value to avoid empty array issues
-    //         // Some API implementations don't handle empty arrays well
-    //         const messageSeqs = ["1"]; // Using a dummy sequence
-            
-    //         console.log("QueryMessages params:", {
-    //           messageSeqs,
-    //           conversationID: convId,
-    //           conversationType: 0
-    //         });
-            
-    //         const messagesResult = await zim.queryMessages(
-    //           messageSeqs,
-    //           convId,
-    //           0 // One-to-one chat
-    //         );
-            
-    //         console.log("Query specific messages result:", messagesResult);
-            
-    //         if (messagesResult?.messageList?.length > 0) {
-    //           console.log(`Retrieved ${messagesResult.messageList.length} messages`);
-              
-    //           const formattedMessages = messagesResult.messageList.map(msg => ({
-    //             id: msg.messageID,
-    //             content: msg.message,
-    //             sender: msg.senderUserID,
-    //             timestamp: new Date(msg.timestamp),
-    //             isSelf: msg.senderUserID === getUsername(),
-    //             extendedData: msg.extendedData,
-    //             hasVideoCall: !msg.extendedData && 
-    //                         msg.message && 
-    //                         msg.message.includes('tham gia phòng khám') && 
-    //                         msg.message.includes('http')
-    //           }));
-              
-    //           setMessages(formattedMessages.reverse());
-    //         } else {
-    //           console.log("No messages found with any query method");
-    //           setMessages([]);
-    //         }
-            
-    //         hasMoreMessages.current = false;
-    //       } catch (secondError) {
-    //         console.error("All query methods failed:", secondError);
-            
-    //         // Try one more approach - using conversation list only
-    //         try {
-    //           console.log("Attempting to use conversation list to get last message");
-              
-    //           const conversationResult = await zim.queryConversationList({
-    //             count: 100
-    //           });
-              
-    //           const targetConversation = conversationResult.conversationList.find(
-    //             conv => conv.conversationID === convId
-    //           );
-              
-    //           if (targetConversation && targetConversation.lastMessage) {
-    //             console.log("Found last message in conversation:", targetConversation.lastMessage);
-                
-    //             const lastMsg = targetConversation.lastMessage;
-    //             const formattedMessage = {
-    //               id: lastMsg.messageID || "temp-id",
-    //               content: lastMsg.message || "",
-    //               sender: lastMsg.senderUserID || "",
-    //               timestamp: new Date(lastMsg.timestamp || Date.now()),
-    //               isSelf: (lastMsg.senderUserID || "") === getUsername(),
-    //               extendedData: lastMsg.extendedData || "",
-    //               hasVideoCall: lastMsg.message && 
-    //                             lastMsg.message.includes('tham gia phòng khám') && 
-    //                             lastMsg.message.includes('http')
-    //             };
-                
-    //             setMessages([formattedMessage]);
-    //           } else {
-    //             console.log("No last message found in conversation list");
-    //             setMessages([]);
-    //           }
-    //         } catch (thirdError) {
-    //           console.error("All recovery methods failed:", thirdError);
-    //           setMessages([]);
-    //         }
-            
-    //         hasMoreMessages.current = false;
-    //       }
-    //     }
-    //   } catch (error) {
-    //     console.error('Error querying ZegoCloud API:', error);
-    //     setError(`Không thể tải lịch sử tin nhắn: ${error.message || 'Lỗi không xác định'}`);
-    //     setShowError(true);
-    //     setMessages([]);
-    //     hasMoreMessages.current = false;
-    //   } finally {
-    //     setLoading(false);
-    //   }
-    // };
 
     initZIM();
 
@@ -1206,6 +882,7 @@ function Chat() {
     };
   }, [userRole, doctorInfo, patientUsername, conversationId]);
 
+  // Update handleSendMessage to save to localStorage
   const handleSendMessage = async () => {
     if (!inputMessage.trim() || !zimRef.current) {
       console.warn("Can't send message: missing input or ZIM instance");
@@ -1219,22 +896,8 @@ function Chat() {
       return;
     }
     
-    // Kiểm tra thông tin người nhận dựa trên role
-    if (userRole === 'DOCTOR' && !patientUsername) {
-      console.error("patientUsername is not set for doctor role");
-      setError("Không thể xác định người nhận. Vui lòng tải lại trang.");
-      setShowError(true);
-      return;
-    } else if (userRole === 'PATIENT' && !doctorInfo) {
-      console.error("doctorInfo is null for patient role");
-      setError("Không thể tìm thấy thông tin bác sĩ. Vui lòng tải lại trang.");
-      setShowError(true);
-      return;
-    }
-    
     try {
       setSending(true);
-      // Xác định ID người nhận dựa trên role
       let toConversationID = conversationId;
       
       if (!toConversationID) {
@@ -1245,7 +908,6 @@ function Chat() {
         }
       }
       
-      // Nếu không có conversationId được thiết lập, thiết lập nó
       if (!conversationId && toConversationID) {
         setConversationId(toConversationID);
       }
@@ -1258,22 +920,18 @@ function Chat() {
         }
       };
       
-      // Kiểm tra xem có phải tin nhắn chứa thông tin video call không
       const isVideoInvitation = inputMessage.includes('tham gia phòng khám') && 
-                                inputMessage.includes('http');
+                              inputMessage.includes('http');
       
       let extendedDataValue = 'text';
       
-      // Nếu là lời mời video call, tạo extendedData phù hợp
       if (isVideoInvitation) {
         console.log("Detected video invitation in message:", inputMessage);
         
-        // Extract URL from message
         const urlMatch = inputMessage.match(/(https?:\/\/[^\s]+)/);
         if (urlMatch) {
           const roomUrl = urlMatch[0];
           
-          // Tạo extendedData dạng JSON string
           const extendedDataObj = {
             type: 'video_invitation',
             roomUrl: roomUrl,
@@ -1308,32 +966,35 @@ function Chat() {
       
       const newMessage = {
         id: message.messageID,
+        receiver: message.conversationID,
         content: inputMessage,
         sender: getUsername(),
         timestamp: new Date(),
-        isSelf: true,
+        checkSelf: true,
         extendedData: message.extendedData,
         hasVideoCall: isVideoInvitation
       };
       
+      // Update messages and save to localStorage
       setMessages(prev => {
-        const newMessages = [...prev, newMessage];
-        saveMessagesToLocalStorage(newMessages);
-        return newMessages;
+        const updatedMessages = [...prev, newMessage];
+        return updatedMessages;
       });
+
       setInputMessage('');
       setSending(false);
+      
+      // Scroll to bottom after sending message
+      setTimeout(scrollToBottom, 100);
     } catch (error) {
       console.error('Error sending message:', error);
       setSending(false);
       
-      // Try to reconnect if not logged in
-      if (error.code === 6000121) { // "Not logged with call"
+      if (error.code === 6000121) {
         setError("Kết nối bị mất. Đang thử kết nối lại...");
         setShowError(true);
         
         try {
-          // Try to re-login
           if (zimRef.current) {
             const userID = getUsername();
             const userName = userID;
@@ -1355,7 +1016,8 @@ function Chat() {
     }
   };
 
-  const handleGoBack = () => {
+  const handleGoBack = async() => {
+   
     // Điều hướng dựa trên role
     if (userRole === 'DOCTOR') {
       navigate('/doctor_chat');
@@ -1375,7 +1037,7 @@ function Chat() {
   useEffect(() => {
     if (messages.length > 0) {
       const lastMessage = messages[messages.length - 1];
-      if (lastMessage.isSelf) {
+      if (lastMessage.checkSelf) {
         // If the last message is from the current user, scroll to bottom
         setTimeout(() => {
           scrollToBottom();
@@ -1395,18 +1057,7 @@ function Chat() {
     }
   };
 
-  // Add cleanup function to remove messages from localStorage when component unmounts
-  useEffect(() => {
-    return () => {
-      if (conversationId) {
-        const key = `chat_messages_${conversationId}`;
-        localStorage.removeItem(key);
-        console.log("Cleaned up messages from localStorage for key:", key);
-      }
-    };
-  }, [conversationId]);
-
-  // Listen for new messages and save them to localStorage
+  // Update message received handler to save to localStorage
   useEffect(() => {
     if (zimRef.current) {
       const handleMessageReceived = (zim, { messageList, fromConversationID }) => {
@@ -1416,7 +1067,7 @@ function Chat() {
             content: msg.message,
             sender: msg.senderUserID,
             timestamp: new Date(msg.timestamp),
-            isSelf: msg.senderUserID === getUsername(),
+            checkSelf: msg.senderUserID === getUsername(),
             extendedData: msg.extendedData,
             hasVideoCall: !msg.extendedData && 
                          msg.message && 
@@ -1424,11 +1075,14 @@ function Chat() {
                          msg.message.includes('http')
           }));
           
+          // Update messages and save to localStorage
           setMessages(prev => {
             const updatedMessages = [...prev, ...newMessages];
-            saveMessagesToLocalStorage(updatedMessages);
             return updatedMessages;
           });
+          
+          // Scroll to bottom when receiving new messages
+          setTimeout(scrollToBottom, 100);
         }
       };
 
@@ -1441,6 +1095,18 @@ function Chat() {
       };
     }
   }, [conversationId]);
+
+  // Add cleanup on component unmount
+ 
+
+  // Add effect to scroll to bottom when component mounts and messages are loaded
+  useEffect(() => {
+    if (!loading && messages.length > 0) {
+      setTimeout(() => {
+        scrollToBottom();
+      }, 100);
+    }
+  }, [loading, messages]);
 
   if (loading) {
     return (
@@ -1541,129 +1207,140 @@ function Chat() {
               height: '100%',
               gap: 2
             }}>
-              <Avatar 
-                sx={{ 
-                  width: 80, 
-                  height: 80, 
-                  opacity: 0.6,
-                  backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
-                  color: 'primary.main',
-                  mb: 2
-                }}
-              >
-                <SendIcon sx={{ fontSize: 32 }} />
-              </Avatar>
-              <Typography color="text.secondary" variant="h6" textAlign="center">
-                {userRole === 'DOCTOR' 
-                  ? `Bắt đầu cuộc trò chuyện với bệnh nhân ${patientUsername}`
-                  : `Bắt đầu cuộc trò chuyện với bác sĩ ${doctorInfo?.name || ''}`
-                }
-              </Typography>
-              <Typography color="text.disabled" variant="body2" textAlign="center" sx={{ maxWidth: 400 }}>
-                Gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện. Bạn có thể gửi tin nhắn văn bản,
-                hoặc lời mời tham gia phòng khám trực tuyến.
-              </Typography>
-            </Box>
-          ) : (
-            <Box sx={{ p: 2 }}>
-              {messages.map((message, index) => {
-                // Kiểm tra xem tin nhắn có chứa URL phòng khám không
-                const isVideoInvitation = message.content && 
-                  typeof message.content === 'string' && 
-                  message.content.includes('http') && 
-                  (message.content.toLowerCase().includes('phòng khám') || 
-                   message.content.toLowerCase().includes('tham gia'));
-                
-                // Nếu là tin nhắn mời tham gia phòng khám, hiển thị dạng đặc biệt
-                if (isVideoInvitation) {
-                  const urlMatch = message.content.match(/(https?:\/\/[^\s]+)/);
-                  const roomUrl = urlMatch ? urlMatch[0] : '';
-                  
-                  return (
-                    <SpecialMessageContainer key={index} isSelf={message.isSelf}>
-                      <Box sx={{ 
-                        display: 'flex', 
-                        alignItems: 'center', 
-                        mb: 1.5,
-                        gap: 1
-                      }}>
-                        <Avatar sx={{ 
-                          bgcolor: 'success.main',
-                          width: 36,
-                          height: 36
-                        }}>
-                          <VideocamIcon sx={{ fontSize: 18 }} />
-                        </Avatar>
-                        <Box>
-                          <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
-                            Lời mời tham gia phòng khám
-                          </Typography>
-                          <Typography variant="caption" sx={{ opacity: 0.7 }}>
-                            Từ: {message.isSelf ? 'Bạn' : message.sender}
-                          </Typography>
-                        </Box>
-                      </Box>
-                      
-                      <Divider sx={{ 
-                        my: 1.5, 
-                        opacity: 0.1 
-                      }} />
-                      
-                      <Typography 
-                        variant="body2" 
-                        sx={{ 
-                          mb: 2, 
-                          fontWeight: 'medium', 
-                          lineHeight: 1.6,
-                          px: 0.5
-                        }}
-                      >
-                        {message.content.split('\n').map((line, i) => (
-                          <React.Fragment key={i}>
-                            {line}
-                            {i < message.content.split('\n').length - 1 && <br />}
-                          </React.Fragment>
-                        ))}
-                      </Typography>
-                      
-                      <JoinVideoButton
-                        variant="contained"
-                        startIcon={<VideocamIcon />}
-                        fullWidth
-                        onClick={() => window.open(roomUrl, '_blank')}
-                      >
-                        Tham gia phòng khám
-                      </JoinVideoButton>
-                      
-                      <MessageTime isSelf={message.isSelf} sx={{ mt: 1.5, textAlign: 'right' }}>
-                        {renderMessageTime(message.timestamp)}
-                      </MessageTime>
-                    </SpecialMessageContainer>
-                  );
-                }
-                
-                // Hiển thị tin nhắn thông thường
-                return (
-                  <Box 
-                    key={index}
+                <Box>
+                  <Avatar 
                     sx={{ 
-                      display: 'flex', 
-                      justifyContent: message.isSelf ? 'flex-end' : 'flex-start',
+                      width: 80, 
+                      height: 80, 
+                      opacity: 0.6,
+                      backgroundColor: theme => alpha(theme.palette.primary.main, 0.1),
+                      color: 'primary.main',
                       mb: 2
                     }}
                   >
-                    <MessageBubble isSelf={message.isSelf}>
-                      <Typography variant="body2">
-                        {message.content != null ? message.content : message.message}
-                      </Typography>
+                    <SendIcon sx={{ fontSize: 32 }} />
+                  </Avatar>
+                  <Typography color="text.secondary" variant="h6" textAlign="center">
+                    {userRole === 'DOCTOR' 
+                      ? `Bắt đầu cuộc trò chuyện với bệnh nhân ${patientUsername}`
+                      : `Bắt đầu cuộc trò chuyện với bác sĩ ${doctorInfo?.name || ''}`
+                    }
+                  </Typography>
+                  <Typography color="text.disabled" variant="body2" textAlign="center" sx={{ maxWidth: 400 }}>
+                    Gửi tin nhắn đầu tiên để bắt đầu cuộc trò chuyện. Bạn có thể gửi tin nhắn văn bản,
+                    hoặc lời mời tham gia phòng khám trực tuyến.
+                  </Typography>
+                </Box>
+            </Box>
+          ) : (
+            <Box sx={{ p: 2 }}>
+              {Object.entries(groupMessagesByDate()).map(([dateKey, messages]) => (
+                <React.Fragment key={dateKey}>
+                  <DateDivider>
+                    <Typography variant="caption" color="text.secondary" sx={{ px: 2 }}>
+                      {formatDateDivider(dateKey)}
+                    </Typography>
+                  </DateDivider>
+                  {messages.map((message, index) => {
+                    // Kiểm tra xem tin nhắn có chứa URL phòng khám không
+                    const isVideoInvitation = message.content && 
+                      typeof message.content === 'string' && 
+                      message.content.includes('http') && 
+                      (message.content.toLowerCase().includes('phòng khám') || 
+                       message.content.toLowerCase().includes('tham gia'));
+                    
+                    // Nếu là tin nhắn mời tham gia phòng khám, hiển thị dạng đặc biệt
+                    if (isVideoInvitation) {
+                      const urlMatch = message.content.match(/(https?:\/\/[^\s]+)/);
+                      const roomUrl = urlMatch ? urlMatch[0] : '';
+                      
+                      return (
+                        <SpecialMessageContainer key={index} isSelf={message.checkSelf}>
+                          <Box sx={{ 
+                            display: 'flex', 
+                            alignItems: 'center', 
+                            mb: 1.5,
+                            gap: 1
+                          }}>
+                            <Avatar sx={{ 
+                              bgcolor: 'success.main',
+                              width: 36,
+                              height: 36
+                            }}>
+                              <VideocamIcon sx={{ fontSize: 18 }} />
+                            </Avatar>
+                            <Box>
+                              <Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+                                Lời mời tham gia phòng khám
+                              </Typography>
+                              <Typography variant="caption" sx={{ opacity: 0.7 }}>
+                                Từ: {message.checkSelf ? 'Bạn' : message.sender}
+                              </Typography>
+                            </Box>
+                          </Box>
+                          
+                          <Divider sx={{ 
+                            my: 1.5, 
+                            opacity: 0.1 
+                          }} />
+                          
+                          <Typography 
+                            variant="body2" 
+                            sx={{ 
+                              mb: 2, 
+                              fontWeight: 'medium', 
+                              lineHeight: 1.6,
+                              px: 0.5
+                            }}
+                          >
+                            {message.content.split('\n').map((line, i) => (
+                              <React.Fragment key={i}>
+                                {line}
+                                {i < message.content.split('\n').length - 1 && <br />}
+                              </React.Fragment>
+                            ))}
+                          </Typography>
+                          
+                          <JoinVideoButton
+                            variant="contained"
+                            startIcon={<VideocamIcon />}
+                            fullWidth
+                            onClick={() => window.open(roomUrl, '_blank')}
+                          >
+                            Tham gia phòng khám
+                          </JoinVideoButton>
+                          
+                          <MessageTime isSelf={message.checkSelf} sx={{ mt: 1.5, textAlign: 'right' }}>
+                            {renderMessageTime(message.timestamp)}
+                          </MessageTime>
+                        </SpecialMessageContainer>
+                      );
+                    }
+                    
+                    // Hiển thị tin nhắn thông thường
+                    return (
+                      <Box 
+                        key={index}
+                        sx={{ 
+                          display: 'flex', 
+                          justifyContent: message.checkSelf ? 'flex-end' : 'flex-start',
+                          mb: 2
+                        }}
+                      >
+                        <MessageBubble isSelf={message.checkSelf}>
+                          <Typography variant="body2">
+                            {message.content != null ? message.content : message.message}
+                          </Typography>
 
-                      <MessageTime isSelf={message.isSelf}>
-                        {new Date(message.timestamp).toLocaleTimeString()}
-                      </MessageTime>
-                    </MessageBubble>
-                  </Box>
-                );
-              })}
+                          <MessageTime isSelf={message.checkSelf}>
+                            {renderMessageTime(message.timestamp)}
+                          </MessageTime>
+                        </MessageBubble>
+                      </Box>
+                    );
+                  })}
+                </React.Fragment>
+              ))}
             </Box>
           )}
           
