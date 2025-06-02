@@ -26,6 +26,7 @@ import {
   InputLabel,
   Select,
   IconButton,
+  LinearProgress,
 } from "@mui/material";
 import { Link, useNavigate } from "react-router-dom";
 import {
@@ -33,6 +34,7 @@ import {
   createNews,
   deleteNews,
   getAllDoctors,
+  updateNews,
 } from "../../api/newsApi";
 import { format } from "date-fns";
 import Layout from "../../components/doctor/Layout";
@@ -45,9 +47,13 @@ import RateReviewIcon from "@mui/icons-material/RateReview";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import CancelIcon from "@mui/icons-material/Cancel";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import ImageIcon from "@mui/icons-material/Image";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
 import { toast } from "react-toastify";
 import RichTextEditor from "../../components/news/RichTextEditor";
 import DOMPurify from "dompurify";
+import UploadFilesService from "../../service/otherService/upload";
+import UploadFiles from "../../components/patient/uploadFile";
 
 const NewsManagementPage = () => {
   const [news, setNews] = useState([]);
@@ -77,6 +83,17 @@ const NewsManagementPage = () => {
     coverImageUrl: "",
     isDraft: true,
   });
+
+  // State for edit news dialog
+  const [openEditDialog, setOpenEditDialog] = useState(false);
+  const [currentNews, setCurrentNews] = useState({
+    id: "",
+    title: "",
+    content: "",
+    category: "",
+    coverImageUrl: "",
+    isDraft: true,
+  });
   const [categories] = useState([
     "Sức khỏe tổng quát",
     "Dinh dưỡng",
@@ -90,6 +107,16 @@ const NewsManagementPage = () => {
     "Sức khỏe người cao tuổi",
     "Sức khỏe trẻ em",
   ]);
+
+  // Cover image states for dialog
+  const [coverImagePath, setCoverImagePath] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
+
+  // Cover image states for edit dialog
+  const [editCoverImagePath, setEditCoverImagePath] = useState("");
+  const [editUploading, setEditUploading] = useState(false);
+  const [editUploadError, setEditUploadError] = useState("");
 
   useEffect(() => {
     fetchNews();
@@ -208,6 +235,22 @@ const NewsManagementPage = () => {
       coverImageUrl: "",
       isDraft: true,
     });
+    // Reset upload states
+    setCoverImagePath("");
+    setUploading(false);
+    setUploadError("");
+  };
+
+  // Handle file upload from UploadFiles component
+  const handleCoverImageUpload = (fileInfos) => {
+    if (fileInfos && fileInfos.length > 0) {
+      setCoverImagePath(fileInfos[0]);
+      setNewArticle((prev) => ({
+        ...prev,
+        coverImageUrl: fileInfos[0],
+      }));
+      setUploadError("");
+    }
   };
 
   const handleCreateInputChange = (e) => {
@@ -236,6 +279,7 @@ const NewsManagementPage = () => {
 
       const articleData = {
         ...newArticle,
+        coverImageUrl: coverImagePath || "",
         reviewerDoctorId: selectedDoctor || null,
       };
 
@@ -260,6 +304,7 @@ const NewsManagementPage = () => {
 
       const publishedArticle = {
         ...newArticle,
+        coverImageUrl: coverImagePath || "",
         isDraft: false,
         reviewerDoctorId: selectedDoctor || null,
       };
@@ -267,6 +312,190 @@ const NewsManagementPage = () => {
       await createNews(publishedArticle);
       toast.success("Bài viết đã được tạo và gửi để xét duyệt");
       handleCloseCreateDialog();
+      setActiveTab("review");
+      setCurrentPage(0);
+      fetchNews();
+    } catch (error) {
+      console.error("Error publishing news:", error);
+      toast.error("Không thể gửi bài viết. Vui lòng thử lại sau.");
+    }
+  };
+
+  // Handle file selection for cover image
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setUploadError("Vui lòng chọn file ảnh");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError("Kích thước file không được vượt quá 5MB");
+        return;
+      }
+
+      setCoverImagePath(URL.createObjectURL(file));
+      setUploadError("");
+      setUploading(false);
+    }
+  };
+
+  // Upload cover image
+  const handleUploadImage = async () => {
+    if (!coverImagePath) return;
+
+    setUploading(true);
+    setUploadError("");
+
+    try {
+      const response = await UploadFilesService.uploadSingleImage(
+        coverImagePath, // Upload 1 ảnh
+        (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+        }
+      );
+
+      if (response?.result?.fileLinks && response.result.fileLinks.length > 0) {
+        const uploadedPath = response.result.fileLinks[0];
+        setCoverImagePath(uploadedPath);
+        setUploading(false);
+        toast.success("Tải ảnh lên thành công");
+      } else {
+        throw new Error("Không nhận được URL ảnh từ server");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setUploadError("Không thể upload ảnh. Vui lòng thử lại.");
+      setUploading(false);
+      toast.error("Không thể tải ảnh lên");
+    }
+  };
+
+  // Remove cover image
+  const handleRemoveImage = () => {
+    setCoverImagePath("");
+    setNewArticle((prev) => ({
+      ...prev,
+      coverImageUrl: "",
+    }));
+    setUploading(false);
+    setUploadError("");
+  };
+
+  // Handle file upload from UploadFiles component for edit dialog
+  const handleEditCoverImageUpload = (fileInfos) => {
+    if (fileInfos && fileInfos.length > 0) {
+      setEditCoverImagePath(fileInfos[0]);
+      setCurrentNews((prev) => ({
+        ...prev,
+        coverImageUrl: fileInfos[0],
+      }));
+      setEditUploadError("");
+    }
+  };
+
+  // Open edit dialog handler
+  const handleOpenEditDialog = (article) => {
+    setCurrentNews({
+      id: article.id,
+      title: article.title,
+      content: article.content,
+      category: article.category,
+      coverImageUrl: article.coverImageUrl || "",
+      isDraft: true, // Giữ nguyên là draft
+    });
+    setEditCoverImagePath(article.coverImageUrl || "");
+    setOpenEditDialog(true);
+  };
+
+  // Close edit dialog handler
+  const handleCloseEditDialog = () => {
+    setOpenEditDialog(false);
+    setCurrentNews({
+      id: "",
+      title: "",
+      content: "",
+      category: "",
+      coverImageUrl: "",
+      isDraft: true,
+    });
+    // Reset upload states
+    setEditCoverImagePath("");
+    setEditUploading(false);
+    setEditUploadError("");
+  };
+
+  // Handle edit input change
+  const handleEditInputChange = (e) => {
+    const { name, value } = e.target;
+    setCurrentNews((prev) => ({
+      ...prev,
+      [name]: value,
+    }));
+  };
+
+  // Handle edit rich text change
+  const handleEditRichTextChange = (content) => {
+    setCurrentNews((prev) => ({
+      ...prev,
+      content,
+    }));
+  };
+
+  // Handle update article
+  const handleUpdateArticle = async () => {
+    try {
+      if (!currentNews.title || !currentNews.content || !currentNews.category) {
+        toast.error(
+          "Vui lòng điền đầy đủ thông tin bắt buộc (tiêu đề, nội dung, danh mục)"
+        );
+        return;
+      }
+
+      const updateData = {
+        title: currentNews.title,
+        content: currentNews.content,
+        category: currentNews.category,
+        coverImageUrl: editCoverImagePath || "",
+        isDraft: true,
+      };
+
+      const response = await updateNews(currentNews.id, updateData);
+      toast.success("Cập nhật bài viết thành công");
+      handleCloseEditDialog();
+      fetchNews();
+    } catch (error) {
+      console.error("Error updating news:", error);
+      toast.error("Không thể cập nhật bài viết. Vui lòng thử lại sau.");
+    }
+  };
+
+  // Handle update and publish article
+  const handleUpdateAndPublish = async () => {
+    try {
+      if (!currentNews.title || !currentNews.content || !currentNews.category) {
+        toast.error(
+          "Vui lòng điền đầy đủ thông tin bắt buộc (tiêu đề, nội dung, danh mục)"
+        );
+        return;
+      }
+
+      const updateData = {
+        title: currentNews.title,
+        content: currentNews.content,
+        category: currentNews.category,
+        coverImageUrl: editCoverImagePath || "",
+        isDraft: false,
+      };
+
+      await updateNews(currentNews.id, updateData);
+      toast.success("Bài viết đã được cập nhật và gửi để xét duyệt");
+      handleCloseEditDialog();
       setActiveTab("review");
       setCurrentPage(0);
       fetchNews();
@@ -451,7 +680,7 @@ const NewsManagementPage = () => {
                         <CardActions sx={{ px: 2, py: 1.5 }}>
                           <Button
                             component={Link}
-                            to={`/news/${item.id}`}
+                            to={`/news/review/${item.id}`}
                             startIcon={<VisibilityIcon />}
                             variant="outlined"
                             size="small"
@@ -462,13 +691,12 @@ const NewsManagementPage = () => {
 
                           {activeTab === "draft" && (
                             <Button
-                              component={Link}
-                              to={`/news/edit/${item.id}`}
                               startIcon={<EditIcon />}
                               variant="outlined"
                               color="secondary"
                               size="small"
                               sx={{ ml: 1, borderRadius: 8 }}
+                              onClick={() => handleOpenEditDialog(item)}
                             >
                               Sửa
                             </Button>
@@ -564,17 +792,33 @@ const NewsManagementPage = () => {
                 </FormControl>
               </Grid>
 
-              <Grid item xs={12} sm={6}>
-                <TextField
-                  name="coverImageUrl"
-                  label="Đường dẫn ảnh bìa"
-                  value={newArticle.coverImageUrl}
-                  onChange={handleCreateInputChange}
-                  fullWidth
-                  variant="outlined"
-                  margin="normal"
-                  placeholder="https://example.com/image.jpg"
-                />
+              {/* Cover Image Upload Section */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
+                  Ảnh bìa
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <UploadFiles
+                    askUrl={handleCoverImageUpload}
+                    coverImageUpload={true}
+                  />
+                  {uploadError && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ mt: 1, display: "block" }}
+                    >
+                      {uploadError}
+                    </Typography>
+                  )}
+                </Box>
               </Grid>
 
               <Grid item xs={12}>
@@ -611,6 +855,120 @@ const NewsManagementPage = () => {
               sx={{ borderRadius: 8, ml: 1 }}
             >
               Đăng bài viết
+            </Button>
+          </DialogActions>
+        </Dialog>
+
+        {/* Edit Article Dialog */}
+        <Dialog
+          open={openEditDialog}
+          onClose={handleCloseEditDialog}
+          fullWidth
+          maxWidth="md"
+        >
+          <DialogTitle>
+            <Typography variant="h5" fontWeight={600}>
+              Chỉnh sửa bài viết
+            </Typography>
+          </DialogTitle>
+          <DialogContent dividers>
+            <Grid container spacing={3}>
+              <Grid item xs={12}>
+                <TextField
+                  name="title"
+                  label="Tiêu đề bài viết"
+                  value={currentNews.title}
+                  onChange={handleEditInputChange}
+                  fullWidth
+                  required
+                  variant="outlined"
+                  margin="normal"
+                />
+              </Grid>
+
+              <Grid item xs={12} sm={6}>
+                <FormControl fullWidth margin="normal" required>
+                  <InputLabel id="edit-category-label">Danh mục</InputLabel>
+                  <Select
+                    labelId="edit-category-label"
+                    name="category"
+                    value={currentNews.category}
+                    onChange={handleEditInputChange}
+                    label="Danh mục"
+                  >
+                    {categories.map((category) => (
+                      <MenuItem key={category} value={category}>
+                        {category}
+                      </MenuItem>
+                    ))}
+                  </Select>
+                </FormControl>
+              </Grid>
+
+              {/* Cover Image Upload Section */}
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
+                  Ảnh bìa
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <UploadFiles
+                    askUrl={handleEditCoverImageUpload}
+                    coverImageUpload={true}
+                    initialImage={currentNews.coverImageUrl}
+                  />
+                  {editUploadError && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ mt: 1, display: "block" }}
+                    >
+                      {editUploadError}
+                    </Typography>
+                  )}
+                </Box>
+              </Grid>
+
+              <Grid item xs={12}>
+                <Typography variant="subtitle1" gutterBottom sx={{ mt: 2 }}>
+                  Nội dung bài viết
+                </Typography>
+                <RichTextEditor
+                  value={currentNews.content}
+                  onChange={handleEditRichTextChange}
+                />
+              </Grid>
+            </Grid>
+          </DialogContent>
+          <DialogActions sx={{ px: 3, py: 2 }}>
+            <Button
+              onClick={handleCloseEditDialog}
+              variant="outlined"
+              sx={{ borderRadius: 8 }}
+            >
+              Hủy
+            </Button>
+            <Button
+              onClick={handleUpdateArticle}
+              variant="outlined"
+              color="primary"
+              sx={{ borderRadius: 8, ml: 1 }}
+            >
+              Lưu nháp
+            </Button>
+            <Button
+              onClick={handleUpdateAndPublish}
+              variant="contained"
+              color="primary"
+              sx={{ borderRadius: 8, ml: 1 }}
+            >
+              Cập nhật và đăng bài
             </Button>
           </DialogActions>
         </Dialog>

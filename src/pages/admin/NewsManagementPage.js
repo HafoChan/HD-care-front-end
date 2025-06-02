@@ -24,6 +24,8 @@ import {
   Chip,
   alpha,
   useTheme,
+  Autocomplete,
+  Avatar,
 } from "@mui/material";
 import {
   getPendingNews,
@@ -241,7 +243,7 @@ const NewsManagementPage = () => {
                                 variant="body2"
                                 color="text.secondary"
                               >
-                                Tác giả: {item.author?.fullName || "N/A"}
+                                Tác giả: {item.author?.name || "N/A"}
                               </Typography>
                             </Box>
 
@@ -298,7 +300,7 @@ const NewsManagementPage = () => {
                         <CardActions sx={{ p: 2 }}>
                           <Button
                             component={Link}
-                            to={`/news/${item.id}`}
+                            to={`/news/review/${item.id}`}
                             variant="outlined"
                             size="small"
                             startIcon={<VisibilityIcon />}
@@ -363,22 +365,36 @@ const NewsManagementPage = () => {
         </DialogTitle>
         <DialogContent dividers>
           <FormControl fullWidth margin="normal">
-            <InputLabel id="doctor-select-label">Chọn bác sĩ</InputLabel>
-            <Select
-              labelId="doctor-select-label"
-              value={doctorId}
-              onChange={(e) => setDoctorId(e.target.value)}
-              label="Chọn bác sĩ"
-            >
-              <MenuItem value="" disabled>
-                <em>-- Chọn bác sĩ --</em>
-              </MenuItem>
-              {doctors.map((doctor) => (
-                <MenuItem key={doctor.id} value={doctor.id}>
-                  {doctor.name}
-                </MenuItem>
-              ))}
-            </Select>
+            <Autocomplete
+              id="doctor-select"
+              options={doctors}
+              getOptionLabel={(option) => option.name}
+              value={doctors.find((doctor) => doctor.id === doctorId) || null}
+              onChange={(event, newValue) => {
+                setDoctorId(newValue ? newValue.id : "");
+              }}
+              renderInput={(params) => (
+                <TextField
+                  {...params}
+                  label="Chọn bác sĩ"
+                  variant="outlined"
+                  placeholder="-- Chọn bác sĩ --"
+                />
+              )}
+              renderOption={(props, option) => (
+                <li {...props}>
+                  <Box sx={{ display: "flex", alignItems: "center" }}>
+                    <Avatar
+                      src={option.avatar}
+                      alt={option.name}
+                      sx={{ width: 32, height: 32, mr: 1.5 }}
+                    />
+                    <Typography variant="body2">{option.name}</Typography>
+                  </Box>
+                </li>
+              )}
+              noOptionsText="Không tìm thấy bác sĩ"
+            />
           </FormControl>
         </DialogContent>
         <DialogActions sx={{ p: 2 }}>

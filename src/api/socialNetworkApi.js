@@ -10,6 +10,18 @@ export const createPost = async (postData) => {
   }
 };
 
+// API kiểm tra xem user có chế độ riêng tư hay không
+export const checkUserPrivate = async (userId) => {
+  try {
+    const response = await axiosClient.get(
+      `social/users/check-private/${userId}`
+    );
+    return response.result; // Returns true if private, false if not private
+  } catch (error) {
+    throw error;
+  }
+};
+
 // API cập nhật bài post
 export const updatePost = async (postId, updateData) => {
   try {
@@ -196,7 +208,67 @@ export const getAllFollowRequests = async (page = 0, size = 10) => {
     const response = await axiosClient.get("social/users/follow-requests", {
       params: { page, size },
     });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API lấy số lượng follow requests
+export const countFollowRequests = async () => {
+  try {
+    const response = await axiosClient.get(
+      "social/users/count-follow-requests"
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API lấy danh sách follow requests đã gửi (phân trang)
+export const getSentFollowRequests = async (page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get("social/users/send-follow-request", {
+      params: { page, size },
+    });
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API lấy số lượng follow requests đã gửi
+export const countSentFollowRequests = async () => {
+  try {
+    const response = await axiosClient.get(
+      "social/users/count-send-follow-requests"
+    );
+    return response;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API lấy số lượng bài post của user
+export const getCountPosts = async (userId) => {
+  try {
+    const response = await axiosClient.get(
+      `social/users/count-posts/${userId}`
+    );
     return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API xóa yêu cầu theo dõi đã gửi
+export const deleteFollowRequest = async (targetUserId) => {
+  try {
+    const response = await axiosClient.delete(
+      `social/users/delete-follow-request/${targetUserId}`
+    );
+    return response;
   } catch (error) {
     throw error;
   }
@@ -252,6 +324,18 @@ export const suggestUsersToFollow = async (page = 0, size = 10) => {
   try {
     const response = await axiosClient.get(`social/users/suggest-follow`, {
       params: { page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API tìm kiếm bài viết theo từ khóa (phân trang)
+export const searchPosts = async (keyword, page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get(`social/posts/search`, {
+      params: { keyword, page, size },
     });
     return response.result;
   } catch (error) {

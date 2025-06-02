@@ -50,7 +50,11 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
 import NavigateNextIcon from "@mui/icons-material/NavigateNext";
 import SendIcon from "@mui/icons-material/Send";
-import { useNavigate } from "react-router-dom";
+import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import CancelIcon from "@mui/icons-material/Cancel";
+import NewspaperIcon from "@mui/icons-material/Newspaper";
+import { useNavigate, Link } from "react-router-dom";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import patientApi from "../../api/patient";
 import { getImg, setImg } from "../../service/otherService/localStorage";
@@ -67,10 +71,19 @@ import {
   interactPost,
   getAllCommentsByPost,
   commentOnPost,
+  getAllFollowRequests,
+  acceptFollowRequest,
+  rejectFollowRequest,
+  checkUserPrivate,
+  getSentFollowRequests,
+  deleteFollowRequest,
+  countFollowRequests,
+  countSentFollowRequests,
 } from "../../api/socialNetworkApi";
 import PostCard from "../../components/social-network/PostCardComponent";
-import { formatDistanceToNow } from "date-fns";
+import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
+import { getAllFavoriteNews, toggleFavoriteNews } from "../../api/newsApi";
 
 function Profile() {
   const theme = useTheme();
@@ -139,6 +152,33 @@ function Profile() {
   // Add this state variable to handle multiple actions in progress
   const [isFollowingActionInProgress, setIsFollowingActionInProgress] =
     useState(false);
+
+  // Add these new state variables
+  const [showFollowRequests, setShowFollowRequests] = useState(false);
+  const [followRequests, setFollowRequests] = useState([]);
+  const [loadingFollowRequests, setLoadingFollowRequests] = useState(false);
+  const [followRequestsPage, setFollowRequestsPage] = useState(0);
+  const [hasMoreFollowRequests, setHasMoreFollowRequests] = useState(true);
+  const [followRequestsCount, setFollowRequestsCount] = useState(0);
+  const followRequestsObserver = useRef();
+  const [pendingFollowRequests, setPendingFollowRequests] = useState({});
+
+  // Add these new state variables
+  const [showSentRequests, setShowSentRequests] = useState(false);
+  const [sentRequests, setSentRequests] = useState([]);
+  const [loadingSentRequests, setLoadingSentRequests] = useState(false);
+  const [sentRequestsPage, setSentRequestsPage] = useState(0);
+  const [hasMoreSentRequests, setHasMoreSentRequests] = useState(true);
+  const [sentRequestsCount, setSentRequestsCount] = useState(0);
+  const [deletingRequest, setDeletingRequest] = useState({});
+  const sentRequestsObserver = useRef();
+
+  // Add state for saved news
+  const [savedNews, setSavedNews] = useState([]);
+  const [loadingSavedNews, setLoadingSavedNews] = useState(true);
+  const [savedNewsPage, setSavedNewsPage] = useState(0);
+  const [hasMoreSavedNews, setHasMoreSavedNews] = useState(true);
+  const savedNewsObserver = useRef();
 
   // Fetch user info on component mount
   useEffect(() => {
@@ -424,42 +464,100 @@ function Profile() {
     setIsFollowingActionInProgress(true);
 
     try {
-      // Update UI immediately (optimistic update)
-      // Update followers list
-      setFollowers((prev) =>
-        prev.map((user) =>
-          user.id === userId
-            ? { ...user, followed: !isCurrentlyFollowed }
-            : user
-        )
-      );
+      if (isCurrentlyFollowed) {
+        // This is an unfollow action
+        // Update UI immediately (optimistic update)
+        setFollowers((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? { ...user, followed: false, pendingRequest: false }
+              : user
+          )
+        );
 
-      // Update following list
-      setFollowing((prev) =>
-        prev.map((user) =>
-          user.id === userId
-            ? { ...user, followed: !isCurrentlyFollowed }
-            : user
-        )
-      );
+        // Update following list
+        setFollowing((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? { ...user, followed: false, pendingRequest: false }
+              : user
+          )
+        );
 
-      // Call API
-      await followUser(userId);
+        // Call API to unfollow
+        await followUser(userId);
+      } else {
+        // This is a follow action
+        // Check if the user has a private profile
+        const isPrivate = await checkUserPrivate(userId);
+
+        // Update followers list based on privacy setting
+        setFollowers((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  followed: !isPrivate,
+                  pendingRequest: isPrivate,
+                }
+              : user
+          )
+        );
+
+        // Update following list based on privacy setting
+        setFollowing((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  followed: !isPrivate,
+                  pendingRequest: isPrivate,
+                }
+              : user
+          )
+        );
+
+        // Track pending request
+        if (isPrivate) {
+          setPendingFollowRequests((prev) => ({ ...prev, [userId]: true }));
+
+          // Update sent requests count if this is a new request
+          setSentRequestsCount((prev) => prev + 1);
+
+          // Call API
+          await followUser(userId);
+
+          // Refresh the sent requests count
+          const countResponse = await countSentFollowRequests();
+          if (countResponse && countResponse.code === 1000) {
+            setSentRequestsCount(countResponse.result);
+          }
+        } else {
+          // Call API for direct follow
+          await followUser(userId);
+        }
+      }
     } catch (error) {
       console.error("Error following/unfollowing user:", error);
 
       // Revert UI on error
       setFollowers((prev) =>
         prev.map((user) =>
-          user.id === userId ? { ...user, followed: isCurrentlyFollowed } : user
+          user.id === userId
+            ? { ...user, followed: isCurrentlyFollowed, pendingRequest: false }
+            : user
         )
       );
 
       setFollowing((prev) =>
         prev.map((user) =>
-          user.id === userId ? { ...user, followed: isCurrentlyFollowed } : user
+          user.id === userId
+            ? { ...user, followed: isCurrentlyFollowed, pendingRequest: false }
+            : user
         )
       );
+
+      toast.error("Không thể thay đổi trạng thái theo dõi");
     } finally {
       setIsFollowingActionInProgress(false);
     }
@@ -642,10 +740,13 @@ function Profile() {
   useEffect(() => {
     setPage(0);
     setSavedPostsPage(0);
+    setSavedNewsPage(0);
     if (userInfo?.id && tabValue === 0) {
       fetchPosts(true, userInfo?.id);
     } else if (userInfo?.id && tabValue === 1) {
       fetchSavedPosts(true);
+    } else if (userInfo?.id && tabValue === 2) {
+      fetchSavedNews(true);
     }
   }, [tabValue]);
 
@@ -692,6 +793,8 @@ function Profile() {
                   <ListItemAvatar>
                     <Avatar
                       src={user.avatar}
+                      component={Link}
+                      to={`/profile/${user.id}`}
                       sx={{
                         width: 50,
                         height: 50,
@@ -699,6 +802,7 @@ function Profile() {
                           theme.palette.common.black,
                           0.1
                         )}`,
+                        cursor: "pointer",
                       }}
                     >
                       {user.name ? user.name[0].toUpperCase() : "U"}
@@ -706,7 +810,19 @@ function Profile() {
                   </ListItemAvatar>
                   <ListItemText
                     primary={
-                      <Typography variant="subtitle1" fontWeight={600}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={600}
+                        component={Link}
+                        to={`/profile/${user.id}`}
+                        sx={{
+                          textDecoration: "none",
+                          color: "inherit",
+                          "&:hover": {
+                            color: theme.palette.primary.main,
+                          },
+                        }}
+                      >
                         {user.name}
                       </Typography>
                     }
@@ -720,18 +836,34 @@ function Profile() {
                   <ListItemSecondaryAction>
                     <Button
                       size="small"
-                      variant={user.followed ? "contained" : "outlined"}
-                      color="primary"
-                      onClick={() => handleFollowUser(user.id, user.followed)}
+                      variant={
+                        user.followed || user.pendingRequest
+                          ? "contained"
+                          : "outlined"
+                      }
+                      color={user.pendingRequest ? "warning" : "primary"}
+                      onClick={() =>
+                        handleFollowUser(
+                          user.id,
+                          user.followed || user.pendingRequest
+                        )
+                      }
                       sx={{
                         borderRadius: 6,
                         textTransform: "none",
                         px: 2,
                         py: 0.8,
-                        minWidth: user.followed ? "120px" : "80px",
+                        minWidth:
+                          user.followed || user.pendingRequest
+                            ? "130px"
+                            : "80px",
                       }}
                     >
-                      {user.followed ? "Đang theo dõi" : "Theo dõi"}
+                      {user.pendingRequest
+                        ? "Đã gửi yêu cầu"
+                        : user.followed
+                        ? "Đang theo dõi"
+                        : "Theo dõi"}
                     </Button>
                   </ListItemSecondaryAction>
                 </ListItem>
@@ -818,6 +950,8 @@ function Profile() {
                   <ListItemAvatar>
                     <Avatar
                       src={user.avatar}
+                      component={Link}
+                      to={`/profile/${user.id}`}
                       sx={{
                         width: 50,
                         height: 50,
@@ -825,6 +959,7 @@ function Profile() {
                           theme.palette.common.black,
                           0.1
                         )}`,
+                        cursor: "pointer",
                       }}
                     >
                       {user.name ? user.name[0].toUpperCase() : "U"}
@@ -832,7 +967,19 @@ function Profile() {
                   </ListItemAvatar>
                   <ListItemText
                     primary={
-                      <Typography variant="subtitle1" fontWeight={600}>
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={600}
+                        component={Link}
+                        to={`/profile/${user.id}`}
+                        sx={{
+                          textDecoration: "none",
+                          color: "inherit",
+                          "&:hover": {
+                            color: theme.palette.primary.main,
+                          },
+                        }}
+                      >
                         {user.name}
                       </Typography>
                     }
@@ -846,18 +993,34 @@ function Profile() {
                   <ListItemSecondaryAction>
                     <Button
                       size="small"
-                      variant={user.followed ? "contained" : "outlined"}
-                      color="primary"
-                      onClick={() => handleFollowUser(user.id, user.followed)}
+                      variant={
+                        user.followed || user.pendingRequest
+                          ? "contained"
+                          : "outlined"
+                      }
+                      color={user.pendingRequest ? "warning" : "primary"}
+                      onClick={() =>
+                        handleFollowUser(
+                          user.id,
+                          user.followed || user.pendingRequest
+                        )
+                      }
                       sx={{
                         borderRadius: 6,
                         textTransform: "none",
                         px: 2,
                         py: 0.8,
-                        minWidth: user.followed ? "120px" : "80px",
+                        minWidth:
+                          user.followed || user.pendingRequest
+                            ? "130px"
+                            : "80px",
                       }}
                     >
-                      {user.followed ? "Đang theo dõi" : "Theo dõi"}
+                      {user.pendingRequest
+                        ? "Đã gửi yêu cầu"
+                        : user.followed
+                        ? "Đang theo dõi"
+                        : "Theo dõi"}
                     </Button>
                   </ListItemSecondaryAction>
                 </ListItem>
@@ -1390,6 +1553,69 @@ function Profile() {
                 </IconButton>
               </Box>
 
+              {/* Tagged Doctor - Add this section */}
+              {selectedPost.doctor && (
+                <Box
+                  sx={{
+                    px: 3,
+                    py: 2,
+                    display: "flex",
+                    alignItems: "center",
+                    borderBottom: 1,
+                    borderColor: "divider",
+                    bgcolor: alpha(theme.palette.primary.light, 0.05),
+                  }}
+                >
+                  <Avatar
+                    src={selectedPost.doctor.avatar}
+                    component={Link}
+                    to={`/doctor/${selectedPost.doctor.id}`}
+                    sx={{
+                      width: 40,
+                      height: 40,
+                      mr: 2,
+                      border: `2px solid ${alpha(
+                        theme.palette.primary.main,
+                        0.3
+                      )}`,
+                    }}
+                  >
+                    {selectedPost.doctor.name
+                      ? selectedPost.doctor.name[0].toUpperCase()
+                      : "D"}
+                  </Avatar>
+                  <Box>
+                    <Typography variant="body2" color="text.secondary">
+                      Đã gắn thẻ bác sĩ:
+                    </Typography>
+                    <Typography
+                      component={Link}
+                      to={`/doctor/${selectedPost.doctor.id}`}
+                      variant="body2"
+                      sx={{
+                        fontWeight: 600,
+                        color: theme.palette.primary.main,
+                        textDecoration: "none",
+                        "&:hover": {
+                          textDecoration: "underline",
+                        },
+                      }}
+                    >
+                      {selectedPost.doctor.name}
+                      {selectedPost.doctor.role && (
+                        <Chip
+                          label={selectedPost.doctor.role}
+                          size="small"
+                          color="primary"
+                          variant="outlined"
+                          sx={{ ml: 1, fontSize: "0.6rem", height: 18 }}
+                        />
+                      )}
+                    </Typography>
+                  </Box>
+                </Box>
+              )}
+
               {/* Post content */}
               <Box sx={{ p: 3, flexGrow: 0, overflow: "auto" }}>
                 {selectedPost.title && (
@@ -1775,6 +2001,900 @@ function Profile() {
     </Box>
   );
 
+  // Function to fetch saved news articles
+  const fetchSavedNews = async (reset = false) => {
+    if (reset) {
+      setSavedNewsPage(0);
+      setHasMoreSavedNews(true);
+      setSavedNews([]);
+    }
+
+    if (!hasMoreSavedNews && !reset) return;
+
+    setLoadingSavedNews(true);
+    try {
+      const data = await getAllFavoriteNews(savedNewsPage, 10);
+      if (data && data.length > 0) {
+        setSavedNews((prev) => (reset ? data : [...prev, ...data]));
+        setHasMoreSavedNews(data.length === 10);
+        setSavedNewsPage((prev) => prev + 1);
+      } else {
+        setHasMoreSavedNews(false);
+      }
+    } catch (error) {
+      console.error("Error fetching saved news:", error);
+      toast.error("Không thể tải tin tức đã lưu");
+    } finally {
+      setLoadingSavedNews(false);
+    }
+  };
+
+  // Handle toggling favorite status
+  const handleToggleFavorite = async (newsId) => {
+    try {
+      // Optimistic update
+      setSavedNews((prev) =>
+        prev.map((news) =>
+          news.id === newsId ? { ...news, favorited: !news.favorited } : news
+        )
+      );
+
+      // Call API
+      await toggleFavoriteNews(newsId);
+
+      // If unfavorited, remove from list after a short delay
+      setTimeout(() => {
+        setSavedNews((prev) =>
+          prev.filter((news) => news.id !== newsId || news.favorited)
+        );
+      }, 300);
+    } catch (error) {
+      console.error("Error toggling favorite status:", error);
+      toast.error("Không thể thay đổi trạng thái lưu tin tức");
+
+      // Revert on error
+      setSavedNews((prev) =>
+        prev.map((news) =>
+          news.id === newsId ? { ...news, favorited: !news.favorited } : news
+        )
+      );
+    }
+  };
+
+  // Intersection Observer for saved news infinite scrolling
+  const lastSavedNewsElementRef = useCallback(
+    (node) => {
+      if (loadingSavedNews) return;
+      if (savedNewsObserver.current) savedNewsObserver.current.disconnect();
+      savedNewsObserver.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMoreSavedNews) {
+          fetchSavedNews();
+        }
+      });
+      if (node) savedNewsObserver.current.observe(node);
+    },
+    [loadingSavedNews, hasMoreSavedNews]
+  );
+
+  // Load appropriate data when tab changes
+  useEffect(() => {
+    setPage(0);
+    setSavedPostsPage(0);
+    setSavedNewsPage(0);
+    if (userInfo?.id && tabValue === 0) {
+      fetchPosts(true, userInfo?.id);
+    } else if (userInfo?.id && tabValue === 1) {
+      fetchSavedPosts(true);
+    } else if (userInfo?.id && tabValue === 2) {
+      fetchSavedNews(true);
+    }
+  }, [tabValue]);
+
+  // Render saved news cards
+  const renderSavedNewsCard = (news, index) => (
+    <Card
+      key={news.id}
+      ref={index === savedNews.length - 1 ? lastSavedNewsElementRef : null}
+      sx={{
+        mb: 3,
+        borderRadius: 2,
+        overflow: "hidden",
+        boxShadow: `0 2px 12px ${alpha(theme.palette.common.black, 0.08)}`,
+        transition: "all 0.3s ease",
+        "&:hover": {
+          boxShadow: `0 8px 24px ${alpha(theme.palette.common.black, 0.12)}`,
+          transform: "translateY(-4px)",
+        },
+      }}
+    >
+      <Box sx={{ display: "flex", flexDirection: { xs: "column", sm: "row" } }}>
+        {news.coverImageUrl && (
+          <CardMedia
+            component="img"
+            sx={{
+              width: { xs: "100%", sm: 180 },
+              height: { xs: 200, sm: "auto" },
+              objectFit: "cover",
+            }}
+            image={news.coverImageUrl}
+            alt={news.title}
+          />
+        )}
+        <Box sx={{ flex: 1, display: "flex", flexDirection: "column" }}>
+          <CardContent sx={{ flex: "1 0 auto", p: 3 }}>
+            <Box sx={{ display: "flex", justifyContent: "space-between" }}>
+              <Box>
+                {news.category && (
+                  <Chip
+                    label={news.category}
+                    size="small"
+                    color="primary"
+                    sx={{ mb: 1.5, borderRadius: 1, fontWeight: 500 }}
+                  />
+                )}
+              </Box>
+              <IconButton
+                onClick={() => handleToggleFavorite(news.id)}
+                size="small"
+                color={news.favorited ? "primary" : "default"}
+              >
+                <BookmarkIcon />
+              </IconButton>
+            </Box>
+            <Typography
+              component={Link}
+              to={`/news/${news.id}`}
+              variant="h6"
+              fontWeight={600}
+              gutterBottom
+              sx={{
+                textDecoration: "none",
+                color: "text.primary",
+                "&:hover": {
+                  color: "primary.main",
+                },
+                display: "-webkit-box",
+                WebkitLineClamp: 2,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                lineHeight: 1.5,
+              }}
+            >
+              {news.title}
+            </Typography>
+            <Typography
+              variant="body2"
+              color="text.secondary"
+              sx={{
+                mb: 2,
+                display: "-webkit-box",
+                WebkitLineClamp: 3,
+                WebkitBoxOrient: "vertical",
+                overflow: "hidden",
+                lineHeight: 1.6,
+              }}
+            >
+              {news.content?.replace(/<[^>]+>/g, "") || ""}
+            </Typography>
+            <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+              {news.author?.avatar && (
+                <Avatar
+                  src={news.author.avatar}
+                  sx={{ width: 24, height: 24, mr: 1 }}
+                />
+              )}
+              <Typography variant="caption" color="text.secondary">
+                {news.author?.name || "Admin"} • {formatDate(news.createdAt)}
+              </Typography>
+            </Box>
+          </CardContent>
+          <Box
+            sx={{
+              display: "flex",
+              alignItems: "center",
+              pl: 3,
+              pb: 2,
+            }}
+          >
+            <Box sx={{ display: "flex", alignItems: "center", mr: 3 }}>
+              <FavoriteIcon
+                color={news.interactedUseful ? "error" : "disabled"}
+                fontSize="small"
+                sx={{ mr: 0.5 }}
+              />
+              <Typography variant="body2" color="text.secondary">
+                {news.usefulCount || 0}
+              </Typography>
+            </Box>
+            <Button
+              component={Link}
+              to={`/news/${news.id}`}
+              size="small"
+              variant="outlined"
+              sx={{
+                borderRadius: 6,
+                textTransform: "none",
+                px: 2,
+              }}
+            >
+              Đọc tiếp
+            </Button>
+          </Box>
+        </Box>
+      </Box>
+    </Card>
+  );
+
+  // Utility function to format dates
+  const formatDate = (dateString) => {
+    if (!dateString) return "";
+    try {
+      const date = new Date(dateString);
+      return format(date, "dd/MM/yyyy", { locale: vi });
+    } catch (error) {
+      return dateString;
+    }
+  };
+
+  // Render the saved news tab
+  const renderSavedNewsTab = () => (
+    <Box>
+      <Typography
+        variant="h5"
+        fontWeight={600}
+        color="text.primary"
+        gutterBottom
+      >
+        Tin tức đã lưu
+      </Typography>
+      <Typography variant="body1" color="text.secondary" paragraph>
+        Các bài viết tin tức bạn đã lưu sẽ xuất hiện ở đây để dễ dàng truy cập
+        sau.
+      </Typography>
+
+      {loadingSavedNews && savedNews.length === 0 ? (
+        Array(3)
+          .fill()
+          .map((_, index) => (
+            <Box key={index} sx={{ mb: 3 }}>
+              <Skeleton
+                variant="rectangular"
+                height={200}
+                sx={{ borderRadius: 2 }}
+              />
+              <Box sx={{ pt: 2 }}>
+                <Skeleton width="30%" height={24} sx={{ mb: 1 }} />
+                <Skeleton width="90%" height={32} sx={{ mb: 1 }} />
+                <Skeleton width="80%" height={20} />
+                <Skeleton width="60%" height={20} />
+              </Box>
+            </Box>
+          ))
+      ) : (
+        <>
+          {savedNews.length > 0 ? (
+            savedNews.map((news, index) => renderSavedNewsCard(news, index))
+          ) : (
+            <Paper
+              elevation={0}
+              sx={{
+                p: 4,
+                textAlign: "center",
+                borderRadius: 3,
+                border: `1px dashed ${alpha(theme.palette.divider, 0.5)}`,
+                backgroundColor: alpha(theme.palette.background.default, 0.5),
+              }}
+            >
+              <NewspaperIcon
+                sx={{
+                  fontSize: 60,
+                  color: alpha(theme.palette.text.secondary, 0.5),
+                  mb: 2,
+                }}
+              />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Bạn chưa lưu tin tức nào
+              </Typography>
+              <Typography
+                variant="body2"
+                color="text.secondary"
+                sx={{ maxWidth: 450, mx: "auto", mb: 3 }}
+              >
+                Lưu tin tức để dễ dàng tìm và đọc lại sau này. Tin tức đã lưu sẽ
+                xuất hiện ở đây.
+              </Typography>
+              <Button
+                variant="contained"
+                color="primary"
+                onClick={() => navigate("/news")}
+                sx={{
+                  px: 3,
+                  py: 1.2,
+                  borderRadius: 2,
+                  textTransform: "none",
+                  fontWeight: 600,
+                }}
+              >
+                Khám phá tin tức
+              </Button>
+            </Paper>
+          )}
+        </>
+      )}
+    </Box>
+  );
+
+  // Replace the broken fetchFollowRequests function implementation with a clean one
+  const fetchFollowRequests = async (reset = false) => {
+    if (reset) {
+      setFollowRequestsPage(0);
+      setHasMoreFollowRequests(true);
+      setFollowRequests([]);
+    }
+
+    if (!hasMoreFollowRequests && !reset) return;
+
+    setLoadingFollowRequests(true);
+    try {
+      const response = await getAllFollowRequests(followRequestsPage, 10);
+      if (response && response.code === 1000 && response.result) {
+        setFollowRequests((prev) =>
+          reset ? response.result : [...prev, ...response.result]
+        );
+        setHasMoreFollowRequests(response.result.length === 10);
+        setFollowRequestsPage((prev) => prev + 1);
+
+        // Get the accurate count instead of using array length
+        const countResponse = await countFollowRequests();
+        if (countResponse && countResponse.code === 1000) {
+          setFollowRequestsCount(countResponse.result);
+        }
+      } else {
+        setHasMoreFollowRequests(false);
+      }
+    } catch (error) {
+      console.error("Error fetching follow requests:", error);
+      // If error, just show empty list
+      setFollowRequests([]);
+    } finally {
+      setLoadingFollowRequests(false);
+    }
+  };
+
+  // Add this observer with other observers
+  const lastFollowRequestElementRef = useCallback(
+    (node) => {
+      if (loadingFollowRequests) return;
+      if (followRequestsObserver.current)
+        followRequestsObserver.current.disconnect();
+      followRequestsObserver.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMoreFollowRequests) {
+          fetchFollowRequests();
+        }
+      });
+      if (node) followRequestsObserver.current.observe(node);
+    },
+    [loadingFollowRequests, hasMoreFollowRequests]
+  );
+
+  // Add these functions to handle opening/closing follow requests modal
+  const handleOpenFollowRequests = () => {
+    setShowFollowRequests(true);
+    fetchFollowRequests(true);
+  };
+
+  const handleCloseFollowRequests = () => {
+    setShowFollowRequests(false);
+    // Reset pagination
+    setFollowRequestsPage(0);
+    setHasMoreFollowRequests(true);
+    setFollowRequests([]);
+  };
+
+  // Function to handle follow request responses
+  const handleFollowRequestResponse = async (userId, accept) => {
+    try {
+      // Optimistic UI update
+      setFollowRequests((prev) =>
+        prev.filter((request) => request.id !== userId)
+      );
+      setFollowRequestsCount((prev) => Math.max(0, prev - 1));
+
+      // Call API
+      if (accept) {
+        await acceptFollowRequest(userId);
+      } else {
+        await rejectFollowRequest(userId);
+      }
+
+      if (accept) {
+        // Update followers count if accepted
+        setFollowersCount((prev) => prev + 1);
+        toast.success("Đã chấp nhận yêu cầu theo dõi");
+      } else {
+        toast.info("Đã từ chối yêu cầu theo dõi");
+      }
+
+      // Refresh the count after action
+      const response = await countFollowRequests();
+      if (response && response.code === 1000) {
+        setFollowRequestsCount(response.result);
+      }
+    } catch (error) {
+      console.error("Error responding to follow request:", error);
+      toast.error("Có lỗi xảy ra khi xử lý yêu cầu");
+      // Revert optimistic update by refreshing the list
+      fetchFollowRequests(true);
+
+      // Refresh the count
+      const response = await countFollowRequests();
+      if (response && response.code === 1000) {
+        setFollowRequestsCount(response.result);
+      }
+    }
+  };
+
+  // Add this function to render the follow requests modal
+  const renderFollowRequestsModal = () => (
+    <Dialog
+      open={showFollowRequests}
+      onClose={handleCloseFollowRequests}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 3, maxHeight: "80vh" },
+      }}
+    >
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <PersonAddAltIcon color="primary" sx={{ mr: 1.5 }} />
+          <Typography variant="h5" fontWeight={600}>
+            Yêu cầu theo dõi
+          </Typography>
+          {followRequestsCount > 0 && (
+            <Chip
+              label={followRequestsCount}
+              color="primary"
+              size="small"
+              sx={{ ml: 1.5 }}
+            />
+          )}
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 0 }}>
+        <List sx={{ width: "100%" }}>
+          {followRequests.length > 0 ? (
+            followRequests.map((request, index) => (
+              <React.Fragment key={request.id}>
+                <ListItem
+                  ref={
+                    index === followRequests.length - 1
+                      ? lastFollowRequestElementRef
+                      : null
+                  }
+                  alignItems="center"
+                  sx={{
+                    py: 2,
+                    px: 3,
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    },
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      src={request.avatar}
+                      component={Link}
+                      to={`/profile/${request.id}`}
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        boxShadow: `0 2px 10px ${alpha(
+                          theme.palette.common.black,
+                          0.1
+                        )}`,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {request.name ? request.name[0].toUpperCase() : "U"}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={600}
+                        component={Link}
+                        to={`/profile/${request.id}`}
+                        sx={{
+                          textDecoration: "none",
+                          color: "inherit",
+                          "&:hover": {
+                            color: theme.palette.primary.main,
+                          },
+                        }}
+                      >
+                        {request.name}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="text.secondary">
+                        {request.role || "Người dùng"}
+                      </Typography>
+                    }
+                    sx={{ ml: 1 }}
+                  />
+                  <ListItemSecondaryAction sx={{ display: "flex", gap: 1 }}>
+                    <IconButton
+                      color="primary"
+                      onClick={() =>
+                        handleFollowRequestResponse(request.id, true)
+                      }
+                      sx={{
+                        backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                        "&:hover": {
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.2
+                          ),
+                        },
+                      }}
+                    >
+                      <HowToRegIcon />
+                    </IconButton>
+                    <IconButton
+                      color="error"
+                      onClick={() =>
+                        handleFollowRequestResponse(request.id, false)
+                      }
+                      sx={{
+                        backgroundColor: alpha(theme.palette.error.main, 0.1),
+                        "&:hover": {
+                          backgroundColor: alpha(theme.palette.error.main, 0.2),
+                        },
+                      }}
+                    >
+                      <CancelIcon />
+                    </IconButton>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                {index < followRequests.length - 1 && (
+                  <Divider sx={{ mx: 3 }} />
+                )}
+              </React.Fragment>
+            ))
+          ) : (
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <PersonAddAltIcon
+                sx={{
+                  fontSize: 50,
+                  color: alpha(theme.palette.text.secondary, 0.5),
+                  mb: 2,
+                }}
+              />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Không có yêu cầu theo dõi nào
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Khi có người muốn theo dõi bạn, yêu cầu sẽ hiển thị ở đây
+              </Typography>
+            </Box>
+          )}
+          {loadingFollowRequests && (
+            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+              <CircularProgress size={30} />
+            </Box>
+          )}
+        </List>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={handleCloseFollowRequests}
+          variant="contained"
+          color="primary"
+          sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+        >
+          Đóng
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  // Get follow requests count on component mount
+  useEffect(() => {
+    if (userInfo?.id) {
+      const checkFollowRequests = async () => {
+        try {
+          const response = await countFollowRequests();
+          if (response && response.code === 1000) {
+            setFollowRequestsCount(response.result);
+          }
+        } catch (error) {
+          console.error("Error checking follow requests count:", error);
+        }
+      };
+
+      checkFollowRequests();
+    }
+  }, [userInfo?.id]);
+
+  // Function to fetch sent follow requests
+  const fetchSentFollowRequests = async (reset = false) => {
+    if (reset) {
+      setSentRequestsPage(0);
+      setHasMoreSentRequests(true);
+      setSentRequests([]);
+    }
+
+    if (!hasMoreSentRequests && !reset) return;
+
+    setLoadingSentRequests(true);
+    try {
+      const response = await getSentFollowRequests(sentRequestsPage, 10);
+      if (response && response.code === 1000 && response.result) {
+        setSentRequests((prev) =>
+          reset ? response.result : [...prev, ...response.result]
+        );
+        setHasMoreSentRequests(response.result.length === 10);
+        setSentRequestsPage((prev) => prev + 1);
+
+        // Get the accurate count instead of calculating from the array
+        const countResponse = await countSentFollowRequests();
+        if (countResponse && countResponse.code === 1000) {
+          setSentRequestsCount(countResponse.result);
+        }
+      } else {
+        setHasMoreSentRequests(false);
+      }
+    } catch (error) {
+      console.error("Error fetching sent follow requests:", error);
+      // If error, just show empty list
+      setSentRequests([]);
+    } finally {
+      setLoadingSentRequests(false);
+    }
+  };
+
+  // Function to delete a sent follow request
+  const handleDeleteFollowRequest = async (userId) => {
+    try {
+      setDeletingRequest((prev) => ({ ...prev, [userId]: true }));
+
+      // Update UI immediately (optimistic update)
+      setSentRequests((prev) => prev.filter((req) => req.id !== userId));
+      setSentRequestsCount((prev) => Math.max(0, prev - 1));
+
+      // Call API
+      await deleteFollowRequest(userId);
+
+      toast.success("Đã hủy yêu cầu theo dõi");
+
+      // Refresh the count after action
+      const response = await countSentFollowRequests();
+      if (response && response.code === 1000) {
+        setSentRequestsCount(response.result);
+      }
+    } catch (error) {
+      console.error("Error deleting follow request:", error);
+      toast.error("Không thể hủy yêu cầu theo dõi");
+
+      // Revert optimistic update on error by refreshing the list
+      fetchSentFollowRequests(true);
+
+      // Refresh the count
+      const response = await countSentFollowRequests();
+      if (response && response.code === 1000) {
+        setSentRequestsCount(response.result);
+      }
+    } finally {
+      setDeletingRequest((prev) => ({ ...prev, [userId]: false }));
+    }
+  };
+
+  // Add observer for sent requests infinite scrolling
+  const lastSentRequestElementRef = useCallback(
+    (node) => {
+      if (loadingSentRequests) return;
+      if (sentRequestsObserver.current)
+        sentRequestsObserver.current.disconnect();
+      sentRequestsObserver.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMoreSentRequests) {
+          fetchSentFollowRequests();
+        }
+      });
+      if (node) sentRequestsObserver.current.observe(node);
+    },
+    [loadingSentRequests, hasMoreSentRequests]
+  );
+
+  // Check sent follow requests count on component mount
+  useEffect(() => {
+    if (userInfo?.id) {
+      const checkSentFollowRequests = async () => {
+        try {
+          const response = await countSentFollowRequests();
+          if (response && response.code === 1000) {
+            setSentRequestsCount(response.result);
+          }
+        } catch (error) {
+          console.error("Error checking sent follow requests count:", error);
+        }
+      };
+
+      checkSentFollowRequests();
+    }
+  }, [userInfo?.id]);
+
+  // Functions to handle opening/closing sent requests modal
+  const handleOpenSentRequests = () => {
+    setShowSentRequests(true);
+    fetchSentFollowRequests(true);
+  };
+
+  const handleCloseSentRequests = () => {
+    setShowSentRequests(false);
+    // Reset pagination
+    setSentRequestsPage(0);
+    setHasMoreSentRequests(true);
+    setSentRequests([]);
+  };
+
+  // Render sent follow requests modal
+  const renderSentRequestsModal = () => (
+    <Dialog
+      open={showSentRequests}
+      onClose={handleCloseSentRequests}
+      maxWidth="sm"
+      fullWidth
+      PaperProps={{
+        sx: { borderRadius: 3, maxHeight: "80vh" },
+      }}
+    >
+      <DialogTitle sx={{ px: 3, pt: 3, pb: 2 }}>
+        <Box sx={{ display: "flex", alignItems: "center" }}>
+          <PersonAddIcon color="secondary" sx={{ mr: 1.5 }} />
+          <Typography variant="h5" fontWeight={600}>
+            Yêu cầu theo dõi đã gửi
+          </Typography>
+          {sentRequestsCount > 0 && (
+            <Chip
+              label={sentRequestsCount}
+              color="secondary"
+              size="small"
+              sx={{ ml: 1.5 }}
+            />
+          )}
+        </Box>
+      </DialogTitle>
+      <DialogContent dividers sx={{ p: 0 }}>
+        <List sx={{ width: "100%" }}>
+          {sentRequests.length > 0 ? (
+            sentRequests.map((request, index) => (
+              <React.Fragment key={request.id}>
+                <ListItem
+                  ref={
+                    index === sentRequests.length - 1
+                      ? lastSentRequestElementRef
+                      : null
+                  }
+                  alignItems="center"
+                  sx={{
+                    py: 2,
+                    px: 3,
+                    transition: "all 0.2s",
+                    "&:hover": {
+                      backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                    },
+                  }}
+                >
+                  <ListItemAvatar>
+                    <Avatar
+                      src={request.avatar}
+                      component={Link}
+                      to={`/profile/${request.id}`}
+                      sx={{
+                        width: 50,
+                        height: 50,
+                        boxShadow: `0 2px 10px ${alpha(
+                          theme.palette.common.black,
+                          0.1
+                        )}`,
+                        cursor: "pointer",
+                      }}
+                    >
+                      {request.name ? request.name[0].toUpperCase() : "U"}
+                    </Avatar>
+                  </ListItemAvatar>
+                  <ListItemText
+                    primary={
+                      <Typography
+                        variant="subtitle1"
+                        fontWeight={600}
+                        component={Link}
+                        to={`/profile/${request.id}`}
+                        sx={{
+                          textDecoration: "none",
+                          color: "inherit",
+                          "&:hover": {
+                            color: theme.palette.primary.main,
+                          },
+                        }}
+                      >
+                        {request.name}
+                      </Typography>
+                    }
+                    secondary={
+                      <Typography variant="body2" color="text.secondary">
+                        {request.role || "Người dùng"}
+                      </Typography>
+                    }
+                    sx={{ ml: 1 }}
+                  />
+                  <ListItemSecondaryAction>
+                    <Button
+                      size="small"
+                      variant="outlined"
+                      color="error"
+                      onClick={() => handleDeleteFollowRequest(request.id)}
+                      disabled={deletingRequest[request.id]}
+                      startIcon={
+                        deletingRequest[request.id] ? (
+                          <CircularProgress size={16} />
+                        ) : null
+                      }
+                      sx={{
+                        borderRadius: 6,
+                        textTransform: "none",
+                        px: 2,
+                        py: 0.8,
+                      }}
+                    >
+                      Hủy yêu cầu
+                    </Button>
+                  </ListItemSecondaryAction>
+                </ListItem>
+                {index < sentRequests.length - 1 && <Divider sx={{ mx: 3 }} />}
+              </React.Fragment>
+            ))
+          ) : (
+            <Box sx={{ p: 4, textAlign: "center" }}>
+              <PersonAddIcon
+                sx={{
+                  fontSize: 50,
+                  color: alpha(theme.palette.text.secondary, 0.5),
+                  mb: 2,
+                }}
+              />
+              <Typography variant="h6" color="text.secondary" gutterBottom>
+                Không có yêu cầu đã gửi nào
+              </Typography>
+              <Typography variant="body2" color="text.secondary">
+                Khi bạn gửi yêu cầu theo dõi người dùng, các yêu cầu sẽ hiển thị
+                ở đây
+              </Typography>
+            </Box>
+          )}
+          {loadingSentRequests && (
+            <Box sx={{ display: "flex", justifyContent: "center", p: 3 }}>
+              <CircularProgress size={30} />
+            </Box>
+          )}
+        </List>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, py: 2 }}>
+        <Button
+          onClick={handleCloseSentRequests}
+          variant="contained"
+          color="primary"
+          sx={{ borderRadius: 2, textTransform: "none", px: 3 }}
+        >
+          Đóng
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
   if (loading) {
     return (
       <Box
@@ -2006,7 +3126,7 @@ function Profile() {
                         >
                           Mạng xã hội
                         </Typography>
-                        <Box sx={{ display: "flex", gap: 2 }}>
+                        <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
                           <Button
                             variant="text"
                             onClick={handleOpenFollowers}
@@ -2039,52 +3159,79 @@ function Profile() {
                               Đang theo dõi
                             </Typography>
                           </Button>
-                        </Box>
-                      </Box>
-
-                      <Box
-                        sx={{
-                          display: "flex",
-                          justifyContent: "space-between",
-                        }}
-                      >
-                        <Box textAlign="center">
-                          <Typography
-                            variant="h5"
-                            fontWeight={700}
-                            color="primary.main"
+                          <Button
+                            variant="text"
+                            onClick={handleOpenFollowRequests}
+                            sx={{ textTransform: "none" }}
+                            color={
+                              followRequestsCount > 0 ? "primary" : "inherit"
+                            }
                           >
-                            {userInfo.stats.appointments}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Lượt khám
-                          </Typography>
-                        </Box>
-
-                        <Box textAlign="center">
-                          <Typography
-                            variant="h5"
-                            fontWeight={700}
-                            color="primary.main"
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography variant="body1" fontWeight={600}>
+                                {followRequestsCount}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color={
+                                  followRequestsCount > 0
+                                    ? "primary"
+                                    : "text.secondary"
+                                }
+                                sx={{ ml: 0.5 }}
+                              >
+                                Yêu cầu
+                              </Typography>
+                              {followRequestsCount > 0 && (
+                                <Box
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    backgroundColor: theme.palette.primary.main,
+                                    ml: 0.5,
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </Button>
+                          <Button
+                            variant="text"
+                            onClick={handleOpenSentRequests}
+                            sx={{ textTransform: "none" }}
+                            color={
+                              sentRequestsCount > 0 ? "secondary" : "inherit"
+                            }
                           >
-                            {userInfo.stats.posts}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Bài viết
-                          </Typography>
-                        </Box>
-
-                        <Box textAlign="center">
-                          <Typography
-                            variant="h5"
-                            fontWeight={700}
-                            color="primary.main"
-                          >
-                            {userInfo.stats.reviews}
-                          </Typography>
-                          <Typography variant="body2" color="text.secondary">
-                            Đánh giá
-                          </Typography>
+                            <Box sx={{ display: "flex", alignItems: "center" }}>
+                              <Typography variant="body1" fontWeight={600}>
+                                {sentRequestsCount}
+                              </Typography>
+                              <Typography
+                                variant="body2"
+                                color={
+                                  sentRequestsCount > 0
+                                    ? "secondary"
+                                    : "text.secondary"
+                                }
+                                sx={{ ml: 0.5 }}
+                              >
+                                Đã gửi
+                              </Typography>
+                              {sentRequestsCount > 0 && (
+                                <Box
+                                  sx={{
+                                    width: 8,
+                                    height: 8,
+                                    borderRadius: "50%",
+                                    backgroundColor:
+                                      theme.palette.secondary.main,
+                                    ml: 0.5,
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </Button>
                         </Box>
                       </Box>
 
@@ -2189,9 +3336,9 @@ function Profile() {
                           label="Bài viết đã lưu"
                         />
                         <Tab
-                          icon={<VisibilityIcon sx={{ mr: 1 }} />}
+                          icon={<NewspaperIcon sx={{ mr: 1 }} />}
                           iconPosition="start"
-                          label="Hoạt động gần đây"
+                          label="Tin tức đã lưu"
                         />
                       </Tabs>
                     </Box>
@@ -2199,38 +3346,7 @@ function Profile() {
                     <Box sx={{ p: 3 }}>
                       {tabValue === 0 && renderMyPostsTab()}
                       {tabValue === 1 && renderSavedPostsTab()}
-                      {tabValue === 2 && (
-                        <Box>
-                          <Typography
-                            variant="h5"
-                            fontWeight={600}
-                            color="text.primary"
-                            gutterBottom
-                          >
-                            Hoạt động gần đây
-                          </Typography>
-                          <Typography
-                            variant="body1"
-                            color="text.secondary"
-                            paragraph
-                          >
-                            Theo dõi các hoạt động gần đây của bạn trên hệ thống
-                            HD-Care.
-                          </Typography>
-                          <Box
-                            sx={{
-                              height: 300,
-                              display: "flex",
-                              justifyContent: "center",
-                              alignItems: "center",
-                            }}
-                          >
-                            <Typography variant="h6" color="text.secondary">
-                              Đang phát triển...
-                            </Typography>
-                          </Box>
-                        </Box>
-                      )}
+                      {tabValue === 2 && renderSavedNewsTab()}
                     </Box>
                   </Card>
                 </motion.div>
@@ -2295,6 +3411,12 @@ function Profile() {
 
       {/* Post Modal */}
       {renderPostModal()}
+
+      {/* Follow Requests Modal */}
+      {renderFollowRequestsModal()}
+
+      {/* Sent Requests Modal */}
+      {renderSentRequestsModal()}
     </Box>
   );
 }

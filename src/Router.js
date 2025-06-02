@@ -11,6 +11,7 @@ import Register from "./pages/patient/Register";
 import DoctorDetail from "./pages/patient/DoctorDetail";
 import TeamOfDoctors from "./pages/patient/TeamOfDoctors";
 import Profile from "./pages/patient/Profile";
+import ViewProfile from "./pages/patient/ViewProfile";
 import UserDetail from "./pages/patient/UserDetail";
 import AppointmentHistory from "./pages/patient/AppointmentHistory";
 import ScheduleManagement from "./pages/doctor/ScheduleManagement";
@@ -35,7 +36,6 @@ import PostPage from "./pages/social-network/PostPage";
 import CreatePostPage from "./pages/social-network/CreatePostPage";
 import SavedPostsPage from "./pages/social-network/SavedPostsPage";
 import FollowPage from "./pages/social-network/FollowPage";
-import FollowRequestsPage from "./pages/social-network/FollowRequestsPage";
 import VideoCall from "./pages/patient/VideoCall";
 import Chat from "./pages/patient/Chat";
 import ChatDoctor from "./pages/doctor/Chat";
@@ -111,6 +111,7 @@ const AppRouter = () => {
       <Route path="/video-call/:doctorId" element={<VideoCall />} />
       <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
       <Route path="/profile" element={<Profile />} />
+      <Route path="/profile/:userId" element={<ViewProfile />} />
       <Route path="/user-detail" element={<UserDetail />} />
       <Route path="/appointment-list" element={<AppointmentList />} />
       <Route path="/not-found" element={<NotFound />} />
@@ -229,10 +230,6 @@ const AppRouter = () => {
       <Route path="/social-network/create-post" element={<CreatePostPage />} />
       <Route path="/social-network/saved-posts" element={<SavedPostsPage />} />
       <Route path="/social-network/follow" element={<FollowPage />} />
-      <Route
-        path="/social-network/follow-requests"
-        element={<FollowRequestsPage />}
-      />
 
       <Route path="/chat/:doctorId" element={<Chat />} />
     </Routes>

@@ -1,4 +1,4 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import {
   Card,
   CardContent,
@@ -47,14 +47,24 @@ const NewsCard = ({
   loading = false,
   isAuthor = false,
 }) => {
-  const [useful, setUseful] = useState(news?.userInteraction === "USEFUL");
-  const [useless, setUseless] = useState(news?.userInteraction === "USELESS");
-  const [saved, setSaved] = useState(news?.isSaved || false);
-  const [usefulCount, setUsefulCount] = useState(news?.usefulCount || 0);
-  const [uselessCount, setUselessCount] = useState(news?.uselessCount || 0);
+  const [useful, setUseful] = useState(news?.interactedUseful);
+  const [useless, setUseless] = useState(news?.interactedUseless);
+  const [saved, setSaved] = useState(news?.favorited);
+  const [usefulCount, setUsefulCount] = useState(news?.usefulCount);
+  const [uselessCount, setUselessCount] = useState(news?.uselessCount);
   const [anchorEl, setAnchorEl] = useState(null);
   const theme = useTheme();
   const open = Boolean(anchorEl);
+
+  useEffect(() => {
+    if (news) {
+      setUseful(news.interactedUseful || false);
+      setUseless(news.interactedUseless || false);
+      setSaved(news.favorited || false);
+      setUsefulCount(news.usefulCount || 0);
+      setUselessCount(news.uselessCount || 0);
+    }
+  }, [news]);
 
   const handleUseful = async (e) => {
     e.preventDefault();

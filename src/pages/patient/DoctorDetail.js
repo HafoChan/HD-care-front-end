@@ -37,7 +37,7 @@ import FilterListIcon from "@mui/icons-material/FilterList";
 import SortIcon from "@mui/icons-material/Sort";
 import LocalHospitalIcon from "@mui/icons-material/LocalHospital";
 import VideocamIcon from "@mui/icons-material/Videocam";
-import ChatIcon from '@mui/icons-material/Chat';
+import ChatIcon from "@mui/icons-material/Chat";
 import { useNavigate } from "react-router-dom";
 
 function ReviewSection() {
@@ -944,10 +944,10 @@ function DoctorDetail() {
                 mb={4}
                 color={theme.palette.primary.main}
               >
-                {doctorInfo?.specialization || "Chuyên khoa"}
+                Trình độ chuyên môn
               </Typography>
               <Grid container spacing={3} justifyContent="center">
-                {doctorInfo?.experience?.split(".").map(
+                {doctorInfo?.specialization?.split("\\").map(
                   (exp, index) =>
                     exp.trim() && (
                       <Grid item xs={12} sm={6} md={4} key={index}>
@@ -1052,7 +1052,7 @@ function DoctorDetail() {
                       boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                     }}
                   >
-                    {doctorInfo?.description?.split(".").map(
+                    {doctorInfo?.description?.split("\\").map(
                       (sentence, index) =>
                         sentence.trim() && (
                           <Fade key={index} in timeout={800 + index * 100}>
@@ -1138,7 +1138,7 @@ function DoctorDetail() {
                       boxShadow: "0 4px 20px rgba(0,0,0,0.03)",
                     }}
                   >
-                    {doctorInfo?.experience?.split(".").map(
+                    {doctorInfo?.experience?.split("\\").map(
                       (specialty, index) =>
                         specialty.trim() && (
                           <Fade key={index} in timeout={1000 + index * 100}>

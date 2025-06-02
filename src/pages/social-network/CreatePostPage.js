@@ -1,5 +1,5 @@
 // src/pages/social-network/CreatePostPage.js
-import React, { useState, useRef } from "react";
+import React, { useState, useRef, useEffect } from "react";
 import {
   Container,
   TextField,
@@ -22,6 +22,7 @@ import {
   CardContent,
   ImageList,
   ImageListItem,
+  Autocomplete,
 } from "@mui/material";
 import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
 import ClearIcon from "@mui/icons-material/Clear";
@@ -34,6 +35,7 @@ import GroupIcon from "@mui/icons-material/Group";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import LocalOfferIcon from "@mui/icons-material/LocalOffer";
 import { createPost } from "../../api/socialNetworkApi";
+import { getAllDoctors } from "../../api/newsApi";
 import { useNavigate } from "react-router-dom";
 import UploadFilesService from "../../service/otherService/upload";
 
@@ -55,6 +57,21 @@ const CreatePostPage = () => {
   const [tagInput, setTagInput] = useState("");
   const [location, setLocation] = useState("");
   const [uploadProgress, setUploadProgress] = useState(0);
+  const [doctors, setDoctors] = useState([]);
+  const [doctorId, setDoctorId] = useState(null);
+
+  useEffect(() => {
+    fetchDoctors();
+  }, []);
+
+  const fetchDoctors = async () => {
+    try {
+      const data = await getAllDoctors();
+      setDoctors(data || []);
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+    }
+  };
 
   const handleImagesChange = (event) => {
     const files = Array.from(event.target.files);
@@ -118,6 +135,10 @@ const CreatePostPage = () => {
     setTags(tags.filter((tag) => tag !== tagToRemove));
   };
 
+  const handleTagDoctor = (event, selectedDoctor) => {
+    setDoctorId(selectedDoctor ? selectedDoctor.id : null);
+  };
+
   const handleNext = () => {
     if (!content && images.length === 0) {
       setError("Please add some content or at least one image to your post");
@@ -161,11 +182,12 @@ const CreatePostPage = () => {
         imageUrl: url,
       }));
 
-      // Create post with the uploaded images
+      // Create post with the uploaded images and tagged doctor
       await createPost({
         content,
         images: postImages,
-        isHidden, // use the isHidden flag directly
+        isHidden,
+        doctorId: doctorId, // Include tagged doctor ID
       });
 
       // Reset form fields and navigate back to feed
@@ -174,6 +196,7 @@ const CreatePostPage = () => {
       setImagePreviews([]);
       setIsHidden(false);
       setTags([]);
+      setDoctorId(null);
       setLocation("");
       setStep(0);
 
@@ -538,71 +561,43 @@ const CreatePostPage = () => {
 
                   <Box sx={{ mb: 3 }}>
                     <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                      Vị trí
+                      Gắn thẻ bác sĩ
                     </Typography>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="Thêm vị trí"
-                      value={location}
-                      onChange={(e) => setLocation(e.target.value)}
-                      InputProps={{
-                        startAdornment: (
-                          <LocationOnIcon color="action" sx={{ mr: 1 }} />
-                        ),
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: 2,
-                          backgroundColor: theme.palette.background.default,
-                        },
-                      }}
+                    <Autocomplete
+                      id="doctor-tag"
+                      options={doctors}
+                      getOptionLabel={(option) => option.name}
+                      onChange={handleTagDoctor}
+                      renderInput={(params) => (
+                        <TextField
+                          {...params}
+                          variant="outlined"
+                          placeholder="Tìm và gắn thẻ bác sĩ"
+                          size="small"
+                          sx={{
+                            "& .MuiOutlinedInput-root": {
+                              borderRadius: 2,
+                              backgroundColor: theme.palette.background.default,
+                            },
+                          }}
+                        />
+                      )}
+                      renderOption={(props, option) => (
+                        <li {...props}>
+                          <Box sx={{ display: "flex", alignItems: "center" }}>
+                            <Avatar
+                              src={option.avatar}
+                              alt={option.name}
+                              sx={{ width: 32, height: 32, mr: 1.5 }}
+                            />
+                            <Typography variant="body2">
+                              {option.name}
+                            </Typography>
+                          </Box>
+                        </li>
+                      )}
+                      noOptionsText="Không tìm thấy bác sĩ"
                     />
-                  </Box>
-
-                  <Box sx={{ mb: 3 }}>
-                    <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
-                      Thẻ
-                    </Typography>
-                    <TextField
-                      fullWidth
-                      size="small"
-                      placeholder="Thêm thẻ (nhấn Enter để thêm)"
-                      value={tagInput}
-                      onChange={(e) => setTagInput(e.target.value)}
-                      onKeyDown={handleAddTag}
-                      InputProps={{
-                        startAdornment: (
-                          <LocalOfferIcon color="action" sx={{ mr: 1 }} />
-                        ),
-                      }}
-                      sx={{
-                        "& .MuiOutlinedInput-root": {
-                          borderRadius: 2,
-                          backgroundColor: theme.palette.background.default,
-                        },
-                      }}
-                    />
-                    {tags.length > 0 && (
-                      <Box
-                        sx={{
-                          mt: 1.5,
-                          display: "flex",
-                          flexWrap: "wrap",
-                          gap: 0.5,
-                        }}
-                      >
-                        {tags.map((tag) => (
-                          <Chip
-                            key={tag}
-                            label={tag}
-                            size="small"
-                            onDelete={() => handleRemoveTag(tag)}
-                            sx={{ borderRadius: 1 }}
-                          />
-                        ))}
-                      </Box>
-                    )}
                   </Box>
                 </Grid>
               </Grid>

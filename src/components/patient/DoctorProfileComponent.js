@@ -131,7 +131,7 @@ function DoctorProfileComponent({ doctorInfo }) {
               {doctorInfo?.specialization && (
                 <Chip
                   icon={<LocalHospitalIcon />}
-                  label={doctorInfo?.specialization}
+                  label={doctorInfo.specialization.split("\\")[0]}
                   sx={{
                     bgcolor: alpha(theme.palette.primary.contrastText, 0.2),
                     color: theme.palette.primary.contrastText,
@@ -143,7 +143,13 @@ function DoctorProfileComponent({ doctorInfo }) {
                   }}
                 />
               )}
+            </Stack>
 
+            <Stack
+              direction="row"
+              spacing={1}
+              sx={{ mb: 2, flexWrap: "wrap", gap: 1 }}
+            >
               {doctorInfo?.address && (
                 <Chip
                   label={doctorInfo?.address}
@@ -172,9 +178,9 @@ function DoctorProfileComponent({ doctorInfo }) {
                 fontSize: "1rem",
               }}
             >
-              {doctorInfo?.description?.split(".")[0]}
-              {doctorInfo?.description?.split(".")[1] &&
-                `.${doctorInfo?.description?.split(".")[1]}`}
+              {doctorInfo?.description?.split("\\")[0]}
+              {doctorInfo?.description?.split("\\")[1] &&
+                `.${doctorInfo?.description?.split("\\")[1]}`}
             </Typography>
           </Box>
         </Grid>

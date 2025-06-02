@@ -197,7 +197,7 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
           <StyledListItem
             button
             selected={activeTab === "news"}
-            onClick={handleNavigateToNews}
+            onClick={() => setActiveTab("news")}
           >
             <IconWrapper active={activeTab === "news"}>
               <ArticleIcon

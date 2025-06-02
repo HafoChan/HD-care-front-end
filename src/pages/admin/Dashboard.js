@@ -25,6 +25,7 @@ import DoctorManagement from "../../components/admin/DoctorManagement";
 import PatientManagement from "../../components/admin/PatientManagement";
 import DoctorModal from "../../components/admin/DoctorModal";
 import PatientModal from "../../components/admin/PatientModal";
+import NewsManagementPage from "./NewsManagementPage";
 
 const StyledBox = styled(Box)(({ theme }) => ({
   minHeight: "100vh",
@@ -645,6 +646,7 @@ const AdminInterface = () => {
             onEditPatient={handleEditPatient}
           />
         )}
+        {activeTab === "news" && <NewsManagementPage />}
       </MainContent>
 
       <DoctorModal

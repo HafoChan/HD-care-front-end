@@ -70,7 +70,7 @@ const SavedNewsPage = () => {
               }}
             >
               <ArrowBackIcon fontSize="small" sx={{ mr: 0.5 }} />
-              Back to News
+              Trở lại trang tin tức
             </Link>
           </Breadcrumbs>
         </Box>
@@ -139,7 +139,7 @@ const SavedNewsPage = () => {
                       fontWeight: 500,
                     }}
                   >
-                    Load more articles
+                    Tải thêm tin tức
                   </Button>
                 </Box>
               )}

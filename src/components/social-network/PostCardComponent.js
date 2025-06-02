@@ -274,7 +274,7 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
         avatar={
           <Avatar
             component={Link}
-            to={`/social-network/profile/${post.user?.id || "unknown"}`}
+            to={`/profile/${post.user?.id || "unknown"}`}
             sx={{
               width: 44,
               height: 44,
@@ -388,7 +388,7 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
         title={
           <Typography
             component={Link}
-            to={`/social-network/profile/${post.user?.id || "unknown"}`}
+            to={`/profile/${post.user?.id || "unknown"}`}
             variant="subtitle1"
             sx={{
               fontWeight: 600,
@@ -417,6 +417,66 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
           </Box>
         }
       />
+
+      {post.doctor && (
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            px: 2,
+            py: 1,
+            bgcolor: alpha(theme.palette.primary.light, 0.08),
+            borderTop: `1px solid ${alpha(theme.palette.primary.light, 0.2)}`,
+            borderBottom: `1px solid ${alpha(
+              theme.palette.primary.light,
+              0.2
+            )}`,
+          }}
+        >
+          <Avatar
+            component={Link}
+            to={`/profile/${post.doctor.id || "unknown"}`}
+            src={post.doctor.avatar}
+            sx={{
+              width: 32,
+              height: 32,
+              mr: 1.5,
+              border: `2px solid ${alpha(theme.palette.primary.main, 0.4)}`,
+            }}
+          >
+            {post.doctor.name ? post.doctor.name[0].toUpperCase() : "D"}
+          </Avatar>
+          <Box>
+            <Typography variant="body2" color="text.secondary">
+              Đã gắn thẻ bác sĩ:
+            </Typography>
+            <Typography
+              component={Link}
+              to={`/doctor/${post.doctor.id || "unknown"}`}
+              variant="body2"
+              sx={{
+                fontWeight: 600,
+                color: theme.palette.primary.main,
+                textDecoration: "none",
+                "&:hover": {
+                  textDecoration: "underline",
+                },
+              }}
+            >
+              {post.doctor.name}
+              {post.doctor.role && (
+                <Chip
+                  label={post.doctor.role}
+                  size="small"
+                  color="primary"
+                  variant="outlined"
+                  sx={{ ml: 1, fontSize: "0.6rem", height: 18 }}
+                />
+              )}
+            </Typography>
+          </Box>
+        </Box>
+      )}
 
       <CardContent sx={{ pb: 1 }}>
         <Typography variant="body1" sx={{ whiteSpace: "pre-wrap" }}>
@@ -614,7 +674,11 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
                 <React.Fragment key={comment.id}>
                   <ListItem alignItems="flex-start" sx={{ py: 2 }}>
                     <ListItemAvatar>
-                      <Avatar src={comment.user?.avatar}>
+                      <Avatar
+                        src={comment.user?.avatar}
+                        component={Link}
+                        to={`/profile/${comment.user?.id || "unknown"}`}
+                      >
                         {comment.user?.name
                           ? comment.user.name[0].toUpperCase()
                           : "U"}
@@ -631,6 +695,9 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
                           <Typography
                             variant="subtitle2"
                             sx={{ fontWeight: 600 }}
+                            component={Link}
+                            to={`/profile/${comment.user?.id || "unknown"}`}
+                            style={{ textDecoration: "none", color: "inherit" }}
                           >
                             {comment.user?.name}
                           </Typography>

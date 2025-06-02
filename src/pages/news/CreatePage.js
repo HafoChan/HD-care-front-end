@@ -17,14 +17,23 @@ import {
   Select,
   IconButton,
   Breadcrumbs,
+  Card,
+  CardMedia,
+  LinearProgress,
 } from "@mui/material";
 import SaveIcon from "@mui/icons-material/Save";
 import SendIcon from "@mui/icons-material/Send";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
+import ImageIcon from "@mui/icons-material/Image";
+import DeleteIcon from "@mui/icons-material/Delete";
+import CloudUploadIcon from "@mui/icons-material/CloudUpload";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { Link, useNavigate } from "react-router-dom";
 import { createNews } from "../../api/newsApi";
 import RichTextEditor from "../../components/news/RichTextEditor";
+import UploadFilesService from "../../service/otherService/upload";
+import UploadFiles from "../../components/patient/uploadFile";
 
 const CATEGORIES = [
   "General Health",
@@ -49,6 +58,11 @@ const CreateNewsPage = () => {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const [success, setSuccess] = useState(false);
+
+  // Cover image states
+  const [coverImagePath, setCoverImagePath] = useState("");
+  const [uploading, setUploading] = useState(false);
+  const [uploadError, setUploadError] = useState("");
 
   // Form validation
   const [titleError, setTitleError] = useState("");
@@ -88,6 +102,79 @@ const CreateNewsPage = () => {
     return isValid;
   };
 
+  // Handle file selection for cover image
+  const handleFileSelect = (event) => {
+    const file = event.target.files[0];
+    if (file) {
+      // Validate file type
+      if (!file.type.startsWith("image/")) {
+        setUploadError("Vui lòng chọn file ảnh");
+        return;
+      }
+
+      // Validate file size (max 5MB)
+      if (file.size > 5 * 1024 * 1024) {
+        setUploadError("Kích thước file không được vượt quá 5MB");
+        return;
+      }
+
+      setCoverImagePath(URL.createObjectURL(file));
+      setUploadError("");
+
+      // Create preview URL
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        setCoverImagePath(e.target.result);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  // Upload cover image
+  const handleUploadImage = async () => {
+    if (!coverImagePath) return;
+
+    setUploading(true);
+    setUploadError("");
+
+    try {
+      const response = await UploadFilesService.uploadSingleImage(
+        coverImagePath, // Upload 1 ảnh
+        (progressEvent) => {
+          const progress = Math.round(
+            (progressEvent.loaded * 100) / progressEvent.total
+          );
+        }
+      );
+
+      if (response?.result?.fileLinks && response.result.fileLinks.length > 0) {
+        const uploadedUrl = response.result.fileLinks[0];
+        setCoverImagePath(uploadedUrl);
+        setUploading(false);
+      } else {
+        throw new Error("Không nhận được URL ảnh từ server");
+      }
+    } catch (error) {
+      console.error("Error uploading image:", error);
+      setUploadError("Không thể upload ảnh. Vui lòng thử lại.");
+      setUploading(false);
+    }
+  };
+
+  // Remove cover image
+  const handleRemoveImage = () => {
+    setCoverImagePath("");
+    setUploadError("");
+  };
+
+  // Handle file upload from UploadFiles component
+  const handleCoverImageUpload = (fileInfos) => {
+    if (fileInfos && fileInfos.length > 0) {
+      setCoverImagePath(fileInfos[0]);
+      setUploadError("");
+    }
+  };
+
   const handleSubmit = async (event) => {
     event.preventDefault();
 
@@ -105,6 +192,7 @@ const CreateNewsPage = () => {
         content,
         category,
         isDraft,
+        coverImageUrl: coverImagePath || "",
       };
 
       const createdNews = await createNews(newsData);
@@ -142,7 +230,7 @@ const CreateNewsPage = () => {
               }}
             >
               <ArrowBackIcon fontSize="small" sx={{ mr: 0.5 }} />
-              Back to News
+              Trở lại trang tin tức
             </Link>
           </Breadcrumbs>
         </Box>
@@ -194,6 +282,35 @@ const CreateNewsPage = () => {
                 placeholder="Enter a descriptive title for your article"
                 disabled={loading}
               />
+
+              {/* Cover Image Upload Section */}
+              <Box sx={{ mb: 3 }}>
+                <Typography variant="subtitle1" sx={{ mb: 2, fontWeight: 500 }}>
+                  Ảnh bìa
+                </Typography>
+
+                <Box
+                  sx={{
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                  }}
+                >
+                  <UploadFiles
+                    askUrl={handleCoverImageUpload}
+                    coverImageUpload={true}
+                  />
+                  {uploadError && (
+                    <Typography
+                      variant="caption"
+                      color="error"
+                      sx={{ mt: 1, display: "block" }}
+                    >
+                      {uploadError}
+                    </Typography>
+                  )}
+                </Box>
+              </Box>
 
               <FormControl
                 fullWidth

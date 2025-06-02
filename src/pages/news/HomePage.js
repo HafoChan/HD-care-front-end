@@ -5,15 +5,12 @@ import {
   Grid,
   Box,
   Paper,
-  CircularProgress,
-  Divider,
   Button,
   Tabs,
   Tab,
   useMediaQuery,
   useTheme,
   Card,
-  CardMedia,
   CardContent,
   Chip,
   Avatar,
@@ -25,15 +22,19 @@ import {
 import FiberNewIcon from "@mui/icons-material/FiberNew";
 import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
-import BookmarkBorderIcon from "@mui/icons-material/BookmarkBorder";
 import SearchIcon from "@mui/icons-material/Search";
 import ClearIcon from "@mui/icons-material/Clear";
-import FavoriteIcon from "@mui/icons-material/Favorite";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import { Link } from "react-router-dom";
-import { getNewestNews, getFeaturedNews, getAllNews } from "../../api/newsApi";
+import {
+  getNewestNews,
+  getFeaturedNews,
+  getAllNews,
+  searchNews,
+} from "../../api/newsApi";
 import NewsCard from "../../components/news/NewsCard";
 import { format } from "date-fns";
+import { vi } from "date-fns/locale";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 
 const NewsHomePage = () => {
@@ -45,6 +46,10 @@ const NewsHomePage = () => {
   const [page, setPage] = useState(0);
   const [hasMore, setHasMore] = useState(true);
   const [searchQuery, setSearchQuery] = useState("");
+  const [searchResults, setSearchResults] = useState([]);
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchPage, setSearchPage] = useState(0);
+  const [hasMoreSearchResults, setHasMoreSearchResults] = useState(true);
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   const isMedium = useMediaQuery(theme.breakpoints.down("md"));
@@ -52,15 +57,14 @@ const NewsHomePage = () => {
   const fetchInitialData = async () => {
     setLoading(true);
     try {
-      const [newest, featured] = await Promise.all([
+      const [newest, featured, allNewsData] = await Promise.all([
         getNewestNews(8),
-        getFeaturedNews(5),
+        getFeaturedNews(8),
+        getAllNews(0, 12),
       ]);
       setLatestNews(newest);
       setFeaturedNews(featured);
-
-      const allNewsData = await getAllNews(0, 12);
-      setAllNews(allNewsData.content || []);
+      setAllNews(allNewsData || []);
       setHasMore(!(allNewsData.last || false));
 
       setLoading(false);
@@ -74,8 +78,8 @@ const NewsHomePage = () => {
     try {
       const nextPage = page + 1;
       const moreNews = await getAllNews(nextPage, 12);
-      if (moreNews.content && moreNews.content.length > 0) {
-        setAllNews([...allNews, ...moreNews.content]);
+      if (moreNews && moreNews.length > 0) {
+        setAllNews([...allNews, ...moreNews]);
         setPage(nextPage);
         setHasMore(!(moreNews.last || false));
       } else {
@@ -86,12 +90,72 @@ const NewsHomePage = () => {
     }
   };
 
+  const performSearch = async (query, page = 0) => {
+    if (!query.trim()) {
+      setIsSearching(false);
+      setSearchResults([]);
+      return;
+    }
+
+    setLoading(true);
+    setIsSearching(true);
+
+    try {
+      const results = await searchNews(query, page, 12);
+      console.log("Search API Response:", results);
+
+      if (results) {
+        if (page === 0) {
+          setSearchResults(results);
+        } else {
+          setSearchResults((prev) => [...prev, ...results]);
+        }
+
+        setSearchPage(page);
+        setHasMoreSearchResults(results.length > 0);
+      } else {
+        if (page === 0) {
+          setSearchResults([]);
+        }
+        setHasMoreSearchResults(false);
+      }
+
+      setLoading(false);
+    } catch (error) {
+      console.error("Error searching news:", error);
+      setLoading(false);
+      setSearchResults([]);
+    }
+  };
+
+  const fetchMoreSearchResults = async () => {
+    await performSearch(searchQuery, searchPage + 1);
+  };
+
   useEffect(() => {
     fetchInitialData();
   }, []);
 
+  useEffect(() => {
+    const delayDebounceFn = setTimeout(() => {
+      if (searchQuery) {
+        performSearch(searchQuery);
+      } else {
+        setIsSearching(false);
+        setSearchResults([]);
+      }
+    }, 500);
+
+    return () => clearTimeout(delayDebounceFn);
+  }, [searchQuery]);
+
   const handleTabChange = (event, newValue) => {
     setActiveTab(newValue);
+    // Reset search when changing tabs
+    if (isSearching) {
+      setSearchQuery("");
+      setIsSearching(false);
+    }
   };
 
   const handleSearchChange = (event) => {
@@ -100,11 +164,14 @@ const NewsHomePage = () => {
 
   const clearSearch = () => {
     setSearchQuery("");
+    setIsSearching(false);
+    setSearchResults([]);
   };
 
   const formatDate = (dateString) => {
     try {
-      return format(new Date(dateString), "MMM dd, yyyy");
+      const date = new Date(dateString);
+      return format(date, "EEEE, dd 'tháng' MM 'năm' yyyy", { locale: vi });
     } catch (error) {
       return dateString;
     }
@@ -140,7 +207,7 @@ const NewsHomePage = () => {
             alignItems: "center",
           }}
         >
-          <TrendingUpIcon sx={{ mr: 1 }} /> Featured Articles
+          <TrendingUpIcon sx={{ mr: 1 }} /> Tin nổi bật
         </Typography>
 
         <Grid container spacing={3}>
@@ -170,7 +237,7 @@ const NewsHomePage = () => {
                   <Box
                     sx={{
                       backgroundImage: `url(${
-                        mainFeature.thumbnailUrl ||
+                        mainFeature.coverImageUrl ||
                         "https://via.placeholder.com/800x450?text=HD-Care+News"
                       })`,
                       backgroundSize: "cover",
@@ -200,9 +267,9 @@ const NewsHomePage = () => {
                       }}
                     >
                       <Chip
-                        label="Featured"
-                        size="small"
-                        color="primary"
+                        label="Nổi bật"
+                        size="medium"
+                        color="warning"
                         sx={{ mb: 2, fontWeight: 600 }}
                       />
                       <Typography
@@ -225,12 +292,12 @@ const NewsHomePage = () => {
                         }}
                       >
                         <Avatar
-                          src={mainFeature.author?.profileImage || ""}
-                          alt={mainFeature.author?.fullName || ""}
+                          src={mainFeature.author?.img || ""}
+                          alt={mainFeature.author?.name || ""}
                           sx={{ width: 32, height: 32, mr: 1 }}
                         />
                         <Typography variant="body2" sx={{ mr: 2 }}>
-                          {mainFeature.author?.fullName || "Unknown Author"}
+                          {mainFeature.author?.name || "Unknown Author"}
                         </Typography>
                         <AccessTimeIcon sx={{ fontSize: 16, mr: 0.5 }} />
                         <Typography variant="body2">
@@ -279,7 +346,7 @@ const NewsHomePage = () => {
                     <Box
                       sx={{
                         backgroundImage: `url(${
-                          news.thumbnailUrl ||
+                          news.coverImageUrl ||
                           "https://via.placeholder.com/400x216?text=HD-Care+News"
                         })`,
                         backgroundSize: "cover",
@@ -342,28 +409,25 @@ const NewsHomePage = () => {
   const renderNewsList = () => {
     let newsToShow = [];
 
-    switch (activeTab) {
-      case 0: // All
-        newsToShow = allNews;
-        break;
-      case 1: // Latest
-        newsToShow = latestNews;
-        break;
-      case 2: // Featured
-        newsToShow = featuredNews;
-        break;
-      default:
-        newsToShow = allNews;
-    }
-
-    // Filter by search query if available
-    if (searchQuery) {
-      newsToShow = newsToShow.filter(
-        (news) =>
-          news.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-          (news.summary &&
-            news.summary.toLowerCase().includes(searchQuery.toLowerCase()))
-      );
+    // If searching, show search results
+    if (isSearching && searchQuery) {
+      newsToShow = searchResults;
+      console.log("Rendering search results:", newsToShow);
+    } else {
+      // Otherwise show tab-based content
+      switch (activeTab) {
+        case 0: // All
+          newsToShow = allNews;
+          break;
+        case 1: // Latest
+          newsToShow = latestNews;
+          break;
+        case 2: // Featured
+          newsToShow = featuredNews;
+          break;
+        default:
+          newsToShow = allNews;
+      }
     }
 
     if (loading) {
@@ -386,7 +450,7 @@ const NewsHomePage = () => {
       );
     }
 
-    if (newsToShow.length === 0) {
+    if (!newsToShow || newsToShow.length === 0) {
       return (
         <Box sx={{ textAlign: "center", py: 8 }}>
           <NewspaperIcon sx={{ fontSize: 60, color: "text.disabled", mb: 2 }} />
@@ -421,7 +485,8 @@ const NewsHomePage = () => {
           ))}
         </Grid>
 
-        {activeTab === 0 && hasMore && !searchQuery && (
+        {/* Show appropriate load more button based on context */}
+        {activeTab === 0 && hasMore && !isSearching && (
           <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
             <Button
               variant="outlined"
@@ -434,7 +499,25 @@ const NewsHomePage = () => {
                 fontWeight: 500,
               }}
             >
-              Load more articles
+              Tải thêm tin tức
+            </Button>
+          </Box>
+        )}
+
+        {isSearching && hasMoreSearchResults && (
+          <Box sx={{ textAlign: "center", mt: 4, mb: 2 }}>
+            <Button
+              variant="outlined"
+              onClick={fetchMoreSearchResults}
+              sx={{
+                borderRadius: 8,
+                px: 4,
+                py: 1,
+                textTransform: "none",
+                fontWeight: 500,
+              }}
+            >
+              Load more search results
             </Button>
           </Box>
         )}
@@ -443,122 +526,12 @@ const NewsHomePage = () => {
   };
 
   return (
-    <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh" }}>
+    <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh", pb: 4 }}>
       <HeaderComponent />
 
-      {/* Hero Section */}
-      <Box
-        sx={{
-          bgcolor: "primary.main",
-          color: "white",
-          pt: { xs: 8, md: 12 },
-          pb: { xs: 6, md: 8 },
-          position: "relative",
-          overflow: "hidden",
-        }}
-      >
-        <Box
-          sx={{
-            position: "absolute",
-            top: 0,
-            left: 0,
-            right: 0,
-            bottom: 0,
-            opacity: 0.1,
-            backgroundImage: `url("https://images.unsplash.com/photo-1505751172876-fa1923c5c528?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80")`,
-            backgroundSize: "cover",
-            backgroundPosition: "center",
-            zIndex: 0,
-          }}
-        />
-        <Container
-          maxWidth="lg"
-          sx={{
-            position: "relative",
-            zIndex: 1,
-          }}
-        >
-          <Grid container spacing={3} alignItems="center">
-            <Grid item xs={12} md={7}>
-              <Typography
-                variant="h2"
-                component="h1"
-                sx={{
-                  fontWeight: 700,
-                  mb: 2,
-                  fontSize: { xs: "2rem", sm: "2.5rem", md: "3rem" },
-                }}
-              >
-                HD-Care Health News & Insights
-              </Typography>
-              <Typography
-                variant="h6"
-                sx={{
-                  fontWeight: 400,
-                  mb: 3,
-                  opacity: 0.9,
-                  maxWidth: "700px",
-                }}
-              >
-                Stay informed with the latest health insights, medical
-                breakthroughs, and wellness advice from trusted healthcare
-                professionals.
-              </Typography>
-              <Box sx={{ display: "flex", gap: 2, flexWrap: "wrap" }}>
-                <Button
-                  component={Link}
-                  to="/news/saved"
-                  variant="outlined"
-                  color="inherit"
-                  startIcon={<BookmarkBorderIcon />}
-                  sx={{
-                    textTransform: "none",
-                    fontWeight: 600,
-                    px: 3,
-                    py: 1.2,
-                    borderRadius: 8,
-                    fontSize: "1rem",
-                    borderColor: "rgba(255,255,255,0.5)",
-                    "&:hover": {
-                      borderColor: "white",
-                      bgcolor: "rgba(255,255,255,0.1)",
-                    },
-                  }}
-                >
-                  Saved Articles
-                </Button>
-              </Box>
-            </Grid>
-            <Grid
-              item
-              xs={12}
-              md={5}
-              sx={{
-                display: { xs: "none", md: "flex" },
-                justifyContent: "center",
-              }}
-            >
-              <Box
-                component="img"
-                src="https://images.unsplash.com/photo-1576091160550-2173dba999ef?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80"
-                alt="Health News"
-                sx={{
-                  maxWidth: "100%",
-                  height: "auto",
-                  maxHeight: 300,
-                  borderRadius: 4,
-                  boxShadow: 6,
-                  transform: "perspective(1000px) rotateY(-5deg)",
-                }}
-              />
-            </Grid>
-          </Grid>
-        </Container>
-      </Box>
-
-      <Container maxWidth="lg" sx={{ mt: { xs: 4, md: 8 } }}>
+      <Container maxWidth="lg" sx={{ mt: 4 }}>
         {/* Featured News Section (for Desktop) */}
-        {!isMedium && renderFeaturedSection()}
+        {!isMedium && !isSearching && renderFeaturedSection()}
 
         {/* Main Content */}
         <Box sx={{ mb: 4 }}>
@@ -578,14 +551,14 @@ const NewsHomePage = () => {
                   variant="h4"
                   sx={{ fontWeight: "600", color: "text.primary" }}
                 >
-                  Health Articles
+                  {isSearching ? "Kết quả tìm kiếm" : "Bài viết sức khỏe"}
                 </Typography>
               </Box>
             </Grid>
             <Grid item xs={12} md={6}>
               <TextField
                 fullWidth
-                placeholder="Search articles..."
+                placeholder="Tìm kiếm bài viết..."
                 variant="outlined"
                 size="small"
                 value={searchQuery}
@@ -614,39 +587,50 @@ const NewsHomePage = () => {
         </Box>
 
         {/* Featured News Section (for Mobile) */}
-        {isMedium && renderFeaturedSection()}
+        {isMedium && !isSearching && renderFeaturedSection()}
 
-        <Box sx={{ width: "100%", mb: 4 }}>
-          <Tabs
-            value={activeTab}
-            onChange={handleTabChange}
-            variant={isMobile ? "fullWidth" : "standard"}
-            indicatorColor="primary"
-            textColor="primary"
-            sx={{
-              borderBottom: 1,
-              borderColor: "divider",
-              "& .MuiTab-root": {
-                textTransform: "none",
-                fontSize: "1rem",
-                fontWeight: 500,
-                minWidth: 100,
-              },
-            }}
-          >
-            <Tab label="All Articles" />
-            <Tab
-              label="Latest News"
-              icon={<FiberNewIcon />}
-              iconPosition="start"
-            />
-            <Tab
-              label="Featured"
-              icon={<TrendingUpIcon />}
-              iconPosition="start"
-            />
-          </Tabs>
-        </Box>
+        {/* Hide tabs when searching */}
+        {!isSearching && (
+          <Box sx={{ width: "100%", mb: 4 }}>
+            <Tabs
+              value={activeTab}
+              onChange={handleTabChange}
+              variant={isMobile ? "fullWidth" : "standard"}
+              indicatorColor="primary"
+              textColor="primary"
+              sx={{
+                borderBottom: 1,
+                borderColor: "divider",
+                "& .MuiTab-root": {
+                  textTransform: "none",
+                  fontSize: "1rem",
+                  fontWeight: 500,
+                  minWidth: 100,
+                },
+              }}
+            >
+              <Tab label="Tất cả bài viết" />
+              <Tab
+                label="Bài viết mới nhất"
+                icon={<FiberNewIcon />}
+                iconPosition="start"
+              />
+              <Tab
+                label="Bài viết nổi bật"
+                icon={<TrendingUpIcon />}
+                iconPosition="start"
+              />
+            </Tabs>
+          </Box>
+        )}
+
+        {isSearching && searchQuery && (
+          <Box sx={{ mb: 3 }}>
+            <Typography variant="body1" color="text.secondary">
+              Tìm thấy {searchResults.length} kết quả cho "{searchQuery}"
+            </Typography>
+          </Box>
+        )}
 
         {renderNewsList()}
       </Container>

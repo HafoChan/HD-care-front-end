@@ -28,16 +28,22 @@ import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import NotInterestedIcon from "@mui/icons-material/NotInterested";
 import PermIdentityIcon from "@mui/icons-material/PermIdentity";
 import { Link } from "react-router-dom";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 import {
   getAllFollowRequests,
   acceptFollowRequest,
   rejectFollowRequest,
+  followUser,
+  checkUserPrivate,
 } from "../../api/socialNetworkApi";
+import { ToastContainer } from "react-toastify";
 
 const FollowRequestsPage = () => {
   const [requests, setRequests] = useState([]);
   const [loading, setLoading] = useState(true);
   const [actionLoading, setActionLoading] = useState({});
+  const [pendingRequests, setPendingRequests] = useState({});
   const theme = useTheme();
 
   const fetchRequests = async () => {
@@ -60,16 +66,58 @@ const FollowRequestsPage = () => {
 
   const handleAccept = async (requestId) => {
     setActionLoading((prev) => ({ ...prev, [requestId]: "accept" }));
-    await acceptFollowRequest(requestId);
-    setActionLoading((prev) => ({ ...prev, [requestId]: null }));
-    fetchRequests();
+    try {
+      await acceptFollowRequest(requestId);
+      // Remove the request from the list after successful acceptance
+      setRequests((prev) => prev.filter((req) => req.id !== requestId));
+      toast.success("Đã chấp nhận yêu cầu theo dõi");
+    } catch (error) {
+      console.error("Error accepting follow request:", error);
+      toast.error("Không thể chấp nhận yêu cầu");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [requestId]: null }));
+    }
   };
 
   const handleReject = async (requestId) => {
     setActionLoading((prev) => ({ ...prev, [requestId]: "reject" }));
-    await rejectFollowRequest(requestId);
-    setActionLoading((prev) => ({ ...prev, [requestId]: null }));
-    fetchRequests();
+    try {
+      await rejectFollowRequest(requestId);
+      // Remove the request from the list after successful rejection
+      setRequests((prev) => prev.filter((req) => req.id !== requestId));
+      toast.info("Đã từ chối yêu cầu theo dõi");
+    } catch (error) {
+      console.error("Error rejecting follow request:", error);
+      toast.error("Không thể từ chối yêu cầu");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [requestId]: null }));
+    }
+  };
+
+  // New function to handle following back a user
+  const handleFollowBack = async (userId) => {
+    try {
+      setActionLoading((prev) => ({ ...prev, [userId]: "followBack" }));
+
+      // Check if the user has a private profile
+      const isPrivate = await checkUserPrivate(userId);
+
+      // Update UI based on the privacy setting
+      if (isPrivate) {
+        setPendingRequests((prev) => ({ ...prev, [userId]: true }));
+        toast.info("Đã gửi yêu cầu theo dõi");
+      } else {
+        toast.success("Đã theo dõi người dùng");
+      }
+
+      // Call API to follow
+      await followUser(userId);
+    } catch (error) {
+      console.error("Error following user:", error);
+      toast.error("Không thể theo dõi người dùng");
+    } finally {
+      setActionLoading((prev) => ({ ...prev, [userId]: null }));
+    }
   };
 
   const timeSince = (dateString) => {
@@ -105,6 +153,18 @@ const FollowRequestsPage = () => {
         py: 4,
       }}
     >
+      <ToastContainer
+        position="top-right"
+        autoClose={5000}
+        hideProgressBar={false}
+        newestOnTop
+        closeOnClick
+        rtl={false}
+        pauseOnFocusLoss
+        draggable
+        pauseOnHover
+      />
+
       <Container maxWidth="md">
         <Breadcrumbs
           separator={<NavigateNextIcon fontSize="small" />}
@@ -368,6 +428,56 @@ const FollowRequestsPage = () => {
                             )}
                           </Box>
                         </Tooltip>
+
+                        {!pendingRequests[req.userId] && (
+                          <Tooltip title="Follow Back">
+                            <Box sx={{ position: "relative", mr: 1.5 }}>
+                              <Button
+                                variant="outlined"
+                                onClick={() => handleFollowBack(req.userId)}
+                                startIcon={<PersonAddIcon />}
+                                disabled={
+                                  actionLoading[req.userId] === "followBack"
+                                }
+                                color="secondary"
+                                sx={{
+                                  textTransform: "none",
+                                  fontWeight: 500,
+                                  px: 2,
+                                  minWidth: 110,
+                                  boxShadow: "none",
+                                  "&:hover": {
+                                    boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                                  },
+                                }}
+                              >
+                                Follow Back
+                              </Button>
+                              {actionLoading[req.userId] === "followBack" && (
+                                <CircularProgress
+                                  size={24}
+                                  sx={{
+                                    position: "absolute",
+                                    top: "50%",
+                                    left: "50%",
+                                    marginTop: "-12px",
+                                    marginLeft: "-12px",
+                                  }}
+                                />
+                              )}
+                            </Box>
+                          </Tooltip>
+                        )}
+
+                        {pendingRequests[req.userId] && (
+                          <Chip
+                            label="Request Sent"
+                            color="warning"
+                            size="small"
+                            sx={{ mr: 1.5, height: 36 }}
+                          />
+                        )}
+
                         <Tooltip title="Delete">
                           <Box sx={{ position: "relative" }}>
                             <Button

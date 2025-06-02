@@ -45,9 +45,9 @@ const NewsDetailPage = () => {
       try {
         const newsData = await getNewsById(id);
         setNews(newsData);
-        setUseful(newsData.userInteraction === "USEFUL");
-        setUseless(newsData.userInteraction === "USELESS");
-        setSaved(newsData.isSaved || false);
+        setUseful(newsData.interactedUseful);
+        setUseless(newsData.interactedUseless);
+        setSaved(newsData.favorited || false);
         setUsefulCount(newsData.usefulCount || 0);
         setUselessCount(newsData.uselessCount || 0);
         setLoading(false);
@@ -113,12 +113,10 @@ const NewsDetailPage = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleString("vi-VN", {
       year: "numeric",
       month: "long",
       day: "numeric",
-      hour: "2-digit",
-      minute: "2-digit",
     });
   };
 
@@ -169,7 +167,7 @@ const NewsDetailPage = () => {
         <Box sx={{ mb: 3 }}>
           <Breadcrumbs aria-label="breadcrumb">
             <Link
-              to="/news"
+              onClick={() => navigate(-1)}
               style={{
                 textDecoration: "none",
                 color: "#757575",
@@ -178,7 +176,7 @@ const NewsDetailPage = () => {
               }}
             >
               <ArrowBackIcon fontSize="small" sx={{ mr: 0.5 }} />
-              Back to News
+              Trở lại trang tin tức
             </Link>
           </Breadcrumbs>
         </Box>

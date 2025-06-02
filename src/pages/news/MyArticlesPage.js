@@ -125,7 +125,7 @@ const MyArticlesPage = () => {
   const formatDate = (dateString) => {
     if (!dateString) return "";
     const date = new Date(dateString);
-    return date.toLocaleDateString("en-US", {
+    return date.toLocaleString("vi-VN", {
       year: "numeric",
       month: "short",
       day: "numeric",
@@ -267,7 +267,7 @@ const MyArticlesPage = () => {
               }}
             >
               <ArrowBackIcon fontSize="small" sx={{ mr: 0.5 }} />
-              Back to News
+              Trở lại trang tin tức
             </Link>
           </Breadcrumbs>
         </Box>

@@ -13,6 +13,8 @@ import {
   IconButton,
   useTheme,
   alpha,
+  Avatar,
+  Link,
 } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
@@ -198,6 +200,51 @@ const PostDetailPage = () => {
                   Bình luận: {post?.countComments || 0}
                 </Typography>
               </Box>
+
+              {post?.doctor && (
+                <Box sx={{ mt: 3 }}>
+                  <Typography variant="subtitle2" fontWeight={600} gutterBottom>
+                    Bác sĩ được gắn thẻ
+                  </Typography>
+                  <Box sx={{ display: "flex", alignItems: "center", mt: 1 }}>
+                    <Avatar
+                      src={post.doctor.avatar}
+                      alt={post.doctor.name}
+                      sx={{ width: 40, height: 40, mr: 1.5 }}
+                    >
+                      {post.doctor.name
+                        ? post.doctor.name[0].toUpperCase()
+                        : "D"}
+                    </Avatar>
+                    <Box>
+                      <Typography
+                        variant="body2"
+                        component={Link}
+                        to={`/profile/${post.doctor.id}`}
+                        sx={{
+                          fontWeight: 600,
+                          textDecoration: "none",
+                          color: "text.primary",
+                          "&:hover": {
+                            color: "primary.main",
+                          },
+                        }}
+                      >
+                        {post.doctor.name}
+                      </Typography>
+                      {post.doctor.role && (
+                        <Typography
+                          variant="caption"
+                          color="text.secondary"
+                          display="block"
+                        >
+                          {post.doctor.role}
+                        </Typography>
+                      )}
+                    </Box>
+                  </Box>
+                </Box>
+              )}
             </Paper>
           </Grid>
         </Grid>

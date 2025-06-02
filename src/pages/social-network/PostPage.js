@@ -43,6 +43,12 @@ import TrendingUpIcon from "@mui/icons-material/TrendingUp";
 import NewReleasesIcon from "@mui/icons-material/NewReleases";
 import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import HealthAndSafetyIcon from "@mui/icons-material/HealthAndSafety";
+import NavigateBeforeIcon from "@mui/icons-material/NavigateBefore";
+import NavigateNextIcon from "@mui/icons-material/NavigateNext";
+import SendIcon from "@mui/icons-material/Send";
+import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
+import HowToRegIcon from "@mui/icons-material/HowToReg";
+import CancelIcon from "@mui/icons-material/Cancel";
 import {
   getAllPostsByUser,
   discoverPosts,
@@ -50,6 +56,8 @@ import {
   getPostsFromFollowers,
   suggestUsersToFollow,
   followUser,
+  checkUserPrivate,
+  searchPosts,
 } from "../../api/socialNetworkApi";
 import PostCard from "../../components/social-network/PostCardComponent";
 import { Link } from "react-router-dom";
@@ -62,6 +70,14 @@ const PostPage = () => {
   const [posts, setPosts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [feedType, setFeedType] = useState("discover");
+
+  // Thêm state cho chức năng tìm kiếm
+  const [searchQuery, setSearchQuery] = useState("");
+  const [isSearching, setIsSearching] = useState(false);
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchPage, setSearchPage] = useState(0);
+  const [hasMoreSearchResults, setHasMoreSearchResults] = useState(true);
+  const [showSearchResults, setShowSearchResults] = useState(false);
 
   // Separate pagination states for each feed type
   const [discoverPage, setDiscoverPage] = useState(0);
@@ -85,6 +101,7 @@ const PostPage = () => {
 
   const [isFollowingActionInProgress, setIsFollowingActionInProgress] =
     useState(false);
+  const [pendingRequests, setPendingRequests] = useState({}); // Track pending follow requests
 
   // Function to get current page based on feed type
   const getCurrentPage = () => {
@@ -276,22 +293,53 @@ const PostPage = () => {
     setIsFollowingActionInProgress(true); // Set the flag to true
 
     try {
-      // Update UI immediately for optimistic updates
-      setSuggestedUsers((prev) =>
-        prev.map((user) =>
-          user.id === userId ? { ...user, isFollowing: !isFollowing } : user
-        )
-      );
+      // If user is already being followed and is clicked again, this is an unfollow action
+      if (isFollowing) {
+        // Update UI immediately for unfollow action
+        setSuggestedUsers((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? { ...user, isFollowing: false, isPendingRequest: false }
+              : user
+          )
+        );
 
-      // Call API
-      await followUser(userId);
+        // Call API to unfollow
+        await followUser(userId);
+      } else {
+        // For follow action, check if the user has a private profile
+        const isPrivate = await checkUserPrivate(userId);
+
+        // Update UI based on privacy setting
+        setSuggestedUsers((prev) =>
+          prev.map((user) =>
+            user.id === userId
+              ? {
+                  ...user,
+                  isFollowing: !isPrivate, // Only mark as following if not private
+                  isPendingRequest: isPrivate, // Mark as pending request if private
+                }
+              : user
+          )
+        );
+
+        // Track pending request
+        if (isPrivate) {
+          setPendingRequests((prev) => ({ ...prev, [userId]: true }));
+        }
+
+        // Call API to follow (the backend will handle creating a request or direct follow)
+        await followUser(userId);
+      }
     } catch (error) {
       console.error("Error following/unfollowing user:", error);
 
       // Revert UI change on error
       setSuggestedUsers((prev) =>
         prev.map((user) =>
-          user.id === userId ? { ...user, isFollowing: isFollowing } : user
+          user.id === userId
+            ? { ...user, isFollowing: isFollowing, isPendingRequest: false }
+            : user
         )
       );
 
@@ -434,6 +482,8 @@ const PostPage = () => {
           >
             <Avatar
               src={user.avatar}
+              component={Link}
+              to={`/profile/${user.id}`}
               sx={{
                 width: 45,
                 height: 45,
@@ -442,12 +492,25 @@ const PostPage = () => {
                   theme.palette.common.black,
                   0.1
                 )}`,
+                cursor: "pointer",
               }}
             >
               {user.name ? user.name[0].toUpperCase() : "U"}
             </Avatar>
             <Box sx={{ flexGrow: 1 }}>
-              <Typography variant="subtitle2" fontWeight={600}>
+              <Typography
+                variant="subtitle2"
+                fontWeight={600}
+                component={Link}
+                to={`/profile/${user.id}`}
+                sx={{
+                  textDecoration: "none",
+                  color: "text.primary",
+                  "&:hover": {
+                    color: theme.palette.primary.main,
+                  },
+                }}
+              >
                 {user.name}
               </Typography>
               <Typography variant="caption" color="text.secondary">
@@ -456,19 +519,33 @@ const PostPage = () => {
             </Box>
             <Button
               size="small"
-              variant={user.isFollowing ? "contained" : "outlined"}
-              color="primary"
-              onClick={() => handleFollowUser(user.id, user.isFollowing)}
+              variant={
+                user.isFollowing || user.isPendingRequest
+                  ? "contained"
+                  : "outlined"
+              }
+              color={user.isPendingRequest ? "warning" : "primary"}
+              onClick={() =>
+                handleFollowUser(
+                  user.id,
+                  user.isFollowing || user.isPendingRequest
+                )
+              }
               sx={{
                 borderRadius: 6,
                 textTransform: "none",
                 minHeight: "36px",
                 maxHeight: "36px",
-                minWidth: user.isFollowing ? "120px" : "90px",
+                minWidth:
+                  user.isFollowing || user.isPendingRequest ? "120px" : "90px",
                 px: 2,
               }}
             >
-              {user.isFollowing ? "Đang theo dõi" : "Theo dõi"}
+              {user.isPendingRequest
+                ? "Đã gửi yêu cầu"
+                : user.isFollowing
+                ? "Đang theo dõi"
+                : "Theo dõi"}
             </Button>
           </Box>
         ))}
@@ -530,6 +607,8 @@ const PostPage = () => {
                 <ListItemAvatar>
                   <Avatar
                     src={user.avatar}
+                    component={Link}
+                    to={`/profile/${user.id}`}
                     sx={{
                       width: 50,
                       height: 50,
@@ -537,6 +616,7 @@ const PostPage = () => {
                         theme.palette.common.black,
                         0.1
                       )}`,
+                      cursor: "pointer",
                     }}
                   >
                     {user.name ? user.name[0].toUpperCase() : "U"}
@@ -544,7 +624,19 @@ const PostPage = () => {
                 </ListItemAvatar>
                 <ListItemText
                   primary={
-                    <Typography variant="subtitle1" fontWeight={600}>
+                    <Typography
+                      variant="subtitle1"
+                      fontWeight={600}
+                      component={Link}
+                      to={`/profile/${user.id}`}
+                      sx={{
+                        textDecoration: "none",
+                        color: "text.primary",
+                        "&:hover": {
+                          color: theme.palette.primary.main,
+                        },
+                      }}
+                    >
                       {user.name}
                     </Typography>
                   }
@@ -558,17 +650,34 @@ const PostPage = () => {
                 <ListItemSecondaryAction>
                   <Button
                     size="small"
-                    variant={user.isFollowing ? "contained" : "outlined"}
-                    color="primary"
-                    onClick={() => handleFollowUser(user.id, user.isFollowing)}
+                    variant={
+                      user.isFollowing || user.isPendingRequest
+                        ? "contained"
+                        : "outlined"
+                    }
+                    color={user.isPendingRequest ? "warning" : "primary"}
+                    onClick={() =>
+                      handleFollowUser(
+                        user.id,
+                        user.isFollowing || user.isPendingRequest
+                      )
+                    }
                     sx={{
                       borderRadius: 6,
                       textTransform: "none",
                       px: 2,
                       py: 0.8,
+                      minWidth:
+                        user.isPendingRequest || user.isFollowing
+                          ? "130px"
+                          : "90px",
                     }}
                   >
-                    {user.isFollowing ? "Đang theo dõi" : "Theo dõi"}
+                    {user.isPendingRequest
+                      ? "Đã gửi yêu cầu"
+                      : user.isFollowing
+                      ? "Đang theo dõi"
+                      : "Theo dõi"}
                   </Button>
                 </ListItemSecondaryAction>
               </ListItem>
@@ -617,6 +726,91 @@ const PostPage = () => {
     });
 
     setPosts(updatedPosts);
+  };
+
+  // Hàm tìm kiếm bài viết
+  const handleSearch = async (e) => {
+    e?.preventDefault();
+
+    if (!searchQuery.trim()) {
+      setShowSearchResults(false);
+      return;
+    }
+
+    setIsSearching(true);
+    setSearchPage(0);
+    setSearchResults([]);
+    setHasMoreSearchResults(true);
+    setShowSearchResults(true);
+
+    try {
+      const results = await searchPosts(searchQuery, 0, 10);
+      if (results && results.length > 0) {
+        setSearchResults(results);
+        setHasMoreSearchResults(results.length === 10);
+        setSearchPage(1);
+      } else {
+        setSearchResults([]);
+        setHasMoreSearchResults(false);
+      }
+    } catch (error) {
+      console.error("Error searching posts:", error);
+      toast.error("Không thể tìm kiếm bài viết");
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Hàm tải thêm kết quả tìm kiếm
+  const loadMoreSearchResults = async () => {
+    if (!hasMoreSearchResults || isSearching) return;
+
+    setIsSearching(true);
+    try {
+      const results = await searchPosts(searchQuery, searchPage, 10);
+      if (results && results.length > 0) {
+        setSearchResults((prev) => [...prev, ...results]);
+        setHasMoreSearchResults(results.length === 10);
+        setSearchPage((prev) => prev + 1);
+      } else {
+        setHasMoreSearchResults(false);
+      }
+    } catch (error) {
+      console.error("Error loading more search results:", error);
+    } finally {
+      setIsSearching(false);
+    }
+  };
+
+  // Tạo ref cho phần tử cuối cùng trong kết quả tìm kiếm
+  const searchObserver = useRef();
+  const lastSearchResultRef = useCallback(
+    (node) => {
+      if (isSearching) return;
+      if (searchObserver.current) searchObserver.current.disconnect();
+      searchObserver.current = new IntersectionObserver((entries) => {
+        if (entries[0].isIntersecting && hasMoreSearchResults) {
+          loadMoreSearchResults();
+        }
+      });
+      if (node) searchObserver.current.observe(node);
+    },
+    [isSearching, hasMoreSearchResults]
+  );
+
+  // Hàm xử lý thay đổi input tìm kiếm
+  const handleSearchInputChange = (e) => {
+    setSearchQuery(e.target.value);
+    if (!e.target.value.trim()) {
+      setShowSearchResults(false);
+    }
+  };
+
+  // Hàm xóa tìm kiếm
+  const clearSearch = () => {
+    setSearchQuery("");
+    setShowSearchResults(false);
+    setSearchResults([]);
   };
 
   return (
@@ -788,6 +982,48 @@ const PostPage = () => {
             md={6}
             sx={{ display: "flex", flexDirection: "column" }}
           >
+            {/* Search Bar */}
+            <Paper
+              elevation={0}
+              component="form"
+              onSubmit={handleSearch}
+              sx={{
+                borderRadius: 3,
+                overflow: "hidden",
+                border: "1px solid",
+                borderColor: alpha(theme.palette.divider, 0.1),
+                mb: 3,
+                p: 0.5,
+                display: "flex",
+                alignItems: "center",
+              }}
+            >
+              <IconButton type="submit" sx={{ p: 1 }}>
+                <SearchIcon />
+              </IconButton>
+              <TextField
+                placeholder="Tìm kiếm bài viết..."
+                value={searchQuery}
+                onChange={handleSearchInputChange}
+                variant="standard"
+                fullWidth
+                InputProps={{
+                  disableUnderline: true,
+                }}
+                sx={{
+                  "& .MuiInput-root": {
+                    height: 40,
+                    fontSize: "16px",
+                  },
+                }}
+              />
+              {searchQuery && (
+                <IconButton onClick={clearSearch} sx={{ p: 1 }}>
+                  <CancelIcon fontSize="small" />
+                </IconButton>
+              )}
+            </Paper>
+
             {/* Fixed Tabs */}
             <Paper
               elevation={0}
@@ -801,6 +1037,7 @@ const PostPage = () => {
                 top: 80,
                 zIndex: 5,
                 backgroundColor: "#fff",
+                display: showSearchResults ? "none" : "block",
               }}
             >
               <Tabs
@@ -837,8 +1074,112 @@ const PostPage = () => {
               </Tabs>
             </Paper>
 
+            {/* Search Results */}
+            {showSearchResults && (
+              <Box sx={{ mb: 3 }}>
+                <Paper
+                  elevation={0}
+                  sx={{
+                    borderRadius: 3,
+                    overflow: "hidden",
+                    border: "1px solid",
+                    borderColor: alpha(theme.palette.divider, 0.1),
+                    mb: 3,
+                    p: 2,
+                  }}
+                >
+                  <Box
+                    sx={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "space-between",
+                      mb: 2,
+                    }}
+                  >
+                    <Typography variant="h6" fontWeight={600}>
+                      Kết quả tìm kiếm: {searchQuery}
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      color="primary"
+                      size="small"
+                      onClick={clearSearch}
+                      startIcon={<CancelIcon />}
+                      sx={{ borderRadius: 2 }}
+                    >
+                      Đóng
+                    </Button>
+                  </Box>
+
+                  {searchResults.length === 0 && !isSearching ? (
+                    <Box
+                      sx={{
+                        display: "flex",
+                        flexDirection: "column",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        py: 4,
+                        textAlign: "center",
+                      }}
+                    >
+                      <SearchIcon
+                        sx={{ fontSize: 60, color: "text.secondary", mb: 2 }}
+                      />
+                      <Typography variant="h6" gutterBottom>
+                        Không tìm thấy kết quả nào
+                      </Typography>
+                      <Typography variant="body2" color="text.secondary">
+                        Hãy thử tìm kiếm với từ khóa khác
+                      </Typography>
+                    </Box>
+                  ) : (
+                    <>
+                      {searchResults.map((post, index) => (
+                        <div
+                          key={post.id}
+                          ref={
+                            index === searchResults.length - 1
+                              ? lastSearchResultRef
+                              : null
+                          }
+                        >
+                          <PostCard
+                            post={post}
+                            onRefresh={handleSearch}
+                            onLike={() =>
+                              handlePostInteraction(post.id, "like")
+                            }
+                            onSave={() =>
+                              handlePostInteraction(post.id, "save")
+                            }
+                          />
+                        </div>
+                      ))}
+                      {isSearching && (
+                        <Box
+                          sx={{
+                            display: "flex",
+                            justifyContent: "center",
+                            p: 2,
+                          }}
+                        >
+                          <CircularProgress size={24} />
+                        </Box>
+                      )}
+                    </>
+                  )}
+                </Paper>
+              </Box>
+            )}
+
             {/* Scrollable Content */}
-            <Box sx={{ flexGrow: 1, overflow: "auto" }}>
+            <Box
+              sx={{
+                flexGrow: 1,
+                overflow: "auto",
+                display: showSearchResults ? "none" : "block",
+              }}
+            >
               {loading && posts.length === 0 ? (
                 renderPostsSkeleton()
               ) : (

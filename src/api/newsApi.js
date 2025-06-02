@@ -75,8 +75,10 @@ export const searchNews = async (keyword, page = 0, size = 10) => {
     const response = await axiosClient.get("news/search", {
       params: { keyword, page, size },
     });
+    console.log("Search API raw response:", response);
     return response.result;
   } catch (error) {
+    console.error("Error in searchNews API:", error);
     throw error;
   }
 };
