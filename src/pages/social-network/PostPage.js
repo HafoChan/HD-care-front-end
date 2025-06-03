@@ -1120,6 +1120,7 @@ const PostPage = () => {
                         justifyContent: "center",
                         py: 4,
                         textAlign: "center",
+                        overflowX: "hidden",
                       }}
                     >
                       <SearchIcon
@@ -1178,6 +1179,7 @@ const PostPage = () => {
                 flexGrow: 1,
                 overflow: "auto",
                 display: showSearchResults ? "none" : "block",
+                overflowX: "hidden",
               }}
             >
               {loading && posts.length === 0 ? (
