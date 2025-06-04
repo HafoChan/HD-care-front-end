@@ -347,7 +347,7 @@ const NewsHomePage = () => {
                       sx={{
                         backgroundImage: `url(${
                           news.coverImageUrl ||
-                          "https://via.placeholder.com/400x216?text=HD-Care+News"
+                          "/src/assets/images/placeholder.png"
                         })`,
                         backgroundSize: "cover",
                         backgroundPosition: "center",

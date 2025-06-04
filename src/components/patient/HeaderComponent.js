@@ -210,20 +210,6 @@ const HeaderComponent = ({ userInfo }) => {
         newEventSource.close();
       };
 
-      // eventSource.addEventListener("social", (event) => {
-      //   try {
-      //     console.log("receive")
-      //     const data = JSON.parse(event.data);
-      //     console.log("Received notification:", data);
-          
-      //     // Add new notification to state
-      //     setNotifications(prev => [data.data, ...prev]);
-          
-      //     // Increase unread count
-      //     setUnreadCount(prev => prev + 1);
-      //   } catch (error) {
-      //     console.error("Error parsing SSE message:", error);
-      //   }      });
       
       setEventSource(newEventSource);
     }
@@ -265,12 +251,13 @@ const HeaderComponent = ({ userInfo }) => {
     setUnreadCount(unreadCount);  
   }
   useEffect(() => {
-    
-    getInfo();
     getPageNotification()
 
-  }, [userInfo, img]);
+  }, [userInfo, img, unreadCount]);
 
+  useEffect(() => {
+    getInfo();
+  }, [])
   // Cleanup SSE connection on component unmount
 
   const NavButton = ({ to, label, active }) => (

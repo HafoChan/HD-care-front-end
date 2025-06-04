@@ -1,3 +1,15 @@
+// Chat component for real-time messaging between doctors and patients
+// Features:
+// - Real-time messaging using ZIM SDK
+// - Video call invitations
+// - Message history with pagination
+// - Message status indicators
+// - Modern UI with animations and transitions
+// - Support for both doctor and patient roles
+// - Message grouping by date
+// - Special message formatting for video calls
+// - Responsive design for all screen sizes
+
 import React, { useEffect, useState, useRef, useCallback } from 'react';
 import { 
   Box, Typography, IconButton, TextField, Button, Avatar, 
@@ -1177,7 +1189,7 @@ function Chat() {
               )}
             </Box>
             <Typography variant="body2" color="text.secondary" sx={{ display: 'flex', alignItems: 'center' }}>
-              {userRole === 'DOCTOR' ? 'Bệnh nhân' : (doctorInfo?.specialization || 'Chuyên khoa')}
+              {userRole === 'DOCTOR' ? 'Bệnh nhân' : (doctorInfo?.specialization?.split('\\')[0] || 'Chuyên khoa')}
               <Box 
                 component="span" 
                 sx={{ 
