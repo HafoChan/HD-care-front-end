@@ -527,9 +527,7 @@ const NewsHomePage = () => {
 
   return (
     <Box sx={{ bgcolor: "#fafafa", minHeight: "100vh", pb: 4 }}>
-      <HeaderComponent />
-
-      <Container maxWidth="lg" sx={{ mt: 4 }}>
+      <Container maxWidth="lg" sx={{ pt: 4 }}>
         {/* Featured News Section (for Desktop) */}
         {!isMedium && !isSearching && renderFeaturedSection()}
 

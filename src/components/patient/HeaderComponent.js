@@ -21,7 +21,7 @@ import {
   Collapse,
   Popover,
 } from "@mui/material";
-import { Link, useLocation } from "react-router-dom";
+import { Link, useLocation, useNavigate } from "react-router-dom";
 import NotificationsNoneIcon from "@mui/icons-material/NotificationsNone";
 import MenuIcon from "@mui/icons-material/Menu";
 import HomeIcon from "@mui/icons-material/Home";
@@ -38,18 +38,16 @@ import ExpandMore from "@mui/icons-material/ExpandMore";
 import EditIcon from "@mui/icons-material/Edit";
 import images from "../../constants/images";
 import React, { useEffect, useState } from "react";
-import notificationApi from "../../api/notification";
 import {
   remove,
   getImg,
   getRefreshToken,
-  getAccessToken,
 } from "../../service/otherService/localStorage";
-import { useNavigate } from "react-router-dom";
-import dayjs from 'dayjs';
-import relativeTime from 'dayjs/plugin/relativeTime';
+import dayjs from "dayjs";
+import relativeTime from "dayjs/plugin/relativeTime";
 import { notification } from "antd";
-import { getAllCommentsByPost } from "../../api/socialNetworkApi";
+import { useNotification } from "../../context/NotificationContext";
+
 dayjs.extend(relativeTime);
 
 const HeaderComponent = ({ userInfo }) => {
@@ -63,12 +61,20 @@ const HeaderComponent = ({ userInfo }) => {
   const [mobileOpen, setMobileOpen] = useState(false);
   const [newsOpen, setNewsOpen] = useState(false);
   const [socialOpen, setSocialOpen] = useState(false);
-  
-  // Notification related states
-  const [notifications, setNotifications] = useState([]);
-  const [unreadCount, setUnreadCount] = useState(0);
+
+  // Get notification context
+  const {
+    notifications,
+    unreadCount,
+    isLoading,
+    getPageNotification,
+    getAllNotification,
+    markAsRead,
+    markAllAsRead,
+  } = useNotification();
+
+  // Notification popover state
   const [notificationAnchorEl, setNotificationAnchorEl] = useState(null);
-  const [eventSource, setEventSource] = useState(null);
 
   const handleMenuOpen = (event) => {
     setAnchorEl(event.currentTarget);
@@ -80,11 +86,6 @@ const HeaderComponent = ({ userInfo }) => {
 
   const handleLogout = () => {
     console.log("Đang thực hiện đăng xuất...");
-    // Close SSE connection if it exists
-    if (eventSource) {
-      eventSource.close();
-      setEventSource(null);
-    }
     setCheckLogin(false);
     remove();
     handleMenuClose();
@@ -99,125 +100,59 @@ const HeaderComponent = ({ userInfo }) => {
   // Notification handlers
   const handleNotificationOpen = (event) => {
     setNotificationAnchorEl(event.currentTarget);
+    // Get notifications when opening panel
+    getPageNotification();
   };
 
   const handleNotificationClose = () => {
     setNotificationAnchorEl(null);
   };
 
-  const markAllAsRead = () => {
-    updateAllStatusRead()
-    setUnreadCount(0);
+  const handleMarkAllAsRead = () => {
+    markAllAsRead();
   };
-
-  const updateStatusRead = async (id) => {
-    await notificationApi.putNotification(id)
-    getPageNotification()
-  }
-
-  const updateAllStatusRead = async () => {
-    await notificationApi.updateAllStatusRead()
-    getPageNotification()
-  }
 
   const handleNotificationClick = (notification) => {
-    // Mark specific notification as read
-    updateStatusRead(notification.id)
-    console.log("notification", notification)
-    if (notification.event_type == "Đặt lịch khám" || notification.event_type == "Thay đổi lịch") {
-      navigate(`/appointment-list/${notification.idReference}`)
-    }
-    else{
-      console.log("notification", notification)
-      navigate(`/social-network/post/${notification.idReference}`)
-    }
+    // Mark notification as read
+    markAsRead(notification.id);
 
-    
-    // Update unread count
-    const updatedUnreadCount = notifications.filter(n => !n.read && n.id !== notification.id).length;
-    setUnreadCount(updatedUnreadCount);
-    
-    
-    // Navigate based on notification type if needed
-    // navigate(notification.redirectUrl);
-    
-    // handleNotificationClose();
+    // Close notification panel
+    handleNotificationClose();
+
+    // Navigate based on notification type
+    if (
+      notification.event_type === "Đặt lịch khám" ||
+      notification.event_type === "Thay đổi lịch"
+    ) {
+      navigate(`/appointment-list/${notification.idReference}`);
+    } else {
+      navigate(`/social-network/post/${notification.idReference}`);
+    }
   };
 
-  const getInfo = () => {
-    console.log("getInfo")
-    getPageNotification()
+  const handleViewAllNotifications = () => {
+    getAllNotification();
+    // Close notification panel after viewing all
+    handleNotificationClose();
+  };
+
+  useEffect(() => {
+    // Set profile image
     if (getRefreshToken()) {
       setCheckLogin(true);
-      const storedUserInfo = getImg();
+      const storedUserImg = getImg();
 
-      if (storedUserInfo && storedUserInfo !== "undefined") {
-        setImg(storedUserInfo);
+      if (storedUserImg && storedUserImg !== "undefined") {
+        setImg(storedUserImg);
       } else {
         setImg(
           "https://kasfaa.com/wp-content/uploads/2023/05/Generic-Avatar.jpg"
         );
       }
-
-      // Setup SSE connection if authenticated
-      setupSSEConnection();
     } else {
       setCheckLogin(false);
     }
-  };
-
-  const setupSSEConnection = () => {
-
-    if (!eventSource) {
-      const token = getAccessToken();
-      
-      // Close existing connection if any
-      if (eventSource) {
-        eventSource.close();
-      }
-
-      // Create new SSE connection with auth token
-      const newEventSource = new EventSource(`http://localhost:8082/api/v1/sse/subscribe?token=${token}`);
-
-            
-
-      newEventSource.onerror = (event) => {
-        console.error("Error occurred: ", event);
-        if (newEventSource.readyState === EventSource.CLOSED) {
-            // Kết nối bị đóng, thử kết nối lại nếu cần
-            console.log("Reconnecting...");
-            // Có thể gọi lại API để tạo kết nối mới hoặc xử lý thông báo
-        }
-    };
-    console.log("EventSource readyState:", newEventSource.readyState);
-
-
-      newEventSource.onmessage = (event) => {
-        try {
-          console.log("receive")
-          const data = JSON.parse(event.data);
-          console.log("Received notification:", data);
-          
-          // // Add new notification to state
-          // setNotifications(prev => [data, ...prev]);
-          
-          // Increase unread count
-          getPageNotification()
-          setUnreadCount(prev => prev + 1);
-        } catch (error) {
-          console.error("Error parsing SSE message:", error);
-        }
-      };
-
-      newEventSource.onerror = (error) => {
-        console.error("SSE connection error:", error);
-        newEventSource.close();
-      };
-
-      
-      setEventSource(newEventSource);
-    }
-  };
+  }, []);
 
   const toggleDrawer = () => {
     setMobileOpen(!mobileOpen);
@@ -240,30 +175,6 @@ const HeaderComponent = ({ userInfo }) => {
       return true;
     return location.pathname === path;
   };
-
-  const getAllNotification = async () => {
-    const page =  await notificationApi.getAllNotification()
-    console.log(page)
-    setNotifications(page.result)
-    const unreadCount = page.result.filter(n => !n.read).length;
-    setUnreadCount(unreadCount);  
-  }
-
-  const getPageNotification = async () => {
-    const page =  await notificationApi.getPageNotification()
-    setNotifications(page.result.content)
-    const pageAll =  await notificationApi.getAllNotification()
-    const unreadCount = pageAll.result.filter(n => !n.read).length;
-    setUnreadCount(unreadCount);  
-
-  }
-
-
-  // Cleanup SSE connection on component unmount
-  useEffect(() => {
-    // Listen for login success event
-    getInfo();
-  }, []); // Empty dependency array means it only runs once on mount
 
   const NavButton = ({ to, label, active }) => (
     <Link to={to} style={{ textDecoration: "none" }}>
@@ -665,10 +576,11 @@ const HeaderComponent = ({ userInfo }) => {
             )}
 
             <Box sx={{ display: "flex", alignItems: "center" }}>
-              <IconButton 
-                color="primary" 
+              <IconButton
+                color="primary"
                 sx={{ mr: 1 }}
                 onClick={handleNotificationOpen}
+                disabled={isLoading}
               >
                 <Badge badgeContent={unreadCount} color="error">
                   <NotificationsNoneIcon />
@@ -730,36 +642,43 @@ const HeaderComponent = ({ userInfo }) => {
         open={Boolean(notificationAnchorEl)}
         onClose={handleNotificationClose}
         anchorOrigin={{
-          vertical: 'bottom',
-          horizontal: 'right',
+          vertical: "bottom",
+          horizontal: "right",
         }}
         transformOrigin={{
-          vertical: 'top',
-          horizontal: 'right',
+          vertical: "top",
+          horizontal: "right",
         }}
         PaperProps={{
           sx: {
             width: 320,
             maxHeight: 400,
-            boxShadow: '0 4px 20px rgba(0,0,0,0.1)',
+            boxShadow: "0 4px 20px rgba(0,0,0,0.1)",
             borderRadius: 2,
             mt: 1.5,
-          }
+          },
         }}
       >
-        <Box sx={{ p: 2, borderBottom: '1px solid', borderColor: 'divider' }}>
-          <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <Box sx={{ p: 2, borderBottom: "1px solid", borderColor: "divider" }}>
+          <Box
+            sx={{
+              display: "flex",
+              justifyContent: "space-between",
+              alignItems: "center",
+            }}
+          >
             <Typography variant="h6" sx={{ fontWeight: 600 }}>
               Thông báo
             </Typography>
             {unreadCount > 0 && (
-              <Button 
-                size="small" 
-                onClick={markAllAsRead}
-                sx={{ 
-                  textTransform: 'none',
+              <Button
+                size="small"
+                onClick={handleMarkAllAsRead}
+                disabled={isLoading}
+                sx={{
+                  textTransform: "none",
                   fontWeight: 500,
-                  color: theme.palette.primary.main
+                  color: theme.palette.primary.main,
                 }}
               >
                 Đánh dấu đã đọc rồi
@@ -767,59 +686,77 @@ const HeaderComponent = ({ userInfo }) => {
             )}
           </Box>
         </Box>
-        
-        <List sx={{ py: 0, maxHeight: 300, overflowY: 'auto' }}>
-          {notifications.length > 0 ? (
+
+        <List sx={{ py: 0, maxHeight: 300, overflowY: "auto" }}>
+          {isLoading ? (
+            <Box sx={{ py: 4, textAlign: "center" }}>
+              <Typography color="text.secondary">
+                Đang tải thông báo...
+              </Typography>
+            </Box>
+          ) : notifications.length > 0 ? (
             notifications.map((notification, index) => (
               <React.Fragment key={notification.id || index}>
-                <ListItem 
-                  button 
+                <ListItem
+                  button
                   onClick={() => handleNotificationClick(notification)}
-                  sx={{ 
+                  sx={{
                     py: 1.5,
-                    backgroundColor: notification.read ? 'transparent' : 'rgba(250, 196, 28, 0.08)',
-                    '&:hover': {
-                      backgroundColor: 'rgba(250, 196, 28, 0.15)',
-                    }
+                    backgroundColor: notification.read
+                      ? "transparent"
+                      : "rgba(250, 196, 28, 0.08)",
+                    "&:hover": {
+                      backgroundColor: "rgba(250, 196, 28, 0.15)",
+                    },
                   }}
                 >
-                  <Box sx={{ width: '100%' }}>
-                    <Typography 
-                      variant="body2" 
-                      sx={{ 
+                  <Box sx={{ width: "100%" }}>
+                    <Typography
+                      variant="body2"
+                      sx={{
                         fontWeight: notification.read ? 400 : 600,
                         mb: 0.5,
-                        color: notification.read ? theme.palette.text.primary : theme.palette.primary.main,
+                        color: notification.read
+                          ? theme.palette.text.primary
+                          : theme.palette.primary.main,
                       }}
                     >
-                      <Typography variant="body2" sx={{ fontWeight: 600, color : theme.palette.primary.main }}>
-                        {notification.event_type || 'Thông báo mới'}
+                      <Typography
+                        variant="body2"
+                        sx={{
+                          fontWeight: 600,
+                          color: theme.palette.primary.main,
+                        }}
+                      >
+                        {notification.event_type || "Thông báo mới"}
                       </Typography>
                     </Typography>
-                    <Typography 
-                      variant="body2" 
+                    <Typography
+                      variant="body2"
                       color="text.secondary"
-                      sx={{ 
-                        fontSize: '0.875rem',
-                        overflow: 'hidden',
-                        textOverflow: 'ellipsis',
-                        display: '-webkit-box',
+                      sx={{
+                        fontSize: "0.875rem",
+                        overflow: "hidden",
+                        textOverflow: "ellipsis",
+                        display: "-webkit-box",
                         WebkitLineClamp: 2,
-                        WebkitBoxOrient: 'vertical',
+                        WebkitBoxOrient: "vertical",
                       }}
                     >
                       {notification.message}
                     </Typography>
-                    <Typography 
-                      variant="caption" 
+                    <Typography
+                      variant="caption"
                       color="text.secondary"
-                      sx={{ 
-                        display: 'block',
+                      sx={{
+                        display: "block",
                         mt: 0.5,
-                        fontSize: '0.75rem',
+                        fontSize: "0.75rem",
                       }}
                     >
-                      {notification.createdAt? dayjs(notification.createdAt).fromNow(): 'Vừa xong'}
+                      {notification.createdAt
+                        ? dayjs(notification.createdAt).fromNow()
+                        : "Vừa xong"}
                     </Typography>
                   </Box>
                 </ListItem>
@@ -827,24 +764,30 @@ const HeaderComponent = ({ userInfo }) => {
               </React.Fragment>
             ))
           ) : (
-            <Box sx={{ py: 4, textAlign: 'center' }}>
+            <Box sx={{ py: 4, textAlign: "center" }}>
               <Typography color="text.secondary">
                 Không có thông báo nào
               </Typography>
             </Box>
           )}
         </List>
-        
+
         {notifications.length > 0 && (
-          <Box sx={{ p: 1.5, textAlign: 'center', borderTop: '1px solid', borderColor: 'divider' }}>
+          <Box
+            sx={{
+              p: 1.5,
+              textAlign: "center",
+              borderTop: "1px solid",
+              borderColor: "divider",
+            }}
+          >
             <Button
               fullWidth
               size="small"
-              onClick={() => {
-                getAllNotification();
-              }}
-              sx={{ 
-                textTransform: 'none',
+              onClick={handleViewAllNotifications}
+              disabled={isLoading}
+              sx={{
+                textTransform: "none",
                 fontWeight: 500,
               }}
             >

@@ -181,7 +181,6 @@ const AppointmentDetailPatient = () => {
   if (loading) {
     return (
       <Box>
-        <HeaderComponent />
         <Box
           sx={{
             display: "flex",
@@ -202,7 +201,6 @@ const AppointmentDetailPatient = () => {
   if (!appointmentData) {
     return (
       <Box>
-        <HeaderComponent />
         <Container>
           <Box
             sx={{
@@ -238,7 +236,6 @@ const AppointmentDetailPatient = () => {
         minHeight: "100vh",
       }}
     >
-      <HeaderComponent />
       <Container maxWidth="lg" sx={{ py: 5 }}>
         <Fade in timeout={500}>
           <Box>

@@ -281,38 +281,7 @@ const TeamOfDoctors = () => {
         paddingBottom: 8,
       }}
     >
-      {/* Header */}
-      <HeaderComponent />
-
       <Container maxWidth="lg" sx={{ pt: 3 }}>
-        {/* Breadcrumbs */}
-        <Breadcrumbs
-          separator={<NavigateNextIcon fontSize="small" />}
-          aria-label="breadcrumb"
-          sx={{ mb: 3 }}
-        >
-          <Button
-            component={Link}
-            to="/"
-            startIcon={<HomeOutlinedIcon />}
-            size="small"
-            sx={{
-              textTransform: "none",
-              fontWeight: 500,
-              color: "text.secondary",
-              "&:hover": {
-                color: theme.palette.primary.main,
-                backgroundColor: "transparent",
-              },
-            }}
-          >
-            Trang chủ
-          </Button>
-          <Typography color="text.primary" fontWeight={600}>
-            Đội ngũ bác sĩ
-          </Typography>
-        </Breadcrumbs>
-
         {/* Page Title */}
         <Typography
           variant="h4"

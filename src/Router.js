@@ -21,6 +21,7 @@ import PrescriptionManagement from "./pages/doctor/PrescriptionManagement";
 import ManageAppointmentHistory from "./pages/doctor/ManageAppointmentHistory";
 import EvaluateForm from "./components/patient/evaluateForm";
 import Layout from "./components/doctor/Layout";
+import PatientLayout from "./components/patient/PatientLayout";
 import { ToastContainer } from "react-toastify";
 import PatientDetail from "./pages/doctor/PatientDetail";
 import AppointmentDetail from "./pages/doctor/AppointmentDetail";
@@ -121,22 +122,51 @@ const AppRouter = () => {
       <Route index element={<Navigate to="/home" replace />} />
       <Route path="/evaluate" element={<EvaluateForm />} />
       <Route path="/authenticate" element={<Authenticate />} />
-      <Route path="/home" element={<Home />} />
       <Route path="/login" element={<Login />} />
       <Route path="/register" element={<Register />} />
-      <Route path="/doctor/:id" element={<DoctorDetail />} />
-      <Route path="/video-call/:doctorId" element={<VideoCall />} />
-      <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
-      <Route path="/profile" element={<Profile />} />
-      <Route path="/profile/:userId" element={<ViewProfile />} />
-      <Route path="/user-detail" element={<UserDetail />} />
-      <Route path="/appointment-list" element={<AppointmentList />} />
       <Route path="/not-found" element={<NotFound />} />
-      <Route
-        path="/appointment-list/:id"
-        element={<AppointmentDetailPatient />}
-      />
-      <Route path="/appointment-history" element={<AppointmentHistory />} />
+      <Route path="/video-call/:doctorId" element={<VideoCall />} />
+
+      {/* Patient Routes with Shared Layout */}
+      <Route element={<PatientLayout />}>
+        <Route path="/home" element={<Home />} />
+        <Route path="/doctor/:id" element={<DoctorDetail />} />
+        <Route path="/team-of-doctors" element={<TeamOfDoctors />} />
+        <Route path="/profile" element={<Profile />} />
+        <Route path="/profile/:userId" element={<ViewProfile />} />
+        <Route path="/user-detail" element={<UserDetail />} />
+        <Route path="/appointment-list" element={<AppointmentList />} />
+        <Route
+          path="/appointment-list/:id"
+          element={<AppointmentDetailPatient />}
+        />
+        <Route path="/appointment-history" element={<AppointmentHistory />} />
+
+        {/* News Routes - Order matters: specific routes first, then dynamic routes */}
+        <Route path="/news" element={<NewsHomePage />} />
+        <Route path="/news/create" element={<CreateNewsPage />} />
+        <Route path="/news/saved" element={<SavedNewsPage />} />
+        <Route path="/news/my-articles" element={<MyArticlesPage />} />
+        <Route path="/news/edit/:id" element={<EditNewsPage />} />
+        <Route path="/news/doctor/:doctorId" element={<DoctorArticlesPage />} />
+        <Route path="/news/:id" element={<NewsDetailPage />} />
+
+        {/* Social Network Routes */}
+        <Route path="/social-network" element={<PostPage />} />
+        <Route
+          path="/social-network/post/:postId"
+          element={<PostDetailPage />}
+        />
+        <Route
+          path="/social-network/create-post"
+          element={<CreatePostPage />}
+        />
+        <Route
+          path="/social-network/saved-posts"
+          element={<SavedPostsPage />}
+        />
+        <Route path="/social-network/follow" element={<FollowPage />} />
+      </Route>
 
       <Route
         path="/doctor/manage-appointment-history"
@@ -201,36 +231,6 @@ const AppRouter = () => {
         <Route path="/doctor_chat" element={<ChatDoctor />} />
       </Route>
 
-      {/* News Routes - Order matters: specific routes first, then dynamic routes */}
-      <Route path="/news" element={<NewsHomePage />} />
-      <Route
-        path="/news/create"
-        element={
-          <PrivateRoute>
-            <CreateNewsPage />
-          </PrivateRoute>
-        }
-      />
-      <Route path="/news/saved" element={<SavedNewsPage />} />
-      <Route
-        path="/news/my-articles"
-        element={
-          <PrivateRoute>
-            <MyArticlesPage />
-          </PrivateRoute>
-        }
-      />
-      <Route
-        path="/news/edit/:id"
-        element={
-          <PrivateRoute>
-            <EditNewsPage />
-          </PrivateRoute>
-        }
-      />
-      <Route path="/news/doctor/:doctorId" element={<DoctorArticlesPage />} />
-      <Route path="/news/:id" element={<NewsDetailPage />} />
-
       {/* Restricted News routes for doctors and admins */}
       <Route
         path="/news/review/:id"
@@ -240,15 +240,6 @@ const AppRouter = () => {
           </DoctorOrAdminRoute>
         }
       />
-
-      {/* Social Network Routes */}
-      <Route path="/social-network" element={<PostPage />} />
-      <Route path="/social-network/post/:postId" element={<PostDetailPage />} />
-      <Route path="/social-network/create-post" element={<CreatePostPage />} />
-      <Route path="/social-network/saved-posts" element={<SavedPostsPage />} />
-      <Route path="/social-network/follow" element={<FollowPage />} />
-
-      <Route path="/chat/:doctorId" element={<Chat />} />
     </Routes>
   );
 };

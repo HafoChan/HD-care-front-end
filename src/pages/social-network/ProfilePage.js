@@ -428,9 +428,6 @@ const ProfilePage = () => {
         minHeight: "100vh",
       }}
     >
-      {/* Include HeaderComponent */}
-      <HeaderComponent />
-
       {/* Page Content */}
       <Container maxWidth="lg" sx={{ pt: 3, pb: 6 }}>
         <Grid container spacing={3}>

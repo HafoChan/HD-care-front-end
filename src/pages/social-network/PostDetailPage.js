@@ -83,8 +83,6 @@ const PostDetailPage = () => {
 
   return (
     <Box sx={{ bgcolor: "#f5f7fa", minHeight: "100vh" }}>
-      <HeaderComponent />
-
       <Container
         maxWidth={false}
         sx={{

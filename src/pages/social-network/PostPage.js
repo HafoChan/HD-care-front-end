@@ -822,11 +822,6 @@ const PostPage = () => {
         flexDirection: "column",
       }}
     >
-      {/* Fixed Header */}
-      <Box sx={{ position: "sticky", top: 0, zIndex: 10 }}>
-        <HeaderComponent />
-      </Box>
-
       <ToastContainer
         position="top-right"
         autoClose={5000}

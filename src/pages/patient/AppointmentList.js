@@ -337,8 +337,6 @@ const AppointmentList = () => {
 
   return (
     <Box sx={{ bgcolor: alpha(theme.palette.background.default, 0.8) }}>
-      <HeaderComponent />
-
       <Container sx={{ maxWidth: 1200, py: 6 }}>
         <Divider sx={{ mb: 5 }} />
 

@@ -271,8 +271,8 @@ const BookingForm = ({ open, onClose, selectedDate, doctor, schedule }) => {
                 {doctor?.name || "Bác sĩ"}
               </Typography>
               <Typography variant="body2" color="text.secondary">
-                {doctor?.specialization || "Chuyên khoa"} • {doctor?.district}{" "}
-                {doctor?.city}
+                {doctor?.specialization.split("\\")[0] || "Chuyên khoa"} •{" "}
+                {doctor?.district} {doctor?.city}
               </Typography>
             </Box>
           </Box>

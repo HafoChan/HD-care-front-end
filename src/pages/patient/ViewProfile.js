@@ -432,8 +432,6 @@ function ViewProfile() {
         minHeight: "100vh",
       }}
     >
-      <HeaderComponent />
-
       <ToastContainer
         position="top-right"
         autoClose={6000}

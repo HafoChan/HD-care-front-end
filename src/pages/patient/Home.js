@@ -149,9 +149,6 @@ const HomePage = () => {
         minHeight: "100vh",
       }}
     >
-      {/* Header */}
-      <HeaderComponent />
-
       {/* Hero Section */}
       <Box
         sx={{

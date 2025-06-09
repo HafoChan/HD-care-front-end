@@ -69,8 +69,6 @@ function AppointmentHistory() {
         minHeight: "100vh",
       }}
     >
-      <HeaderComponent />
-
       <Divider />
 
       <Container maxWidth="lg" sx={{ py: 5 }}>

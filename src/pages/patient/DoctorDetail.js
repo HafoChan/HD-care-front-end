@@ -825,8 +825,6 @@ function DoctorDetail() {
         position: "relative",
       }}
     >
-      <HeaderComponent />
-
       {/* Doctor Profile Section - Gradient Background */}
       <Box
         sx={{

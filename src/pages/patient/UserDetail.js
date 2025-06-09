@@ -150,8 +150,6 @@ function UserDetail() {
 
   return (
     <Box align={"center"}>
-      <HeaderComponent userInfo={userInfo} />
-
       <Divider
         orientation="horizontal"
         flexItem

@@ -2917,8 +2917,6 @@ function Profile() {
         minHeight: "100vh",
       }}
     >
-      <HeaderComponent userInfo={userInfo} />
-
       <ToastContainer
         position="top-right"
         autoClose={6000}
