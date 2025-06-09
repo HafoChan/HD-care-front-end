@@ -32,6 +32,7 @@ import { getRole } from "./service/otherService/localStorage";
 import AdminDashboard from "./pages/admin/Dashboard";
 import DoctorDetailAdmin from "./pages/admin/DoctorDetailAdmin";
 import PatientDetailAdmin from "./pages/admin/PatientDetailAdmin";
+import StatisticsPage from "./pages/admin/StatisticsPage";
 import PostPage from "./pages/social-network/PostPage";
 import CreatePostPage from "./pages/social-network/CreatePostPage";
 import SavedPostsPage from "./pages/social-network/SavedPostsPage";
@@ -97,6 +98,22 @@ const AppRouter = () => {
         element={
           <AdminRoute>
             <AdminNewsManagementPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/statistics/:statType"
+        element={
+          <AdminRoute>
+            <StatisticsPage />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/statistics"
+        element={
+          <AdminRoute>
+            <StatisticsPage />
           </AdminRoute>
         }
       />

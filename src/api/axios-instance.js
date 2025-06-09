@@ -38,12 +38,19 @@ axiosClient.interceptors.request.use(
 // Add a response interceptor
 axiosClient.interceptors.response.use(
   function (config) {
+    // Kiểm tra nếu đã đăng nhập và cần chuyển hướng người dùng theo vai trò
     if (config.data?.result?.roles === "DOCTOR") {
       window.location.href = "doctor/schedule-management";
     } else if (config.data?.result?.roles === "PATIENT") {
       window.location.href = "/home";
     } else if (config.data?.result?.roles === "ADMIN")
       window.location.href = "/admin";
+
+    // Nếu là API statistics, cần trả về trực tiếp dữ liệu
+    if (config.config?.url?.includes("/stats/")) {
+      console.log("Stats API response:", config.data);
+      return config.data;
+    }
 
     return config.data;
   },

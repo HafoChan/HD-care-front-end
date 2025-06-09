@@ -10,7 +10,12 @@ import {
   Divider,
   Avatar,
 } from "@mui/material";
-import { MdDashboard, MdLocalHospital, MdPeople } from "react-icons/md";
+import {
+  MdDashboard,
+  MdLocalHospital,
+  MdPeople,
+  MdInsertChart,
+} from "react-icons/md";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ArticleIcon from "@mui/icons-material/Article";
 import { useNavigate } from "react-router-dom";
@@ -95,6 +100,10 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
     navigate("/admin/news-management");
   };
 
+  const handleNavigateToStatistics = () => {
+    navigate("/admin/statistics");
+  };
+
   return (
     <StyledDrawer sx={{ overflowX: "hidden" }}>
       <LogoSection>
@@ -135,6 +144,34 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                   fontWeight: activeTab === "dashboard" ? 600 : 400,
                   fontSize: "0.95rem",
                   color: activeTab === "dashboard" ? "#1976d2" : "inherit",
+                },
+              }}
+            />
+          </StyledListItem>
+
+          <StyledListItem
+            button
+            selected={activeTab === "statistics"}
+            onClick={() => {
+              setActiveTab("statistics");
+              handleNavigateToStatistics();
+            }}
+          >
+            <IconWrapper active={activeTab === "statistics"}>
+              <MdInsertChart
+                size={20}
+                color={activeTab === "statistics" ? "#1976d2" : "#666"}
+              />
+            </IconWrapper>
+            <ListItemText
+              primary="Quản lý thống kê"
+              sx={{
+                ml: 1.5,
+                maxWidth: "100%",
+                "& .MuiListItemText-primary": {
+                  fontWeight: activeTab === "statistics" ? 600 : 400,
+                  fontSize: "0.95rem",
+                  color: activeTab === "statistics" ? "#1976d2" : "inherit",
                 },
               }}
             />
