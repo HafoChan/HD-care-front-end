@@ -13,6 +13,7 @@ const DoctorSchedule = ({ type }) => {
   const [doctorId, setDoctorId] = useState();
 
   const [selectedSlots, setSelectedSlots] = useState([]);
+  const [quantityPatient, setquantityPatient] = useState(1);
 
   const [selectedDate, setSelectedDate] = useState(
     new Date(new Date().getTime() + 7 * 60 * 60 * 1000)
@@ -220,6 +221,8 @@ const DoctorSchedule = ({ type }) => {
         selectedSlots={selectedSlots}
         doctorId={doctorId}
         onScheduleCreated={handleScheduleCreated}
+        quantityPatient={quantityPatient}
+        onquantityPatientChange={(e) => setquantityPatient(e.target.value)}
       />
 
       <CancelScheduleDialog

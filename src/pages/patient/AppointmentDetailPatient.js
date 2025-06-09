@@ -342,7 +342,8 @@ const AppointmentDetailPatient = () => {
                         </Typography>
                         <Typography variant="body2" color="text.secondary">
                           Chuyên khoa:{" "}
-                          {doctorInfo?.specialist || "Chưa cập nhật"}
+                          {doctorInfo?.specialist?.split("\\")[0] ||
+                            "Chưa cập nhật"}
                         </Typography>
                       </Box>
                     </Box>

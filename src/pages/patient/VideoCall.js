@@ -628,7 +628,7 @@ function VideoCall() {
                   {doctorInfo?.name || "Doctor"}
                 </Typography>
                 <Typography variant="body2" sx={{ opacity: 0.8 }}>
-                  {doctorInfo?.specialization || "Specialist"}
+                  {doctorInfo?.specialization?.split("\\")[0] || "Specialist"}
                 </Typography>
               </Box>
             </Box>

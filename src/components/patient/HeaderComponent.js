@@ -145,6 +145,8 @@ const HeaderComponent = ({ userInfo }) => {
   };
 
   const getInfo = () => {
+    console.log("getInfo")
+    getPageNotification()
     if (getRefreshToken()) {
       setCheckLogin(true);
       const storedUserInfo = getImg();
@@ -165,7 +167,8 @@ const HeaderComponent = ({ userInfo }) => {
   };
 
   const setupSSEConnection = () => {
-    if (checkLogin && !eventSource) {
+
+    if (!eventSource) {
       const token = getAccessToken();
       
       // Close existing connection if any
@@ -199,6 +202,7 @@ const HeaderComponent = ({ userInfo }) => {
           // setNotifications(prev => [data, ...prev]);
           
           // Increase unread count
+          getPageNotification()
           setUnreadCount(prev => prev + 1);
         } catch (error) {
           console.error("Error parsing SSE message:", error);
@@ -241,24 +245,25 @@ const HeaderComponent = ({ userInfo }) => {
     const page =  await notificationApi.getAllNotification()
     console.log(page)
     setNotifications(page.result)
+    const unreadCount = page.result.filter(n => !n.read).length;
+    setUnreadCount(unreadCount);  
   }
 
   const getPageNotification = async () => {
     const page =  await notificationApi.getPageNotification()
     setNotifications(page.result.content)
-    console.log(page.result.content)
-    const unreadCount = page.result.content.filter(n => !n.read).length;
+    const pageAll =  await notificationApi.getAllNotification()
+    const unreadCount = pageAll.result.filter(n => !n.read).length;
     setUnreadCount(unreadCount);  
+
   }
-  useEffect(() => {
-    getPageNotification()
 
-  }, [userInfo, img, unreadCount]);
 
-  useEffect(() => {
-    getInfo();
-  }, [])
   // Cleanup SSE connection on component unmount
+  useEffect(() => {
+    // Listen for login success event
+    getInfo();
+  }, []); // Empty dependency array means it only runs once on mount
 
   const NavButton = ({ to, label, active }) => (
     <Link to={to} style={{ textDecoration: "none" }}>

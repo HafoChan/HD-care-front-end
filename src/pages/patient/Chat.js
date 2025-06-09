@@ -1149,6 +1149,7 @@ function Chat() {
       
       <ChatContainer>
         {/* Header with user info based on role */}
+        {/* Header */}
         <ChatHeader>
           <IconButton 
             onClick={handleGoBack}

@@ -19,6 +19,8 @@ const ConfirmScheduleDialog = ({
   selectedSlots,
   doctorId,
   onScheduleCreated,
+  quantityPatient,
+  onquantityPatientChange,
 }) => {
   const schedules = selectedSlots.map((slot) => `${slot.start}-${slot.end}`);
 
@@ -26,6 +28,7 @@ const ConfirmScheduleDialog = ({
     date: selectedDate,
     idDoctor: doctorId,
     schedules: schedules,
+    quantityPatient: quantityPatient,
   };
 
   const handleSubmitForm = async () => {
@@ -85,6 +88,14 @@ const ConfirmScheduleDialog = ({
                 {slot.start} - {slot.end}
               </Button>
             ))}
+          </Box>
+          <Box sx={{ display: "flex", flexDirection: "column", gap: 2, mt: 2 }}>
+            <TextField
+              label="Số lượng bệnh nhân"
+              type="number"
+              value={quantityPatient}
+              onChange={onquantityPatientChange}
+            />
           </Box>
         </Box>
       </DialogContent>
