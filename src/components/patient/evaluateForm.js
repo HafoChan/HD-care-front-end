@@ -27,7 +27,7 @@ export default class EvaluateForm extends Component {
       doctorName: "", // Thêm trạng thái cho tên bác sĩ
       doctorImage: "", // Thêm trạng thái cho ảnh bác sĩ
       appointmentStartDate: "", // Thêm trạng thái cho ngày bắt đầu khám
-      appointmentEndDate: "", // Thêm trạng thái cho ngày k��t thúc khám
+      appointmentEndDate: "", // Thêm trạng thái cho ngày kết thúc khám
       uploadedImage: [], // Added state for uploaded image
       snackBarOpen: false, // Moved snackbar state to component state
       snackBarMessage: "",
@@ -89,8 +89,8 @@ export default class EvaluateForm extends Component {
   };
 
   handleImageUpload = (file) => {
-    this.setState(prevState => ({
-      uploadedImage: [...prevState.uploadedImage, ...file]
+    this.setState((prevState) => ({
+      uploadedImage: [...prevState.uploadedImage, ...file],
     }));
   };
 
@@ -101,16 +101,15 @@ export default class EvaluateForm extends Component {
       img: [...this.state.uploadedImage],
       idAppointment: this.state.idAppointment,
     };
-    console.log(body.img)
+    console.log(body.img);
     reviewApi
       .postReview(body)
       .then((response) => {
-        if (response.code == 1000) {
+        if (response.message) {
           this.showSuccess(response.message);
-        } else throw new Error(response.message);
+        } else throw new Error("Đánh giá thất bại");
       })
-      .catch((e) => this.showError(e));
-
+      .catch((e) => this.showError(e.message || "Đánh giá thất bại"));
   };
 
   render() {
@@ -140,7 +139,12 @@ export default class EvaluateForm extends Component {
           >
             <Avatar
               src={doctorImage ? doctorImage : ""}
-              sx={{ width: 180, height: 180, margin: "0 auto", objectFit: "cover" }}
+              sx={{
+                width: 180,
+                height: 180,
+                margin: "0 auto",
+                objectFit: "cover",
+              }}
             />
             <Snackbar
               open={snackBarOpen}

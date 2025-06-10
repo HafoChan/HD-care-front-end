@@ -28,9 +28,13 @@ import SendIcon from "@mui/icons-material/Send";
 import ContentCopyIcon from "@mui/icons-material/ContentCopy";
 import { doctor } from "../../api/doctor";
 import HeaderComponent from "../../components/patient/HeaderComponent";
-import { ZegoUIKitPrebuilt } from '@zegocloud/zego-uikit-prebuilt';
-import { getName, getUsername, getRole } from "../../service/otherService/localStorage";
-import { ZIM } from 'zego-zim-web';
+import { ZegoUIKitPrebuilt } from "@zegocloud/zego-uikit-prebuilt";
+import {
+  getName,
+  getUsername,
+  getRole,
+} from "../../service/otherService/localStorage";
+import { ZIM } from "zego-zim-web";
 import { AppID } from "../../utils";
 import { generateToken as generateZimToken } from "../../service/patientService/ZimSerivce";
 
@@ -45,7 +49,7 @@ function VideoCall() {
   const videoContainerRef = useRef(null);
   const zegoInstanceRef = useRef(null);
   const zimRef = useRef(null);
-  
+
   // Chat popover state
   const [chatAnchorEl, setChatAnchorEl] = useState(null);
   const [chatMessage, setChatMessage] = useState("");
@@ -54,26 +58,29 @@ function VideoCall() {
   const [snackbarMessage, setSnackbarMessage] = useState("");
   const [snackbarSeverity, setSnackbarSeverity] = useState("success");
   const [roomUrl, setRoomUrl] = useState("");
-  
+
   const handleChatClick = (event) => {
     setChatAnchorEl(event.currentTarget);
-    
+
     // Generate room URL if not already set
     if (!roomUrl) {
       const params = getUrlParams(window.location.href);
-      const roomID = params['roomID'] || `room_${doctorId}`;
-      const generatedUrl = window.location.origin + window.location.pathname + '?roomID=' + roomID;
+      const roomID = params["roomID"] || `room_${doctorId}`;
+      const generatedUrl =
+        window.location.origin + window.location.pathname + "?roomID=" + roomID;
       setRoomUrl(generatedUrl);
-      
+
       // Tạo tin nhắn với HTML được escape - sử dụng entity để tăng khả năng hiển thị
       const clickableLink = `&lt;a href="${generatedUrl}" target="_blank"&gt;${generatedUrl}&lt;/a&gt;`;
-      setChatMessage(`Xin chào bác sĩ, vui lòng tham gia phòng khám trực tuyến của tôi.\n\nNhấp vào đường dẫn: ${clickableLink}\n\nHoặc copy đường dẫn này: ${generatedUrl}`);
+      setChatMessage(
+        `Xin chào bác sĩ, vui lòng tham gia phòng khám trực tuyến của tôi.\n\nNhấp vào đường dẫn: ${clickableLink}\n\nHoặc copy đường dẫn này: ${generatedUrl}`
+      );
     }
-    
+
     // Initialize ZIM for chat if needed
     if (zimRef.current) {
       // Nếu ZIM đã được khởi tạo, thử đăng nhập lại nếu cần
-      loginToZIM().catch(err => {
+      loginToZIM().catch((err) => {
         console.error("Error logging in to ZIM:", err);
       });
     } else {
@@ -81,33 +88,36 @@ function VideoCall() {
       initZIMChat();
     }
   };
-  
+
   const handleChatClose = () => {
     setChatAnchorEl(null);
   };
-  
+
   const chatOpen = Boolean(chatAnchorEl);
-  
+
   // Initialize ZIM for chat
   const initZIMChat = async () => {
     if (zimRef.current) return; // Already initialized
-    
+
     try {
       // Import login logic từ Chat.js
       console.log("Initializing ZIM with AppID:", AppID);
       ZIM.create({ appID: AppID });
       const zim = ZIM.getInstance();
       zimRef.current = zim;
-      
+
       // Set up event listeners từ Chat.js
-      zim.on('error', (zim, errorInfo) => {
-        console.error('ZIM error:', errorInfo.code, errorInfo.message);
-        showSnackbar(`Lỗi chat: ${errorInfo.code} - ${errorInfo.message}`, "error");
+      zim.on("error", (zim, errorInfo) => {
+        console.error("ZIM error:", errorInfo.code, errorInfo.message);
+        showSnackbar(
+          `Lỗi chat: ${errorInfo.code} - ${errorInfo.message}`,
+          "error"
+        );
       });
-      
+
       // Thêm event listeners từ Chat.js
-      zim.on('connectionStateChanged', (zim, { state, event }) => {
-        console.log('Connection state changed:', state, event);
+      zim.on("connectionStateChanged", (zim, { state, event }) => {
+        console.log("Connection state changed:", state, event);
         if (state === 0) {
           showSnackbar("Mất kết nối chat", "warning");
           // Try to reconnect if disconnected due to network issues
@@ -119,14 +129,27 @@ function VideoCall() {
           showSnackbar("Đã kết nối đến dịch vụ chat", "success");
         }
       });
-      
-      zim.on('peerMessageReceived', (zim, { messageList, fromConversationID }) => {
-        console.log("Message received from:", fromConversationID, messageList);
-        if (messageList?.length > 0) {
-          showSnackbar(`Nhận tin nhắn từ ${fromConversationID}: ${messageList[0].message.substring(0, 30)}...`, "info");
+
+      zim.on(
+        "peerMessageReceived",
+        (zim, { messageList, fromConversationID }) => {
+          console.log(
+            "Message received from:",
+            fromConversationID,
+            messageList
+          );
+          if (messageList?.length > 0) {
+            showSnackbar(
+              `Nhận tin nhắn từ ${fromConversationID}: ${messageList[0].message.substring(
+                0,
+                30
+              )}...`,
+              "info"
+            );
+          }
         }
-      });
-      
+      );
+
       // Login với logic từ Chat.js sử dụng token ZIM đúng
       await loginToZIM();
     } catch (error) {
@@ -134,23 +157,23 @@ function VideoCall() {
       showSnackbar("Không thể kết nối dịch vụ chat: " + error.message, "error");
     }
   };
-  
+
   // Login function như trong Chat.js
   const loginToZIM = async () => {
     if (!zimRef.current) {
       showSnackbar("ZIM chưa được khởi tạo", "error");
       return;
     }
-    
+
     try {
       const userID = getUsername();
       if (!userID) {
         showSnackbar("Không tìm thấy thông tin người dùng", "error");
         throw new Error("User ID is null or empty");
       }
-      
+
       const userName = userID; // Use same value for both to keep it simple
-      
+
       // Sử dụng đúng token generator cho chat từ ZimService
       let token;
       try {
@@ -158,151 +181,164 @@ function VideoCall() {
         console.log("Generated ZIM token from service for chat:", token);
       } catch (tokenError) {
         console.error("Error generating ZIM token with service:", tokenError);
-        
+
         // Create a fallback token
         token = createFallbackZimToken(userID);
         console.log("Generated fallback ZIM token for chat");
       }
-      
+
       const userInfo = { userID, userName };
       console.log("Logging in to ZIM with:", userInfo);
-      
+
       // Attempt login with retry
       let retryCount = 0;
       const maxRetries = 2;
-      
+
       while (retryCount <= maxRetries) {
         try {
           await zimRef.current.login(userInfo, token);
-          console.log('Logged in successfully to ZIM chat');
+          console.log("Logged in successfully to ZIM chat");
           showSnackbar("Đã đăng nhập vào hệ thống chat", "success");
           break; // Exit loop on success
         } catch (loginError) {
           console.error(`Login attempt ${retryCount + 1} failed:`, loginError);
-          
+
           if (retryCount === maxRetries) {
             throw loginError; // Re-throw after max retries
           }
-          
+
           // Wait before retry
-          await new Promise(resolve => setTimeout(resolve, 2000));
+          await new Promise((resolve) => setTimeout(resolve, 2000));
           retryCount++;
         }
       }
     } catch (error) {
-      console.error('Login failed after retries:', error);
+      console.error("Login failed after retries:", error);
       showSnackbar(`Đăng nhập thất bại: ${error.message}`, "error");
       throw error;
     }
   };
-  
+
   // Create fallback token đặc biệt cho ZIM chat
   const createFallbackZimToken = (userID) => {
     // This is a simplified version based on Chat.js
     const timestamp = Math.floor(Date.now() / 1000);
     const expireTime = timestamp + 3600; // 1 hour expiration
-    
+
     // Create a basic payload with required fields for ZIM
     const payload = {
       app_id: AppID,
       user_id: userID,
       expire_time: expireTime,
-      nonce: Math.random().toString(36).substring(2, 15)
+      nonce: Math.random().toString(36).substring(2, 15),
     };
-    
+
     // For testing, return a base64 representation (not secure for production)
     return btoa(JSON.stringify(payload));
   };
-  
+
   // Send chat message khi người dùng click "Gửi lời mời"
   const sendChatMessage = async () => {
     if (!zimRef?.current) {
-      showSnackbar("Không thể gửi tin nhắn: Thiếu nội dung hoặc chưa kết nối", "error");
+      showSnackbar(
+        "Không thể gửi tin nhắn: Thiếu nội dung hoặc chưa kết nối",
+        "error"
+      );
       return;
     }
-    
+
     if (!doctorInfo) {
       showSnackbar("Không thể tìm thấy thông tin bác sĩ", "error");
       return;
     }
-    
+
     setIsSending(true);
-    
+
     try {
       // Lấy ID người nhận từ doctorInfo
       let toConversationID = doctorInfo.userName;
-      
+
       // Nếu không có userName, thử dùng các trường khác
       if (!toConversationID) {
         console.warn("doctorInfo.userName is missing, trying alternatives");
         toConversationID = doctorInfo.username || doctorInfo.userId || doctorId;
         console.log("Using alternative recipient ID:", toConversationID);
       }
-      
+
       if (!toConversationID) {
         throw new Error("Không tìm thấy ID của bác sĩ");
       }
-      
+
       // Đơn giản hóa tin nhắn - KHÔNG sử dụng HTML entities
       const messageToSend = `Xin chào bác sĩ, vui lòng tham gia phòng khám trực tuyến của tôi.\n\nPhòng khám: ${roomUrl}\n\nKhi nhận được tin nhắn này, bạn có thể nhấp vào nút "Tham gia phòng khám" bên dưới.`;
-      
+
       // Quan trọng: Cấu hình extendedData đúng với format mà Chat.js đang sử dụng
       const extendedDataObj = {
-        type: 'video_invitation',      // Chuẩn hóa type để Chat.js nhận diện
-        roomUrl: roomUrl,              // URL phòng khám - quan trọng để nút hoạt động
-        doctorName: doctorInfo?.name || 'Bác sĩ',
-        patientName: getName() || 'Bệnh nhân',
-        timestamp: Date.now()
+        type: "video_invitation", // Chuẩn hóa type để Chat.js nhận diện
+        roomUrl: roomUrl, // URL phòng khám - quan trọng để nút hoạt động
+        doctorName: doctorInfo?.name || "Bác sĩ",
+        patientName: getName() || "Bệnh nhân",
+        timestamp: Date.now(),
       };
-      
+
       // Chuyển đối tượng thành chuỗi JSON
       const extendedData = JSON.stringify(extendedDataObj);
-      
-      console.log("Creating video invitation with extendedData:", extendedDataObj);
-      
+
+      console.log(
+        "Creating video invitation with extendedData:",
+        extendedDataObj
+      );
+
       // Tạo object tin nhắn
-      const messageTextObj = { 
+      const messageTextObj = {
         type: 1, // Text message
-        message: messageToSend, 
-        extendedData: extendedData    // Quan trọng: đảm bảo extendedData được gán đúng
+        message: messageToSend,
+        extendedData: extendedData, // Quan trọng: đảm bảo extendedData được gán đúng
       };
-      
+
       // Send message với notification
       const conversationType = 0; // One-to-one chat
       const config = { priority: 1 };
       const notification = {
         onMessageAttached: (message) => {
-          console.log('Message attached:', message);
-        }
+          console.log("Message attached:", message);
+        },
       };
-      
-      console.log("Sending video invitation to doctor with message object:", messageTextObj);
-      
+
+      console.log(
+        "Sending video invitation to doctor with message object:",
+        messageTextObj
+      );
+
       const { message } = await zimRef.current.sendMessage(
-        messageTextObj, 
-        toConversationID, 
-        conversationType, 
-        config, 
+        messageTextObj,
+        toConversationID,
+        conversationType,
+        config,
         notification
       );
-      
+
       console.log("Video invitation sent successfully:", message);
-      
+
       showSnackbar("Đã gửi lời mời tham gia video call cho bác sĩ", "success");
       setChatMessage("");
       handleChatClose();
     } catch (error) {
-      console.error('Error sending video invitation:', error);
-      
+      console.error("Error sending video invitation:", error);
+
       // Try to reconnect if not logged in
-      if (error.code === 6000121) { // "Not logged with call"
+      if (error.code === 6000121) {
+        // "Not logged with call"
         showSnackbar("Kết nối bị mất. Đang thử kết nối lại...", "warning");
-        
+
         try {
           // Try to re-login với ZIM token đúng
           if (zimRef.current) {
             await loginToZIM();
-            showSnackbar("Kết nối lại thành công. Vui lòng thử gửi lại.", "success");
+            showSnackbar(
+              "Kết nối lại thành công. Vui lòng thử gửi lại.",
+              "success"
+            );
           }
         } catch (loginError) {
           console.error("Failed to reconnect:", loginError);
@@ -315,21 +351,22 @@ function VideoCall() {
       setIsSending(false);
     }
   };
-  
+
   // Show snackbar message
   const showSnackbar = (message, severity = "info") => {
     setSnackbarMessage(message);
     setSnackbarSeverity(severity);
     setSnackbarOpen(true);
   };
-  
+
   // Copy room URL to clipboard
   const copyRoomUrl = () => {
-    navigator.clipboard.writeText(roomUrl)
+    navigator.clipboard
+      .writeText(roomUrl)
       .then(() => {
         showSnackbar("Đã sao chép đường dẫn vào clipboard", "success");
       })
-      .catch(err => {
+      .catch((err) => {
         console.error("Could not copy text: ", err);
         showSnackbar("Không thể sao chép đường dẫn", "error");
       });
@@ -337,8 +374,9 @@ function VideoCall() {
 
   // Generate random ID for room and user
   const randomID = (len) => {
-    let result = '';
-    var chars = '12345qwertyuiopasdfgh67890jklmnbvcxzMNBVCZXASDQWERTYHGFUIOLKJP',
+    let result = "";
+    var chars =
+        "12345qwertyuiopasdfgh67890jklmnbvcxzMNBVCZXASDQWERTYHGFUIOLKJP",
       maxPos = chars.length,
       i;
     len = len || 5;
@@ -354,7 +392,7 @@ function VideoCall() {
       const response = await fetch(
         `${tokenServerUrl}/access_token?userID=${userID}&expired_ts=7200`,
         {
-          method: 'GET',
+          method: "GET",
         }
       );
       return await response.json();
@@ -367,7 +405,7 @@ function VideoCall() {
   // Get URL parameters
   const getUrlParams = (url) => {
     try {
-      let urlStr = url.split('?')[1];
+      let urlStr = url.split("?")[1];
       const urlSearchParams = new URLSearchParams(urlStr);
       const result = Object.fromEntries(urlSearchParams.entries());
       return result;
@@ -382,17 +420,19 @@ function VideoCall() {
     try {
       // Get roomID from URL or generate a new one
       const params = getUrlParams(window.location.href);
-      let roomID = params['roomID'];
+      let roomID = params["roomID"];
 
       // Nếu không có roomID trong URL, tạo một roomID có cấu trúc
       if (!roomID) {
         const patientUsername = getUsername();
         // Tạo roomID bao gồm cả ID bác sĩ và ID bệnh nhân để dễ nhận diện
-        roomID = `room_${doctorId}_${patientUsername}_${Date.now().toString().substring(9)}`;
-        
+        roomID = `room_${doctorId}_${patientUsername}_${Date.now()
+          .toString()
+          .substring(9)}`;
+
         // Cập nhật URL để lưu trữ roomID mới
-        const newUrl = window.location.pathname + '?roomID=' + roomID;
-        window.history.pushState({}, '', newUrl);
+        const newUrl = window.location.pathname + "?roomID=" + roomID;
+        window.history.pushState({}, "", newUrl);
         console.log("Created new room ID:", roomID);
       } else {
         console.log("Using existing room ID from URL:", roomID);
@@ -410,22 +450,30 @@ function VideoCall() {
       const userID = getUsername();
       if (!userID) {
         console.error("Cannot get username from localStorage");
-        showSnackbar("Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.", "error");
+        showSnackbar(
+          "Không thể lấy thông tin người dùng. Vui lòng đăng nhập lại.",
+          "error"
+        );
         setLoading(false);
         navigate(`/doctor/${doctorId}`);
         return;
       }
-      
+
       // Sử dụng tên thật từ localStorage
       const userName = getName() || userID;
-      console.log("Joining video call with userID:", userID, "userName:", userName);
-      
+      console.log(
+        "Joining video call with userID:",
+        userID,
+        "userName:",
+        userName
+      );
+
       // Sử dụng đúng hàm token cho video call
       const { token } = await generateVideoToken(
-        'https://nextjs-token.vercel.app/api',
+        "https://nextjs-token.vercel.app/api",
         userID
       );
-      
+
       const KitToken = ZegoUIKitPrebuilt.generateKitTokenForProduction(
         1484647939, // Replace with your app ID
         token,
@@ -433,30 +481,35 @@ function VideoCall() {
         userID,
         userName
       );
-      
+
       const zp = ZegoUIKitPrebuilt.create(KitToken);
       zegoInstanceRef.current = zp;
-      
+
       if (videoContainerRef.current) {
         // Create shared links with đường dẫn đầy đủ
-        const currentRoomUrl = window.location.origin + window.location.pathname + '?roomID=' + roomID;
-        
+        const currentRoomUrl =
+          window.location.origin +
+          window.location.pathname +
+          "?roomID=" +
+          roomID;
+
         let sharedLinks = [
           {
-            name: 'Liên kết phòng khám',
+            name: "Liên kết phòng khám",
             url: currentRoomUrl,
           },
         ];
-        
+
         // Save room URL for chat sharing
         setRoomUrl(currentRoomUrl);
-        
+
         // Join room with camera and microphone off by default
         zp.joinRoom({
           container: videoContainerRef.current,
           maxUsers: 2,
           branding: {
-            logoURL: 'https://www.zegocloud.com/_nuxt/img/zegocloud_logo_white.ddbab9f.png',
+            logoURL:
+              "https://www.zegocloud.com/_nuxt/img/zegocloud_logo_white.ddbab9f.png",
           },
           scenario: {
             mode: ZegoUIKitPrebuilt.OneONoneCall,
@@ -468,7 +521,7 @@ function VideoCall() {
           turnMicrophoneOn: false,
         });
       }
-      
+
       setLoading(false);
     } catch (error) {
       console.error("Error initializing Zego UI:", error);
@@ -485,7 +538,7 @@ function VideoCall() {
         if (response?.result) {
           setDoctorInfo(response.result);
         }
-        
+
         // Initialize Zego UI after fetching doctor info
         await initZegoUI();
       } catch (error) {
@@ -495,7 +548,7 @@ function VideoCall() {
     };
 
     fetchDoctorInfo();
-    
+
     // Cleanup function
     return () => {
       // Cleanup video call
@@ -504,22 +557,21 @@ function VideoCall() {
           console.log("Cleaning up Zego video instance");
           zegoInstanceRef.current.destroy();
         } catch (e) {
-          console.error('Error during video cleanup:', e);
+          console.error("Error during video cleanup:", e);
         }
       }
-      
+
       // Cleanup chat
       if (zimRef.current) {
         try {
           console.log("Cleaning up ZIM chat instance");
           zimRef.current.logout();
         } catch (e) {
-          console.error('Error during ZIM logout:', e);
+          console.error("Error during ZIM logout:", e);
         }
       }
     };
   }, [doctorId]);
-
 
   const handleGoBack = async () => {
     try {
@@ -539,8 +591,8 @@ function VideoCall() {
 
       // Navigate based on role
       const role = getRole();
-      if (role === 'DOCTOR') {
-        navigate('/doctor_chat');
+      if (role === "DOCTOR") {
+        navigate("/doctor_chat");
       } else {
         navigate(`/doctor/${doctorId}`);
       }
@@ -548,8 +600,8 @@ function VideoCall() {
       console.error("Error during cleanup:", error);
       // Still navigate even if cleanup fails
       const role = getRole();
-      if (role === 'DOCTOR') {
-        navigate('/doctor_chat');
+      if (role === "DOCTOR") {
+        navigate("/doctor_chat");
       } else {
         navigate(`/doctor/${doctorId}`);
       }
@@ -717,80 +769,87 @@ function VideoCall() {
           </Box>
         </Paper>
       </Box>
-      
+
       {/* Chat Popover */}
       <Popover
         open={chatOpen}
         anchorEl={chatAnchorEl}
         onClose={handleChatClose}
         anchorOrigin={{
-          vertical: 'top',
-          horizontal: 'center',
+          vertical: "top",
+          horizontal: "center",
         }}
         transformOrigin={{
-          vertical: 'bottom',
-          horizontal: 'center',
+          vertical: "bottom",
+          horizontal: "center",
         }}
       >
-        <Box sx={{ 
-          width: 350, 
-          p: 2,
-          maxHeight: 400
-        }}>
+        <Box
+          sx={{
+            width: 350,
+            p: 2,
+            maxHeight: 400,
+          }}
+        >
           <Typography variant="subtitle1" fontWeight="bold" gutterBottom>
             Gửi lời mời đến bác sĩ {doctorInfo?.name}
           </Typography>
-          
+
           <Box sx={{ mb: 2, mt: 2 }}>
-            <Box sx={{ 
-              p: 1.5, 
-              bgcolor: 'primary.50', 
-              borderRadius: 1,
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'space-between',
-              mb: 2
-            }}>
-              <Typography variant="body2" sx={{ mr: 1, flex: 1, wordBreak: 'break-all' }}>
+            <Box
+              sx={{
+                p: 1.5,
+                bgcolor: "primary.50",
+                borderRadius: 1,
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "space-between",
+                mb: 2,
+              }}
+            >
+              <Typography
+                variant="body2"
+                sx={{ mr: 1, flex: 1, wordBreak: "break-all" }}
+              >
                 {roomUrl}
               </Typography>
-              <IconButton 
-                size="small" 
+              <IconButton
+                size="small"
                 onClick={copyRoomUrl}
-                sx={{ 
-                  bgcolor: 'primary.main', 
-                  color: 'primary.contrastText',
-                  '&:hover': { bgcolor: 'primary.dark' }
+                sx={{
+                  bgcolor: "primary.main",
+                  color: "primary.contrastText",
+                  "&:hover": { bgcolor: "primary.dark" },
                 }}
               >
                 <ContentCopyIcon fontSize="small" />
               </IconButton>
             </Box>
-            
 
             <Button
               fullWidth
               variant="contained"
               color="primary"
               startIcon={<SendIcon />}
-              onClick={sendChatMessage}            >
+              onClick={sendChatMessage}
+            >
               {isSending ? "Đang gửi..." : "Gửi lời mời"}
             </Button>
           </Box>
         </Box>
       </Popover>
-      
+
       {/* Snackbar for notifications */}
       <Snackbar
         open={snackbarOpen}
         autoHideDuration={6000}
         onClose={() => setSnackbarOpen(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert 
-          onClose={() => setSnackbarOpen(false)} 
+        <Alert
+          onClose={() => setSnackbarOpen(false)}
           severity={snackbarSeverity}
-          sx={{ width: '100%' }}
+          sx={{ width: "100%" }}
         >
           {snackbarMessage}
         </Alert>
