@@ -240,6 +240,8 @@ const AppRouter = () => {
           </DoctorOrAdminRoute>
         }
       />
+      <Route path="/chat/:doctorId" element={<Chat />} />
+
     </Routes>
   );
 };

@@ -1,6 +1,6 @@
 
-export const AppID =  1198054191;
-export const ServerSecret = 'e4060b5f9cd769fe9019a333ec506a13';
+export const AppID =  1131513936;
+export const ServerSecret = '7d56c0d78cd020348dafd438a86bc706';
 
 
 /**

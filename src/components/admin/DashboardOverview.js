@@ -356,12 +356,12 @@ const DashboardOverview = ({ totalDoctor, totalPatient }) => {
           ),
         ]);
 
-        console.log("Favorite News:", favoriteNewsResponse);
-        console.log("News Count:", newsCountResponse);
+        console.log("Revenue Response:", revenueResponse);
+        console.log("Revenue Response Result:", revenueResponse?.result);
 
-        // Cập nhật cách xử lý response
+        // Update how we handle the responses
         setVisitStats(visitsResponse?.result || []);
-        setRevenueStats(revenueResponse?.result || []);
+        setRevenueStats(Array.isArray(revenueResponse?.result) ? revenueResponse.result : []);
         setNewsStats(newsCountResponse?.result || []);
         setFavoriteNews(favoriteNewsResponse?.result || []);
         setNewUsers(
