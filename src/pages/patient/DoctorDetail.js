@@ -1194,27 +1194,6 @@ function DoctorDetail() {
       {/* Other Doctors Section */}
       <OtherDoctorsSection />
 
-      {/* Video Call Button */}
-      <Fab
-        color="primary"
-        aria-label="video call"
-        onClick={handleVideoCall}
-        sx={{
-          position: "fixed",
-          bottom: 24,
-          right: 24,
-          zIndex: 1000,
-          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
-          "&:hover": {
-            transform: "scale(1.05)",
-            boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
-          },
-          transition: "all 0.3s ease",
-        }}
-      >
-        <VideocamIcon />
-      </Fab>
-
       {/* Chat Button */}
       <Fab
         color="secondary"
@@ -1222,7 +1201,7 @@ function DoctorDetail() {
         onClick={handleChat}
         sx={{
           position: "fixed",
-          bottom: 24,
+          bottom: 30,
           right: 90,
           zIndex: 1000,
           boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
@@ -1234,6 +1213,27 @@ function DoctorDetail() {
         }}
       >
         <ChatIcon />
+      </Fab>
+
+      {/* Video Call Button */}
+      <Fab
+        color="primary"
+        aria-label="video call"
+        onClick={handleVideoCall}
+        sx={{
+          position: "fixed",
+          bottom: 30,
+          right: 152,
+          zIndex: 1000,
+          boxShadow: "0 4px 20px rgba(0,0,0,0.2)",
+          "&:hover": {
+            transform: "scale(1.05)",
+            boxShadow: "0 6px 24px rgba(0,0,0,0.25)",
+          },
+          transition: "all 0.3s ease",
+        }}
+      >
+        <VideocamIcon />
       </Fab>
     </Box>
   );

@@ -716,7 +716,7 @@ const AppointmentDetailPatient = () => {
           </Box>
         </DialogTitle>
         <Divider />
-        <DialogContent sx={{ p: 0 }}>
+        <DialogContent sx={{ p: 0, overflowY: "hidden" }}>
           <iframe
             src={pdfUrl}
             width="100%"

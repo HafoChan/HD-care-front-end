@@ -175,7 +175,6 @@ const AppointmentDetail = () => {
       <Box
         sx={{
           flexGrow: 1,
-          ml: { xs: 0, md: "280px" },
           transition: "margin 0.2s ease",
           py: 4,
           px: { xs: 2, sm: 4 },

@@ -1,12 +1,12 @@
-import React, { useEffect, useState, useRef } from 'react';
-import { 
-  Box, 
-  Typography, 
-  IconButton, 
-  CircularProgress, 
-  Snackbar, 
-  Alert, 
-  Paper, 
+import React, { useEffect, useState, useRef } from "react";
+import {
+  Box,
+  Typography,
+  IconButton,
+  CircularProgress,
+  Snackbar,
+  Alert,
+  Paper,
   Button,
   List,
   ListItem,
@@ -20,65 +20,81 @@ import {
   InputAdornment,
   Card,
   alpha,
-  useTheme
-} from '@mui/material';
-import { useNavigate, useParams } from 'react-router-dom';
-import { ZIM } from 'zego-zim-web';
+  useTheme,
+  Chip,
+  Tooltip,
+  Zoom,
+  Fab,
+  Container,
+  useMediaQuery,
+  Drawer,
+} from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
+import { ZIM } from "zego-zim-web";
 import { AppID } from "../../utils";
 import { generateToken } from "../../service/patientService/ZimSerivce";
-import { getUsername, getRole } from '../../service/otherService/localStorage';
+import { getUsername, getRole } from "../../service/otherService/localStorage";
 import Sidebar from "../../components/doctor/Sidebar";
-import ArrowBackIcon from '@mui/icons-material/ArrowBack';
-import ChatIcon from '@mui/icons-material/Chat';
-import SearchIcon from '@mui/icons-material/Search';
-import PersonIcon from '@mui/icons-material/Person';
-import MessageIcon from '@mui/icons-material/Message';
-import AccessTimeIcon from '@mui/icons-material/AccessTime';
-import RefreshIcon from '@mui/icons-material/Refresh';
-import VideocamIcon from '@mui/icons-material/Videocam';
-import { styled } from '@mui/material/styles';
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ChatIcon from "@mui/icons-material/Chat";
+import SearchIcon from "@mui/icons-material/Search";
+import PersonIcon from "@mui/icons-material/Person";
+import MessageIcon from "@mui/icons-material/Message";
+import AccessTimeIcon from "@mui/icons-material/AccessTime";
+import RefreshIcon from "@mui/icons-material/Refresh";
+import VideocamIcon from "@mui/icons-material/Videocam";
+import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
+import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import MenuIcon from "@mui/icons-material/Menu";
+import { styled } from "@mui/material/styles";
 
 // Styled components for modern chat
 const ChatBubble = styled(Paper)(({ theme, isSelf }) => ({
   padding: theme.spacing(1.5, 2),
-  borderRadius: isSelf ? '18px 18px 4px 18px' : '18px 18px 18px 4px',
-  maxWidth: '75%',
+  borderRadius: isSelf ? "18px 18px 4px 18px" : "18px 18px 18px 4px",
+  maxWidth: "75%",
   marginBottom: theme.spacing(1),
-  backgroundColor: isSelf ? theme.palette.primary.main : alpha(theme.palette.background.paper, 0.9),
-  color: isSelf ? theme.palette.primary.contrastText : theme.palette.text.primary,
-  alignSelf: isSelf ? 'flex-end' : 'flex-start',
-  boxShadow: isSelf 
-    ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}` 
-    : '0 1px 3px rgba(0,0,0,0.08)',
-  wordBreak: 'break-word',
-  animation: 'fadeIn 0.3s ease-out',
-  '&:hover': {
-    boxShadow: isSelf 
-      ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}` 
-      : '0 3px 8px rgba(0,0,0,0.1)',
+  backgroundColor: isSelf
+    ? theme.palette.primary.main
+    : alpha(theme.palette.background.paper, 0.9),
+  color: isSelf
+    ? theme.palette.primary.contrastText
+    : theme.palette.text.primary,
+  alignSelf: isSelf ? "flex-end" : "flex-start",
+  boxShadow: isSelf
+    ? `0 2px 8px ${alpha(theme.palette.primary.main, 0.25)}`
+    : "0 1px 3px rgba(0,0,0,0.08)",
+  wordBreak: "break-word",
+  animation: "fadeIn 0.3s ease-out",
+  "&:hover": {
+    boxShadow: isSelf
+      ? `0 4px 12px ${alpha(theme.palette.primary.main, 0.3)}`
+      : "0 3px 8px rgba(0,0,0,0.1)",
   },
-  transition: 'box-shadow 0.2s ease-in-out',
-  '@keyframes fadeIn': {
-    from: { opacity: 0, transform: 'translateY(10px)' },
-    to: { opacity: 1, transform: 'translateY(0)' }
-  }
+  transition: "box-shadow 0.2s ease-in-out",
+  "@keyframes fadeIn": {
+    from: { opacity: 0, transform: "translateY(10px)" },
+    to: { opacity: 1, transform: "translateY(0)" },
+  },
 }));
 
 const MessageTime = styled(Typography)(({ theme, isSelf }) => ({
-  fontSize: '0.7rem',
+  fontSize: "0.7rem",
   opacity: 0.7,
   marginTop: 4,
-  textAlign: isSelf ? 'right' : 'left',
-  color: isSelf ? alpha(theme.palette.primary.contrastText, 0.85) : theme.palette.text.secondary
+  textAlign: isSelf ? "right" : "left",
+  color: isSelf
+    ? alpha(theme.palette.primary.contrastText, 0.85)
+    : theme.palette.text.secondary,
 }));
 
 const StyledAvatar = styled(Avatar)(({ theme }) => ({
   border: `2px solid ${theme.palette.background.paper}`,
-  boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
-  transition: 'transform 0.2s ease',
-  '&:hover': {
-    transform: 'scale(1.05)'
-  }
+  boxShadow: "0 2px 4px rgba(0,0,0,0.1)",
+  transition: "transform 0.2s ease",
+  "&:hover": {
+    transform: "scale(1.05)",
+  },
 }));
 
 function Chat() {
@@ -88,17 +104,18 @@ function Chat() {
   const [connected, setConnected] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [unreadCount, setUnreadCount] = useState(0);
-  const [error, setError] = useState('');
+  const [error, setError] = useState("");
   const [showError, setShowError] = useState(false);
   const [lastMessage, setLastMessage] = useState(null);
   const [messageList, setMessageList] = useState(null);
-  
+  const [drawerOpen, setDrawerOpen] = useState(false);
+
   // New states for conversation list
   const [conversations, setConversations] = useState([]);
   const [loadingConversations, setLoadingConversations] = useState(false);
-  const [searchQuery, setSearchQuery] = useState('');
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedConversation, setSelectedConversation] = useState(null);
-  
+
   // Reference to keep track of ZIM instance
   const zimRef = useRef(null);
 
@@ -106,15 +123,16 @@ function Chat() {
   const [autoRefreshing, setAutoRefreshing] = useState(false);
 
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down("md"));
 
   // Initialize ZIM to activate account
   useEffect(() => {
     let zimInstance = null;
-    fetchConversations()
+    fetchConversations();
     const initZIM = async () => {
       try {
         console.log("Initializing ZIM with AppID:", AppID);
-        
+
         // Create ZIM instance
         ZIM.create({ appID: AppID });
         const zim = ZIM.getInstance();
@@ -122,14 +140,14 @@ function Chat() {
         zimRef.current = zim;
 
         // Set up event listeners
-        zim.on('error', (zim, errorInfo) => {
-          console.error('ZIM error:', errorInfo.code, errorInfo.message);
+        zim.on("error", (zim, errorInfo) => {
+          console.error("ZIM error:", errorInfo.code, errorInfo.message);
           setError(`Lỗi: ${errorInfo.code} - ${errorInfo.message}`);
           setShowError(true);
         });
 
-        zim.on('connectionStateChanged', (zim, { state }) => {
-          console.log('Connection state changed:', state);
+        zim.on("connectionStateChanged", (zim, { state }) => {
+          console.log("Connection state changed:", state);
           if (state === 0) {
             setConnected(false);
             // Try to reconnect if disconnected
@@ -142,44 +160,53 @@ function Chat() {
           }
         });
 
-        zim.on('peerMessageReceived', (zim, { messageList, fromConversationID }) => {
-          console.log("Message received from:", fromConversationID, messageList);
-          fetchConversations()
-          // Update unread count and last message information
-          setUnreadCount(prev => prev + messageList.length);
-          setMessageList(messageList)
-          if (messageList.length > 0) {
-            const message = messageList[messageList.length - 1];
-            setLastMessage({
-              sender: fromConversationID,
-              content: message.message,
-              timestamp: new Date(message.timestamp)
-            });
-            
-            // Automatically fetch updated conversation list when new message arrives
-            fetchConversations(zim);
-            
-            // Play notification sound
-            try {
-              const audio = new Audio('/notification.mp3');
-              audio.play().catch(e => console.log('Sound notification error:', e));
-            } catch (error) {
-              console.log('Could not play notification sound', error);
+        zim.on(
+          "peerMessageReceived",
+          (zim, { messageList, fromConversationID }) => {
+            console.log(
+              "Message received from:",
+              fromConversationID,
+              messageList
+            );
+            fetchConversations();
+            // Update unread count and last message information
+            setUnreadCount((prev) => prev + messageList.length);
+            setMessageList(messageList);
+            if (messageList.length > 0) {
+              const message = messageList[messageList.length - 1];
+              setLastMessage({
+                sender: fromConversationID,
+                content: message.message,
+                timestamp: new Date(message.timestamp),
+              });
+
+              // Automatically fetch updated conversation list when new message arrives
+              fetchConversations(zim);
+
+              // Play notification sound
+              try {
+                const audio = new Audio("/notification.mp3");
+                audio
+                  .play()
+                  .catch((e) => console.log("Sound notification error:", e));
+              } catch (error) {
+                console.log("Could not play notification sound", error);
+              }
             }
           }
-        });
+        );
 
         // Login
         await loginZIM(zim);
-        
+
         // Fetch conversations after login
         await fetchConversations(zim);
-        
+
         setLoading(false);
       } catch (error) {
-        console.error('Error initializing ZIM:', error);
+        console.error("Error initializing ZIM:", error);
         setLoading(false);
-        setError('Không thể kết nối đến dịch vụ chat. Vui lòng thử lại sau.');
+        setError("Không thể kết nối đến dịch vụ chat. Vui lòng thử lại sau.");
         setShowError(true);
       }
     };
@@ -190,10 +217,10 @@ function Chat() {
         if (!userID) {
           throw new Error("User ID is null or empty");
         }
-        
+
         // Make sure we use a valid userName for the doctor
-        const userName = userID; 
-        
+        const userName = userID;
+
         // Generate token with proper error handling
         let token;
         try {
@@ -209,54 +236,59 @@ function Chat() {
         if (!token) {
           throw new Error("Failed to generate valid token");
         }
-        
+
         const userInfo = { userID, userName };
         console.log("Doctor logging in with userID:", userID);
-        
+
         // Attempt login with retry
         let retryCount = 0;
         const maxRetries = 2;
-        
+
         while (retryCount <= maxRetries) {
           try {
             await zim.login(userInfo, token);
-            console.log('Doctor logged in successfully');
+            console.log("Doctor logged in successfully");
             setLoggedIn(true);
             break; // Exit loop on success
           } catch (loginError) {
-            console.error(`Login attempt ${retryCount + 1} failed:`, loginError);
-            
+            console.error(
+              `Login attempt ${retryCount + 1} failed:`,
+              loginError
+            );
+
             if (retryCount === maxRetries) {
               throw loginError; // Re-throw after max retries
             }
-            
+
             // Wait before retry
-            await new Promise(resolve => setTimeout(resolve, 2000));
+            await new Promise((resolve) => setTimeout(resolve, 2000));
             retryCount++;
           }
         }
       } catch (error) {
-        console.error('Login failed after retries:', error);
-        setError(`Đăng nhập thất bại: ${error.message || 'Vui lòng thử lại sau.'}`);
+        console.error("Login failed after retries:", error);
+        setError(
+          `Đăng nhập thất bại: ${error.message || "Vui lòng thử lại sau."}`
+        );
         setShowError(true);
         setLoggedIn(false);
       }
     };
-    
+
     // Function to create a fallback token if the main token generation fails
     const createFallbackToken = (userID) => {
       try {
         // Basic implementation similar to the one in the patient Chat.js
         const timestamp = Math.floor(Date.now() / 1000);
         const expireTime = timestamp + 3600; // 1 hour expiration
-        
+
         const payload = {
           app_id: AppID,
           user_id: userID,
           expire_time: expireTime,
-          nonce: Math.random().toString(36).substring(2, 15)
+          nonce: Math.random().toString(36).substring(2, 15),
         };
-        
+
         return btoa(JSON.stringify(payload));
       } catch (error) {
         console.error("Error creating fallback token:", error);
@@ -273,7 +305,7 @@ function Chat() {
           console.log("Cleaning up ZIM instance");
           zimInstance.logout();
         } catch (e) {
-          console.error('Error during logout:', e);
+          console.error("Error during logout:", e);
         }
       }
     };
@@ -283,10 +315,12 @@ function Chat() {
   const fetchConversations = async (zim, isAutoRefresh = false) => {
     const zimToUse = zim || zimRef.current;
     if (!zimToUse || !loggedIn) {
-      console.warn("Cannot fetch conversations: ZIM instance not available or not logged in");
+      console.warn(
+        "Cannot fetch conversations: ZIM instance not available or not logged in"
+      );
       return;
     }
-    
+
     if (isAutoRefresh) {
       setAutoRefreshing(true);
     } else {
@@ -296,16 +330,17 @@ function Chat() {
     try {
       const { conversationList } = await zimToUse.queryConversationList({
         count: 100,
-        nextConversation: null
+        nextConversation: null,
       });
-      
+
       setConversations(conversationList);
-      
+
       // Calculate total unread count
-      const totalUnread = conversationList.reduce((sum, conversation) => 
-        sum + conversation.unreadMessageCount, 0);
+      const totalUnread = conversationList.reduce(
+        (sum, conversation) => sum + conversation.unreadMessageCount,
+        0
+      );
       setUnreadCount(totalUnread);
-      
     } catch (error) {
       console.error("Error fetching conversation list:", error);
       setError(`Không thể tải danh sách hội thoại: ${error.message}`);
@@ -318,7 +353,7 @@ function Chat() {
       }
     }
   };
-  
+
   // Handle refresh conversations
   const handleRefreshConversations = () => {
     fetchConversations();
@@ -327,14 +362,17 @@ function Chat() {
   // Handle view conversation detail
   const handleViewConversation = (conversation) => {
     setSelectedConversation(conversation);
-    
+
     // Save messageList to localStorage
     try {
       const key = `chat_messages_${getUsername()}`;
-      const currentMessages = JSON.parse(localStorage.getItem(key) || '{}');
+      const currentMessages = JSON.parse(localStorage.getItem(key) || "{}");
       currentMessages[conversation.conversationID] = messageList;
       localStorage.setItem(key, JSON.stringify(currentMessages));
-      console.log("Messages saved to localStorage for conversation:", conversation.conversationID);
+      console.log(
+        "Messages saved to localStorage for conversation:",
+        conversation.conversationID
+      );
     } catch (error) {
       console.error("Error saving messages to localStorage:", error);
     }
@@ -344,8 +382,8 @@ function Chat() {
       state: {
         messageList: messageList,
         conversationID: conversation.conversationID,
-        conversationName: conversation.conversationName
-      }
+        conversationName: conversation.conversationName,
+      },
     });
   };
 
@@ -354,10 +392,15 @@ function Chat() {
   };
 
   // Get filtered conversations based on search query
-  const filteredConversations = conversations.filter(conversation => 
-    conversation.conversationID.toLowerCase().includes(searchQuery.toLowerCase()) ||
-    (conversation.conversationName && 
-     conversation.conversationName.toLowerCase().includes(searchQuery.toLowerCase()))
+  const filteredConversations = conversations.filter(
+    (conversation) =>
+      conversation.conversationID
+        .toLowerCase()
+        .includes(searchQuery.toLowerCase()) ||
+      (conversation.conversationName &&
+        conversation.conversationName
+          .toLowerCase()
+          .includes(searchQuery.toLowerCase()))
   );
 
   // Function to render special message types
@@ -367,14 +410,18 @@ function Chat() {
       if (conversation.lastMessage?.extendedData) {
         let extendedData;
         try {
-          extendedData = typeof conversation.lastMessage.extendedData === 'string'
-            ? JSON.parse(conversation.lastMessage.extendedData)
-            : conversation.lastMessage.extendedData;
+          extendedData =
+            typeof conversation.lastMessage.extendedData === "string"
+              ? JSON.parse(conversation.lastMessage.extendedData)
+              : conversation.lastMessage.extendedData;
 
-          console.log("Rendering conversation with extendedData:", extendedData);
+          console.log(
+            "Rendering conversation with extendedData:",
+            extendedData
+          );
 
           // Nếu là lời mời tham gia video
-          if (extendedData.type === 'video_invitation') {
+          if (extendedData.type === "video_invitation") {
             return (
               <Button
                 variant="contained"
@@ -382,17 +429,22 @@ function Chat() {
                 size="small"
                 startIcon={<VideocamIcon />}
                 sx={{ mt: 1, mb: 1 }}
-                onClick={() => window.open(extendedData.roomUrl, '_blank')}
+                onClick={() => window.open(extendedData.roomUrl, "_blank")}
               >
                 Tham gia phòng khám
               </Button>
             );
           }
         } catch (e) {
-          console.error("Error parsing extendedData:", e, "Raw value:", conversation.lastMessage.extendedData);
+          console.error(
+            "Error parsing extendedData:",
+            e,
+            "Raw value:",
+            conversation.lastMessage.extendedData
+          );
         }
       }
-      
+
       // Nếu không phải tin nhắn đặc biệt, không hiển thị gì cả
       return null;
     } catch (error) {
@@ -406,75 +458,195 @@ function Chat() {
     if (loggedIn) {
       // Initial fetch
       fetchConversations();
-      
+
       // Set up periodic refresh - less frequent since we also refresh on new messages
       const interval = setInterval(() => {
         fetchConversations();
       }, 60000); // Refresh every minute as backup
-      
+
       return () => clearInterval(interval);
     }
   }, [loggedIn]);
 
   if (loading) {
     return (
-      <Box sx={{ 
-        width: '100%', 
-        height: '100vh', 
-        display: 'flex', 
-        justifyContent: 'center', 
-        alignItems: 'center',
-        flexDirection: 'column',
-        gap: 2 
-      }}>
-        <CircularProgress />
-        <Typography variant="body1">Đang kết nối...</Typography>
+      <Box
+        sx={{
+          width: "100%",
+          height: "100vh",
+          display: "flex",
+          justifyContent: "center",
+          alignItems: "center",
+          flexDirection: "column",
+          gap: 2,
+          background: (theme) =>
+            `linear-gradient(135deg, ${alpha(
+              theme.palette.primary.light,
+              0.05
+            )} 0%, ${alpha(theme.palette.background.default, 1)} 100%)`,
+        }}
+      >
+        <CircularProgress size={48} thickness={4} />
+        <Typography variant="h6" color="text.secondary" fontWeight={500}>
+          Đang kết nối...
+        </Typography>
       </Box>
     );
   }
 
+  // Toggle drawer for mobile view
+  const toggleDrawer = () => {
+    setDrawerOpen(!drawerOpen);
+  };
+
   return (
-    <Box sx={{ 
-      display: 'flex',
-      minHeight: '100vh',
-      bgcolor: theme => alpha(theme.palette.background.default, 0.95)
-    }}>
-      <Sidebar />
-      
-      <Box sx={{ 
-        flexGrow: 1, 
-        ml: { xs: 0, md: "280px" },
-        p: 3,
-        transition: "margin 0.2s ease",
-        display: 'flex',
-        flexDirection: 'column'
-      }}>
-        <Box sx={{ 
-          display: 'flex', 
-          alignItems: 'center', 
-          mb: 3,
-          gap: 2
-        }}>
-          <IconButton onClick={handleGoBack}>
+    <Box
+      sx={{
+        display: "flex",
+        minHeight: "100vh",
+        width: "calc(100% - 280px)",
+        maxWidth: "100vw",
+        overflow: "hidden",
+        bgcolor: (theme) => alpha(theme.palette.background.default, 0.95),
+        background: `radial-gradient(circle at 80% 90%, ${alpha(
+          theme.palette.primary.light,
+          0.15
+        )} 0%, transparent 40%)`,
+      }}
+    >
+      {/* Responsive sidebar */}
+      {isMobile ? (
+        <Drawer
+          variant="temporary"
+          open={drawerOpen}
+          onClose={toggleDrawer}
+          ModalProps={{ keepMounted: true }}
+          sx={{
+            "& .MuiDrawer-paper": {
+              boxSizing: "border-box",
+            },
+          }}
+        >
+          <Sidebar />
+        </Drawer>
+      ) : (
+        <Box
+          sx={{
+            flexShrink: 0,
+            display: { xs: "none", md: "block" },
+          }}
+        >
+          <Sidebar />
+        </Box>
+      )}
+
+      <Box
+        component="main"
+        sx={{
+          flexGrow: 1,
+          width: { xs: "100%", md: "calc(100% - 280px)" },
+          p: { xs: 1, sm: 2, md: 3 },
+          display: "flex",
+          flexDirection: "column",
+        }}
+        overflow="hidden"
+      >
+        <Box
+          sx={{
+            display: "flex",
+            alignItems: "center",
+            mb: 2,
+            p: 1,
+            borderRadius: 2,
+            bgcolor: alpha(theme.palette.background.paper, 0.7),
+            backdropFilter: "blur(8px)",
+            boxShadow: `0 2px 12px ${alpha(theme.palette.common.black, 0.05)}`,
+          }}
+        >
+          {isMobile && (
+            <IconButton
+              edge="start"
+              color="inherit"
+              aria-label="menu"
+              onClick={toggleDrawer}
+              sx={{ mr: 1 }}
+            >
+              <MenuIcon />
+            </IconButton>
+          )}
+          <IconButton
+            onClick={handleGoBack}
+            sx={{
+              mr: 1,
+              backgroundColor: alpha(theme.palette.divider, 0.04),
+              "&:hover": {
+                backgroundColor: alpha(theme.palette.divider, 0.1),
+              },
+            }}
+          >
             <ArrowBackIcon />
           </IconButton>
-          <Typography variant="h5" fontWeight="bold">
+          <Typography variant="h6" fontWeight="bold" noWrap>
             Tin nhắn
           </Typography>
+
+          {unreadCount > 0 && (
+            <Chip
+              label={`${unreadCount} mới`}
+              color="primary"
+              size="small"
+              sx={{
+                ml: 1,
+                fontWeight: 500,
+                height: 24,
+              }}
+            />
+          )}
+
+          <Box sx={{ ml: "auto" }}>
+            <Tooltip title="Làm mới">
+              <IconButton
+                onClick={handleRefreshConversations}
+                disabled={loadingConversations}
+                size="small"
+                sx={{
+                  backgroundColor: alpha(theme.palette.primary.main, 0.1),
+                  color: "primary.main",
+                  "&:hover": {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                  },
+                }}
+              >
+                <RefreshIcon fontSize="small" />
+              </IconButton>
+            </Tooltip>
+          </Box>
         </Box>
-        
-        <Grid container spacing={3}>
+
+        <Grid
+          container
+          spacing={2}
+          sx={{
+            height: "calc(100vh - 100px)",
+            overflow: "hidden",
+          }}
+        >
           {/* Chat list */}
-          <Grid item xs={12} md={4}>
-            <Card sx={{ 
-              height: '100%', 
-              minHeight: 500, 
-              display: 'flex', 
-              flexDirection: 'column',
-              borderRadius: 2,
-              boxShadow: theme => `0 4px 20px ${alpha(theme.palette.common.black, 0.05)}`
-            }}>
-              <Box sx={{ p: 2, borderBottom: 1, borderColor: 'divider' }}>
+          <Grid item xs={12} md={4} lg={3} sx={{ height: "100%" }}>
+            <Card
+              sx={{
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                borderRadius: 2,
+                overflow: "hidden",
+                boxShadow: `0 4px 20px ${alpha(
+                  theme.palette.common.black,
+                  0.05
+                )}`,
+              }}
+            >
+              <Box sx={{ p: 1.5, borderBottom: 1, borderColor: "divider" }}>
                 <TextField
                   fullWidth
                   placeholder="Tìm kiếm..."
@@ -483,145 +655,235 @@ function Chat() {
                   InputProps={{
                     startAdornment: (
                       <InputAdornment position="start">
-                        <SearchIcon />
+                        <SearchIcon fontSize="small" />
                       </InputAdornment>
                     ),
                   }}
                   size="small"
                   sx={{
-                    '& .MuiOutlinedInput-root': {
-                      borderRadius: '20px',
-                      backgroundColor: theme => alpha(theme.palette.background.paper, 0.8),
-                      '&:hover': {
-                        backgroundColor: theme => alpha(theme.palette.background.paper, 0.9),
-                      }
-                    }
+                    "& .MuiOutlinedInput-root": {
+                      borderRadius: "20px",
+                      backgroundColor: alpha(
+                        theme.palette.background.paper,
+                        0.8
+                      ),
+                      "& fieldset": {
+                        borderColor: alpha(theme.palette.divider, 0.2),
+                      },
+                    },
                   }}
                 />
               </Box>
-              
-              <List sx={{ flexGrow: 1, overflow: 'auto', p: 0 }}>
+
+              <List
+                sx={{
+                  flexGrow: 1,
+                  overflow: "auto",
+                  p: 0,
+                  "&::-webkit-scrollbar": {
+                    width: "6px",
+                  },
+                  "&::-webkit-scrollbar-track": {
+                    backgroundColor: "transparent",
+                  },
+                  "&::-webkit-scrollbar-thumb": {
+                    backgroundColor: alpha(theme.palette.primary.main, 0.2),
+                    borderRadius: 3,
+                  },
+                }}
+              >
                 {loadingConversations && conversations.length === 0 ? (
-                  <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Box sx={{ p: 3, textAlign: "center" }}>
                     <CircularProgress size={30} />
                   </Box>
                 ) : filteredConversations.length > 0 ? (
                   filteredConversations.map((conversation) => (
-                    <ListItem 
-                      key={conversation.conversationID} 
-                      divider 
+                    <ListItem
+                      key={conversation.conversationID}
+                      button
+                      divider
                       onClick={() => handleViewConversation(conversation)}
                       sx={{
-                        cursor: 'pointer',
-                        backgroundColor: selectedConversation?.conversationID === conversation.conversationID 
-                          ? alpha(theme.palette.primary.main, 0.08)
-                          : 'transparent',
-                        borderRadius: '12px',
-                        my: 0.5,
-                        mx: 1,
-                        '&:hover': {
-                          backgroundColor: alpha(theme.palette.primary.main, 0.04),
+                        cursor: "pointer",
+                        backgroundColor:
+                          selectedConversation?.conversationID ===
+                          conversation.conversationID
+                            ? alpha(theme.palette.primary.main, 0.08)
+                            : "transparent",
+                        borderRadius: 0,
+                        py: 1,
+                        px: 2,
+                        "&:hover": {
+                          backgroundColor: alpha(
+                            theme.palette.primary.main,
+                            0.04
+                          ),
                         },
                       }}
                     >
                       <ListItemAvatar>
-                        <StyledAvatar>
-                          {conversation.conversationName[0].toUpperCase()}
-                        </StyledAvatar>
+                        <Badge
+                          overlap="circular"
+                          badgeContent={
+                            conversation.unreadMessageCount > 0
+                              ? conversation.unreadMessageCount
+                              : 0
+                          }
+                          color="error"
+                          invisible={conversation.unreadMessageCount === 0}
+                          anchorOrigin={{
+                            vertical: "bottom",
+                            horizontal: "right",
+                          }}
+                        >
+                          <Avatar sx={{ bgcolor: "primary.main" }}>
+                            {conversation.conversationName[0].toUpperCase()}
+                          </Avatar>
+                        </Badge>
                       </ListItemAvatar>
                       <ListItemText
-                        primary={conversation.conversationName}
+                        primary={
+                          <Box
+                            sx={{
+                              display: "flex",
+                              justifyContent: "space-between",
+                            }}
+                          >
+                            <Typography
+                              variant="subtitle2"
+                              noWrap
+                              sx={{
+                                maxWidth: "130px",
+                                fontWeight:
+                                  conversation.unreadMessageCount > 0
+                                    ? 600
+                                    : 400,
+                              }}
+                            >
+                              {conversation.conversationName}
+                            </Typography>
+                            <Typography
+                              variant="caption"
+                              color="text.secondary"
+                            >
+                              {conversation.lastMessage &&
+                                new Date(
+                                  conversation.lastMessage.timestamp
+                                ).toLocaleTimeString([], {
+                                  hour: "2-digit",
+                                  minute: "2-digit",
+                                })}
+                            </Typography>
+                          </Box>
+                        }
                         secondary={
                           <Typography
                             variant="body2"
-                            color="text.secondary"
-                            sx={{ 
-                              display: 'block', 
-                              maxWidth: '100%',
-                              overflow: 'hidden',
-                              textOverflow: 'ellipsis',
-                              whiteSpace: 'nowrap'
+                            color={
+                              conversation.unreadMessageCount > 0
+                                ? "text.primary"
+                                : "text.secondary"
+                            }
+                            noWrap
+                            sx={{
+                              fontWeight:
+                                conversation.unreadMessageCount > 0 ? 500 : 400,
                             }}
                           >
-                            {conversation.lastMessage?.message || 'Chưa có tin nhắn'}
+                            {conversation.lastMessage?.message ||
+                              "Chưa có tin nhắn"}
                           </Typography>
                         }
                       />
                     </ListItem>
                   ))
                 ) : (
-                  <Box sx={{ p: 3, textAlign: 'center' }}>
+                  <Box sx={{ p: 3, textAlign: "center" }}>
                     <Typography color="text.secondary">
-                      {searchQuery ? 'Không tìm thấy kết quả' : 'Không có cuộc trò chuyện nào'}
+                      {searchQuery
+                        ? "Không tìm thấy kết quả"
+                        : "Không có cuộc trò chuyện nào"}
                     </Typography>
                   </Box>
                 )}
               </List>
             </Card>
           </Grid>
-          
+
           {/* Chat preview */}
-          <Grid item xs={12} md={8}>
-            <Paper 
+          <Grid item xs={12} md={8} lg={9} sx={{ height: "100%" }}>
+            <Paper
               elevation={0}
-              sx={{ 
-                p: 4, 
-                borderRadius: 2, 
-                height: '100%',
-                minHeight: 500,
-                display: 'flex',
-                flexDirection: 'column',
-                justifyContent: 'center',
-                alignItems: 'center',
-                bgcolor: theme => alpha(theme.palette.background.paper, 0.6),
-                backdropFilter: 'blur(10px)'
+              sx={{
+                p: { xs: 2, md: 4 },
+                height: "100%",
+                display: "flex",
+                flexDirection: "column",
+                justifyContent: "center",
+                alignItems: "center",
+                bgcolor: alpha(theme.palette.background.paper, 0.7),
+                backdropFilter: "blur(10px)",
+                borderRadius: 2,
+                textAlign: "center",
               }}
             >
-              <Box sx={{ 
-                width: 80, 
-                height: 80, 
-                borderRadius: '50%', 
-                bgcolor: 'primary.main',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                mb: 3,
-                color: 'white',
-                boxShadow: theme => `0 4px 20px ${alpha(theme.palette.primary.main, 0.3)}`
-              }}>
-                <ChatIcon sx={{ fontSize: 40 }} />
+              <Box
+                sx={{
+                  width: { xs: 70, md: 80 },
+                  height: { xs: 70, md: 80 },
+                  borderRadius: "50%",
+                  bgcolor: alpha(theme.palette.primary.main, 0.1),
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  mb: 3,
+                  color: "primary.main",
+                }}
+              >
+                <ChatIcon sx={{ fontSize: { xs: 32, md: 40 } }} />
               </Box>
-              
-              <Typography variant="h6" gutterBottom>
+
+              <Typography variant="h6" gutterBottom fontWeight="bold">
                 Chọn một cuộc trò chuyện
               </Typography>
-              
-              <Typography variant="body1" sx={{ 
-                mb: 3, 
-                color: 'text.secondary', 
-                textAlign: 'center', 
-                maxWidth: 400 
-              }}>
-                Chọn một cuộc trò chuyện từ danh sách bên trái để bắt đầu chat
+
+              <Typography
+                variant="body2"
+                sx={{
+                  mb: 3,
+                  color: "text.secondary",
+                  maxWidth: { xs: 260, md: 400 },
+                }}
+              >
+                Chọn một cuộc trò chuyện từ danh sách để bắt đầu chat
               </Typography>
+
+              {unreadCount > 0 && (
+                <Chip
+                  icon={<MessageIcon />}
+                  label={`${unreadCount} tin nhắn chưa đọc`}
+                  color="primary"
+                  size="small"
+                />
+              )}
             </Paper>
           </Grid>
         </Grid>
       </Box>
-      
-      <Snackbar 
-        open={showError} 
-        autoHideDuration={6000} 
+
+      <Snackbar
+        open={showError}
+        autoHideDuration={6000}
         onClose={() => setShowError(false)}
-        anchorOrigin={{ vertical: 'bottom', horizontal: 'center' }}
+        anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
       >
-        <Alert 
-          onClose={() => setShowError(false)} 
-          severity="error" 
-          sx={{ 
-            width: '100%',
-            boxShadow: '0 4px 20px rgba(0,0,0,0.15)',
-            borderRadius: 2
+        <Alert
+          onClose={() => setShowError(false)}
+          severity="error"
+          sx={{
+            width: "100%",
+            boxShadow: "0 4px 20px rgba(0,0,0,0.15)",
+            borderRadius: 2,
           }}
         >
           {error}
@@ -631,4 +893,4 @@ function Chat() {
   );
 }
 
-export default Chat; 
+export default Chat;
