@@ -5,6 +5,7 @@ import {
   getRefreshToken,
   remove,
 } from "../service/otherService/localStorage";
+
 const axiosClient = axios.create({
   baseURL: "http://localhost:8082/api/v1/",
   headers: {
@@ -120,4 +121,23 @@ axiosClient.interceptors.response.use(
   }
 );
 
+// Create a new axios instance for password reset without token
+const axiosResetPassword = axios.create({
+  baseURL: process.env.REACT_APP_API_URL,
+  headers: {
+    "Content-Type": "application/json",
+  },
+});
+
+// Add a response interceptor for reset password
+axiosResetPassword.interceptors.response.use(
+  function (response) {
+    return response.data;
+  },
+  function (error) {
+    return Promise.reject(error);
+  }
+);
+
+export { axiosResetPassword };
 export default axiosClient;

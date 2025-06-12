@@ -57,6 +57,7 @@ import DoctorNewsManagementPage from "./pages/doctor/NewsManagementPage";
 import DoctorNewsReviewPage from "./pages/doctor/NewsReviewPage";
 import AdminNewsManagementPage from "./pages/admin/NewsManagementPage";
 import DoctorArticlesPage from "./pages/news/DoctorArticlesPage";
+import ResetPassword from "./pages/patient/ResetPassword";
 
 const PrivateRoute = ({ children }) => {
   const role = getRole();
@@ -126,7 +127,7 @@ const AppRouter = () => {
       <Route path="/register" element={<Register />} />
       <Route path="/not-found" element={<NotFound />} />
       <Route path="/video-call/:doctorId" element={<VideoCall />} />
-
+      <Route path="/auth/resetPassword/:username" element={<ResetPassword />} />
       {/* Patient Routes with Shared Layout */}
       <Route element={<PatientLayout />}>
         <Route path="/home" element={<Home />} />

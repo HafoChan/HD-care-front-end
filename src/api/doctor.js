@@ -35,7 +35,7 @@ export const doctor = {
       const endpoint = query
         ? `/doctor?${query}&page=${page}`
         : `/doctor?page=${page}`;
-      console.log(endpoint);
+      console.log("tim kiem bs", endpoint);
 
       return axiosClient.get(endpoint);
     } catch (error) {

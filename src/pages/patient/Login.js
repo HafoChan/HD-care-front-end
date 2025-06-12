@@ -17,6 +17,10 @@ import {
   IconButton,
   Divider,
   Fade,
+  Dialog,
+  DialogTitle,
+  DialogContent,
+  DialogActions,
 } from "@mui/material";
 import { Link } from "react-router-dom";
 import "../../css/user/login_register.css";
@@ -32,6 +36,7 @@ import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ArrowBackIcon from "@mui/icons-material/ArrowBack";
 import { toast } from "react-toastify";
+import axios from "axios";
 
 const Login = () => {
   const theme = useTheme();
@@ -41,7 +46,17 @@ const Login = () => {
   const [snackBarOpen, setSnackBarOpen] = useState(false);
   const [snackBarMessage, setSnackBarMessage] = useState("");
   const [snackType, setSnackType] = useState("error");
+  const [forgotPasswordOpen, setForgotPasswordOpen] = useState(false);
+  const [forgotPasswordUsername, setForgotPasswordUsername] = useState("");
   const navigate = useNavigate();
+
+  // Create axios instance for password reset
+  const axiosResetPassword = axios.create({
+    baseURL: "http://localhost:8082/api/v1/",
+    headers: {
+      "Content-Type": "application/json",
+    },
+  });
 
   const handleCloseSnackBar = (event, reason) => {
     if (reason === "clickaway") {
@@ -110,6 +125,27 @@ const Login = () => {
 
   const handleTogglePasswordVisibility = () => {
     setShowPassword(!showPassword);
+  };
+
+  const handleForgotPassword = async () => {
+    if (!forgotPasswordUsername) {
+      showError("Vui lòng nhập tên đăng nhập");
+      return;
+    }
+
+    try {
+      const response = await axiosResetPassword.get(`/auth/resetPassword?username=${forgotPasswordUsername}`);
+      console.log("response", response);
+      if (response.data.code === 1000) {
+        showSuccess("Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.");
+        setForgotPasswordOpen(false);
+        setForgotPasswordUsername("");
+      } else {
+        showError(response.data.message || "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu");
+      }
+    } catch (error) {
+      showError(error.response?.data?.message || "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu");
+    }
   };
 
   return (
@@ -332,11 +368,11 @@ const Login = () => {
                     >
                       <Typography
                         variant="body2"
-                        component={Link}
-                        to="/forgot-password"
+                        onClick={() => setForgotPasswordOpen(true)}
                         sx={{
                           color: theme.palette.primary.main,
                           textDecoration: "none",
+                          cursor: "pointer",
                           "&:hover": {
                             textDecoration: "underline",
                           },
@@ -422,6 +458,31 @@ const Login = () => {
           </Card>
         </Fade>
       </Container>
+
+      <Dialog open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)}>
+        <DialogTitle>Quên mật khẩu</DialogTitle>
+        <DialogContent>
+          <Typography variant="body2" sx={{ mb: 2 }}>
+            Vui lòng nhập tên đăng nhập của bạn để nhận hướng dẫn đặt lại mật khẩu.
+          </Typography>
+          <TextField
+            autoFocus
+            margin="dense"
+            label="Tên đăng nhập"
+            type="text"
+            fullWidth
+            value={forgotPasswordUsername}
+            onChange={(e) => setForgotPasswordUsername(e.target.value)}
+            required
+          />
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setForgotPasswordOpen(false)}>Hủy</Button>
+          <Button onClick={handleForgotPassword} variant="contained" color="primary">
+            Gửi yêu cầu
+          </Button>
+        </DialogActions>
+      </Dialog>
     </Box>
   );
 };

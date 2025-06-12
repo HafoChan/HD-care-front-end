@@ -442,21 +442,7 @@ const TeamOfDoctors = () => {
               </FormLabel>
               <RadioGroup row value={sortOrder} onChange={handleSortChange}>
                 <FormControlLabel
-                  value="rating_desc"
-                  control={
-                    <Radio
-                      sx={{
-                        color: theme.palette.primary.main,
-                        "&.Mui-checked": {
-                          color: theme.palette.primary.main,
-                        },
-                      }}
-                    />
-                  }
-                  label="Đánh giá cao nhất"
-                />
-                <FormControlLabel
-                  value="price_asc"
+                  value="asc"
                   control={
                     <Radio
                       sx={{
@@ -470,7 +456,7 @@ const TeamOfDoctors = () => {
                   label="Giá thấp đến cao"
                 />
                 <FormControlLabel
-                  value="price_desc"
+                  value="desc"
                   control={
                     <Radio
                       sx={{
