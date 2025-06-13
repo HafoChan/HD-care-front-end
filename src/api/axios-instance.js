@@ -11,6 +11,7 @@ const axiosClient = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // Thêm biến để theo dõi trạng thái
@@ -127,6 +128,7 @@ const axiosResetPassword = axios.create({
   headers: {
     "Content-Type": "application/json",
   },
+  withCredentials: true,
 });
 
 // Add a response interceptor for reset password
