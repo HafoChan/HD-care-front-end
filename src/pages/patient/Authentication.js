@@ -20,7 +20,7 @@ export default function Authenticate() {
 
         try {
           const response = await fetch(
-            `http://hdcarebackend-production.up.railway.app/api/v1/auth/outbound/authentication?code=${authCode}`,
+            `https://hdcarebackend-production.up.railway.app/api/v1/auth/outbound/authentication?code=${authCode}`,
             {
               method: "POST",
             }

@@ -52,7 +52,7 @@ const Login = () => {
 
   // Create axios instance for password reset
   const axiosResetPassword = axios.create({
-    baseURL: "http://hdcarebackend-production.up.railway.app/api/v1/",
+    baseURL: "https://hdcarebackend-production.up.railway.app/api/v1/",
     headers: {
       "Content-Type": "application/json",
     },

@@ -7,7 +7,7 @@ import {
 } from "../service/otherService/localStorage";
 
 const axiosClient = axios.create({
-  baseURL: "http://hdcarebackend-production.up.railway.app/api/v1/",
+  baseURL: "https://hdcarebackend-production.up.railway.app/api/v1/",
   headers: {
     "Content-Type": "application/json",
   },
@@ -70,7 +70,7 @@ axiosClient.interceptors.response.use(
       if (refreshToken && !isRefreshTokenFailed) {
         try {
           const result = await axios.post(
-            "http://hdcarebackend-production.up.railway.app/api/v1/auth/refreshToken",
+            "https://hdcarebackend-production.up.railway.app/api/v1/auth/refreshToken",
             { refreshToken }
           );
 

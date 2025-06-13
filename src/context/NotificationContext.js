@@ -108,7 +108,7 @@ export const NotificationProvider = ({ children }) => {
 
     const token = getAccessToken();
     const newEventSource = new EventSource(
-      `http://hdcarebackend-production.up.railway.app/api/v1/sse/subscribe?token=${token}`
+      `https://hdcarebackend-production.up.railway.app/api/v1/sse/subscribe?token=${token}`
     );
 
     newEventSource.onerror = (event) => {
