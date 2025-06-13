@@ -121,7 +121,7 @@ const AppointmentDetailPatient = () => {
     try {
       toast.info("Đang tải đơn thuốc...");
       const response = await fetch(
-        `http://hdcarebackend-production.up.railway.app/api/v1/appointment/pdf/${id}?status=xem`,
+        `https://hdcarebackend-production.up.railway.app/api/v1/appointment/pdf/${id}?status=xem`,
         {
           method: "GET",
           headers: {
