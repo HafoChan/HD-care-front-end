@@ -235,13 +235,23 @@ const AppointmentList = () => {
   const [status, setStatus] = useState();
   const [month, setMonth] = useState(null);
   const [week, setWeek] = useState(null);
+  const [isAllTime, setIsAllTime] = useState(false);
   const [appointmentList, setAppointmentList] = useState([]);
   const [selectedRow, setSelectedRow] = useState();
 
   const fetchData = async () => {
     try {
       let response;
-      if (week === null && month === null) {
+      if (isAllTime) {
+        response = await appointment.getAppointmentByPatientId(
+          id,
+          null,
+          null,
+          null,
+          status,
+          currentPage
+        );
+      } else if (week === null && month === null) {
         response = await appointment.getAppointmentByPatientId(
           id,
           selectedDate,
@@ -279,12 +289,24 @@ const AppointmentList = () => {
     if (e.target.value === "month") {
       setMonth(selectedDate);
       setWeek(null);
+      setIsAllTime(false);
     } else if (e.target.value === "week") {
       setWeek(selectedDate);
       setMonth(null);
+      setIsAllTime(false);
+    } else if (e.target.value === "today") {
+      setWeek(null);
+      setMonth(null);
+      setIsAllTime(false);
+      setSelectedDate(localDate);
+    } else if (e.target.value === "cancel") {
+      setWeek(null);
+      setMonth(null);
+      setIsAllTime(true);
     } else {
       setWeek(null);
       setMonth(null);
+      setIsAllTime(false);
       setSelectedDate(selectedDate);
     }
   };
@@ -319,7 +341,7 @@ const AppointmentList = () => {
 
   useEffect(() => {
     fetchData();
-  }, [id, selectedDate, week, month, status, currentPage]);
+  }, [id, selectedDate, week, month, status, currentPage, isAllTime]);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -410,6 +432,7 @@ const AppointmentList = () => {
                 sx={{ borderRadius: 2 }}
               >
                 <MenuItem value="cancel">Tất cả thời gian</MenuItem>
+                <MenuItem value="today">Hôm nay</MenuItem>
                 <MenuItem value="week">Tuần này</MenuItem>
                 <MenuItem value="month">Tháng này</MenuItem>
               </Select>

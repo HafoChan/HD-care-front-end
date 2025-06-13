@@ -548,8 +548,8 @@ function Chat() {
           p: { xs: 1, sm: 2, md: 3 },
           display: "flex",
           flexDirection: "column",
+          overflow: "hidden",
         }}
-        overflow="hidden"
       >
         <Box
           sx={{

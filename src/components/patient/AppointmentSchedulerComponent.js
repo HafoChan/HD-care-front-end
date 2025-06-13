@@ -40,6 +40,11 @@ const AppointmentSchedulerComponent = ({
   const [openBookingForm, setOpenBookingForm] = useState(false);
   const [selectedSchedule, setSelectedSchedule] = useState(null);
 
+  // Filter available times to only include those with available: true
+  const filteredAvailableTimes = availableTimes.filter(
+    (time) => time.available === true
+  );
+
   const today = new Date();
   const maxDate = new Date();
   maxDate.setDate(today.getDate() + 7);
@@ -160,7 +165,7 @@ const AppointmentSchedulerComponent = ({
                     Thời gian khám có sẵn:
                   </Typography>
 
-                  {availableTimes.length === 0 ? (
+                  {filteredAvailableTimes.length === 0 ? (
                     <Box
                       sx={{
                         display: "flex",
@@ -192,7 +197,7 @@ const AppointmentSchedulerComponent = ({
                         maxWidth: "100%",
                       }}
                     >
-                      {availableTimes.map((time, index) => {
+                      {filteredAvailableTimes.map((time, index) => {
                         // Tạo đối tượng Date cho thời gian hiện tại
                         const now = new Date();
 

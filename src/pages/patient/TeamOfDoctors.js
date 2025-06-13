@@ -722,7 +722,10 @@ const TeamOfDoctors = () => {
                           variant="body2"
                           sx={{ mb: 1.5, color: "text.secondary" }}
                         >
-                          {doctor.schedules && doctor.schedules.length > 0
+                          {doctor.schedules &&
+                          doctor.schedules.filter(
+                            (schedule) => schedule.available === true
+                          ).length > 0
                             ? "Chọn thời gian khám:"
                             : "Không có lịch khám vào ngày này"}
                         </Typography>
@@ -736,34 +739,75 @@ const TeamOfDoctors = () => {
                           }}
                         >
                           {doctor.schedules &&
-                            doctor.schedules.map((schedule) => (
-                              <Chip
-                                key={schedule.id}
-                                label={`${schedule.start} - ${schedule.end}`}
-                                onClick={() =>
-                                  handleScheduleClick(
-                                    selectedDates[doctor.id],
-                                    doctor,
-                                    schedule.id
-                                  )
-                                }
-                                color="primary"
-                                variant="outlined"
-                                size="small"
-                                icon={<AccessTimeIcon fontSize="small" />}
-                                sx={{
-                                  borderRadius: 1.5,
-                                  transition: "all 0.2s",
-                                  "&:hover": {
-                                    bgcolor: alpha(
-                                      theme.palette.primary.main,
-                                      0.1
-                                    ),
-                                    transform: "scale(1.05)",
-                                  },
-                                }}
-                              />
-                            ))}
+                            doctor.schedules
+                              .filter((schedule) => schedule.available === true)
+                              .map((schedule) => {
+                                // Tạo đối tượng Date cho thời gian hiện tại
+                                const now = new Date();
+
+                                // Tạo đối tượng Date cho thời gian của lịch khám
+                                const scheduleDate = new Date(
+                                  selectedDates[doctor.id]
+                                );
+                                const [scheduleHour] = schedule.start
+                                  .split(":")
+                                  .map(Number);
+                                scheduleDate.setHours(scheduleHour, 0, 0, 0);
+
+                                // Kiểm tra xem lịch có phải trong quá khứ không
+                                const isPastSchedule = scheduleDate < now;
+
+                                return (
+                                  <Chip
+                                    key={schedule.id}
+                                    label={`${schedule.start} - ${schedule.end}`}
+                                    onClick={() => {
+                                      if (!isPastSchedule) {
+                                        handleScheduleClick(
+                                          selectedDates[doctor.id],
+                                          doctor,
+                                          schedule.id
+                                        );
+                                      }
+                                    }}
+                                    color={isPastSchedule ? "error" : "primary"}
+                                    variant="outlined"
+                                    size="small"
+                                    disabled={isPastSchedule}
+                                    icon={<AccessTimeIcon fontSize="small" />}
+                                    sx={{
+                                      borderRadius: 1.5,
+                                      opacity: isPastSchedule ? 0.7 : 1,
+                                      transition: "all 0.2s",
+                                      bgcolor: isPastSchedule
+                                        ? alpha(theme.palette.error.main, 0.1)
+                                        : "transparent",
+                                      borderColor: isPastSchedule
+                                        ? theme.palette.error.main
+                                        : undefined,
+                                      "& .MuiChip-icon": {
+                                        color: isPastSchedule
+                                          ? theme.palette.error.main
+                                          : undefined,
+                                      },
+                                      "&:hover": {
+                                        bgcolor: isPastSchedule
+                                          ? alpha(
+                                              theme.palette.error.main,
+                                              0.15
+                                            )
+                                          : alpha(
+                                              theme.palette.primary.main,
+                                              0.1
+                                            ),
+                                        transform: isPastSchedule
+                                          ? "none"
+                                          : "scale(1.05)",
+                                      },
+                                    }}
+                                  />
+                                );
+                              })}
                         </Box>
 
                         <Divider sx={{ my: 1.5 }} />
