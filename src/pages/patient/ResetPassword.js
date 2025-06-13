@@ -14,7 +14,7 @@ import {
   InputAdornment,
   IconButton,
 } from "@mui/material";
-import { useNavigate, useParams,useSearchParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import LockIcon from "@mui/icons-material/Lock";
 import VisibilityIcon from "@mui/icons-material/Visibility";
 import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
@@ -35,7 +35,7 @@ const ResetPassword = () => {
 
   // Create axios instance for password reset
   const axiosResetPassword = axios.create({
-    baseURL: "http://localhost:8082/api/v1/",
+    baseURL: "http://hdcarebackend-production.up.railway.app/api/v1/",
     headers: {
       "Content-Type": "application/json",
     },
@@ -100,10 +100,14 @@ const ResetPassword = () => {
           navigate("/login");
         }, 2000);
       } else {
-        showError(response.data.message || "Có lỗi xảy ra khi đặt lại mật khẩu");
+        showError(
+          response.data.message || "Có lỗi xảy ra khi đặt lại mật khẩu"
+        );
       }
     } catch (error) {
-      showError(error.response?.data?.message || "Có lỗi xảy ra khi đặt lại mật khẩu");
+      showError(
+        error.response?.data?.message || "Có lỗi xảy ra khi đặt lại mật khẩu"
+      );
     }
   };
 
@@ -168,11 +172,7 @@ const ResetPassword = () => {
               Đặt lại mật khẩu
             </Typography>
 
-            <Typography
-              variant="body1"
-              color="text.secondary"
-              sx={{ mb: 4 }}
-            >
+            <Typography variant="body1" color="text.secondary" sx={{ mb: 4 }}>
               Vui lòng nhập mật khẩu mới của bạn.
             </Typography>
 
@@ -233,7 +233,9 @@ const ResetPassword = () => {
                   endAdornment: (
                     <InputAdornment position="end">
                       <IconButton
-                        onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                        onClick={() =>
+                          setShowConfirmPassword(!showConfirmPassword)
+                        }
                         edge="end"
                       >
                         {showConfirmPassword ? (

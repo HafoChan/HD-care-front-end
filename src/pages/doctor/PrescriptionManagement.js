@@ -302,7 +302,7 @@ const Prescription = () => {
       console.log(appointment);
 
       const response = await fetch(
-        `http://localhost:8082/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
+        `http://hdcarebackend-production.up.railway.app/api/v1/appointment/pdf/${appointment.id}?status=${e.target.textContent}`,
         {
           method: "GET",
           headers: {

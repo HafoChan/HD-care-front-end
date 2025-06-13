@@ -20,7 +20,7 @@ export default function Authenticate() {
 
         try {
           const response = await fetch(
-            `http://localhost:8082/api/v1/auth/outbound/authentication?code=${authCode}`,
+            `http://hdcarebackend-production.up.railway.app/api/v1/auth/outbound/authentication?code=${authCode}`,
             {
               method: "POST",
             }

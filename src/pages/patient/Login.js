@@ -52,7 +52,7 @@ const Login = () => {
 
   // Create axios instance for password reset
   const axiosResetPassword = axios.create({
-    baseURL: "http://localhost:8082/api/v1/",
+    baseURL: "http://hdcarebackend-production.up.railway.app/api/v1/",
     headers: {
       "Content-Type": "application/json",
     },
@@ -106,7 +106,7 @@ const Login = () => {
         toast.warning(data.message);
       } else {
         showSuccess(data.message);
-        console.log(data.result)
+        console.log(data.result);
         setItem(
           data.result.accessToken,
           data.result.refreshToken,
@@ -114,8 +114,8 @@ const Login = () => {
           data.result.userResponse.username
         );
         setRole(data.result.roles);
-        
-        console.log("data" , data.result.userResponse.username)
+
+        console.log("data", data.result.userResponse.username);
         // navigate("/home");
       }
     } catch (error) {
@@ -134,17 +134,27 @@ const Login = () => {
     }
 
     try {
-      const response = await axiosResetPassword.get(`/auth/resetPassword?username=${forgotPasswordUsername}`);
+      const response = await axiosResetPassword.get(
+        `/auth/resetPassword?username=${forgotPasswordUsername}`
+      );
       console.log("response", response);
       if (response.data.code === 1000) {
-        showSuccess("Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn.");
+        showSuccess(
+          "Yêu cầu đặt lại mật khẩu đã được gửi. Vui lòng kiểm tra email của bạn."
+        );
         setForgotPasswordOpen(false);
         setForgotPasswordUsername("");
       } else {
-        showError(response.data.message || "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu");
+        showError(
+          response.data.message ||
+            "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu"
+        );
       }
     } catch (error) {
-      showError(error.response?.data?.message || "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu");
+      showError(
+        error.response?.data?.message ||
+          "Có lỗi xảy ra khi gửi yêu cầu đặt lại mật khẩu"
+      );
     }
   };
 
@@ -459,11 +469,15 @@ const Login = () => {
         </Fade>
       </Container>
 
-      <Dialog open={forgotPasswordOpen} onClose={() => setForgotPasswordOpen(false)}>
+      <Dialog
+        open={forgotPasswordOpen}
+        onClose={() => setForgotPasswordOpen(false)}
+      >
         <DialogTitle>Quên mật khẩu</DialogTitle>
         <DialogContent>
           <Typography variant="body2" sx={{ mb: 2 }}>
-            Vui lòng nhập tên đăng nhập của bạn để nhận hướng dẫn đặt lại mật khẩu.
+            Vui lòng nhập tên đăng nhập của bạn để nhận hướng dẫn đặt lại mật
+            khẩu.
           </Typography>
           <TextField
             autoFocus
@@ -478,7 +492,11 @@ const Login = () => {
         </DialogContent>
         <DialogActions>
           <Button onClick={() => setForgotPasswordOpen(false)}>Hủy</Button>
-          <Button onClick={handleForgotPassword} variant="contained" color="primary">
+          <Button
+            onClick={handleForgotPassword}
+            variant="contained"
+            color="primary"
+          >
             Gửi yêu cầu
           </Button>
         </DialogActions>
