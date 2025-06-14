@@ -243,6 +243,7 @@ const Prescription = () => {
         setEditIndex(null);
         setSnackbarMessage("Cập nhật thuốc thành công!");
         setSnackbarSeverity("success");
+
       } else {
         const data = await prescriptionApi.createMedicine(
           appointment.prescriptionId,
@@ -250,6 +251,10 @@ const Prescription = () => {
         );
         setPrescriptionList([...prescriptionList, { ...data.result }]);
         setSnackbarMessage("Thêm thuốc thành công!");
+        const response = await prescriptionApi.createMedicineDetail(
+          medicine
+        );
+        console.log("thuoc da them", response.result);
         setSnackbarSeverity("success");
       }
 

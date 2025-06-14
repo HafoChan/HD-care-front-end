@@ -13,6 +13,9 @@ const prescriptionApi = {
   getListMedicine(id) {
     return axiosClient.get(`/prescription/${id}/medicine`);
   },
+  createMedicineDetail(data) {
+    return axiosClient.post(`/medicine`, data);
+  },
   createPrescription(id, data) {
     return axiosClient.put(`/prescription/${id}`, data);
   },
