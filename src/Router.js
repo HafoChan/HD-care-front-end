@@ -34,6 +34,7 @@ import AdminDashboard from "./pages/admin/Dashboard";
 import DoctorDetailAdmin from "./pages/admin/DoctorDetailAdmin";
 import PatientDetailAdmin from "./pages/admin/PatientDetailAdmin";
 import StatisticsPage from "./pages/admin/StatisticsPage";
+import ReportedPostsPage from "./pages/admin/ReportedPostsPage";
 import PostPage from "./pages/social-network/PostPage";
 import CreatePostPage from "./pages/social-network/CreatePostPage";
 import SavedPostsPage from "./pages/social-network/SavedPostsPage";
@@ -58,6 +59,7 @@ import DoctorNewsReviewPage from "./pages/doctor/NewsReviewPage";
 import AdminNewsManagementPage from "./pages/admin/NewsManagementPage";
 import DoctorArticlesPage from "./pages/news/DoctorArticlesPage";
 import ResetPassword from "./pages/patient/ResetPassword";
+import NewsManagementPageWrapper from "./pages/admin/NewsManagementPageWrapper";
 
 const PrivateRoute = ({ children }) => {
   const role = getRole();
@@ -99,7 +101,15 @@ const AppRouter = () => {
         path="/admin/news-management"
         element={
           <AdminRoute>
-            <AdminNewsManagementPage />
+            <NewsManagementPageWrapper />
+          </AdminRoute>
+        }
+      />
+      <Route
+        path="/admin/reported-posts"
+        element={
+          <AdminRoute>
+            <ReportedPostsPage />
           </AdminRoute>
         }
       />
@@ -242,7 +252,6 @@ const AppRouter = () => {
         }
       />
       <Route path="/chat/:doctorId" element={<Chat />} />
-
     </Routes>
   );
 };

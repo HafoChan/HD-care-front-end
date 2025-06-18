@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { styled } from "@mui/system";
 import {
   Box,
@@ -18,7 +18,8 @@ import {
 } from "react-icons/md";
 import ExitToAppIcon from "@mui/icons-material/ExitToApp";
 import ArticleIcon from "@mui/icons-material/Article";
-import { useNavigate } from "react-router-dom";
+import ReportProblemIcon from "@mui/icons-material/ReportProblem";
+import { useNavigate, useLocation } from "react-router-dom";
 
 const StyledDrawer = styled("div")(() => ({
   minWidth: 280,
@@ -93,15 +94,69 @@ const SectionLabel = styled(Typography)(() => ({
   fontSize: "0.75rem",
 }));
 
-const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
+const Sidebar = ({ activeTab, setActiveTab, onLogout, selectedKey }) => {
   const navigate = useNavigate();
+  const location = useLocation();
 
-  const handleNavigateToNews = () => {
-    navigate("/admin/news-management");
+  // Use the provided activeTab or selectedKey, or determine from current URL
+  const [currentTab, setCurrentTab] = useState(() => {
+    if (activeTab) return activeTab;
+    if (selectedKey) return selectedKey;
+
+    // Determine tab from URL path
+    const path = location.pathname;
+    if (path.includes("/statistics")) return "statistics";
+    if (path.includes("/news-management")) return "news";
+    if (path.includes("/reported-posts")) return "reported-posts";
+    return "dashboard";
+  });
+
+  // Update currentTab when props change
+  useEffect(() => {
+    if (activeTab) {
+      setCurrentTab(activeTab);
+    } else if (selectedKey) {
+      setCurrentTab(selectedKey);
+    }
+  }, [activeTab, selectedKey]);
+
+  // Tab routes mapping
+  const tabRoutes = {
+    dashboard: "/admin",
+    statistics: "/admin/statistics",
+    news: "/admin/news-management",
+    "reported-posts": "/admin/reported-posts",
+    doctors: "/admin", // These are internal tabs on the dashboard page
+    patients: "/admin", // These are internal tabs on the dashboard page
   };
 
-  const handleNavigateToStatistics = () => {
-    navigate("/admin/statistics");
+  // Handle tab click with unified navigation
+  const handleTabClick = (tab) => {
+    setCurrentTab(tab);
+
+    // Special case for internal dashboard tabs
+    if (
+      (tab === "doctors" || tab === "patients") &&
+      location.pathname === "/admin"
+    ) {
+      // If we're already on the dashboard, just update the internal state
+      if (setActiveTab) {
+        setActiveTab(tab);
+      }
+    } else {
+      // Navigate to the appropriate route
+      navigate(tabRoutes[tab]);
+
+      // If navigating to dashboard with specific tab
+      if (tabRoutes[tab] === "/admin" && tab !== "dashboard") {
+        // Need a small delay to ensure the component is mounted before setting state
+        setTimeout(() => {
+          if (setActiveTab) {
+            setActiveTab(tab);
+          }
+        }, 100);
+      }
+    }
   };
 
   return (
@@ -126,13 +181,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
         <List>
           <StyledListItem
             button
-            selected={activeTab === "dashboard"}
-            onClick={() => setActiveTab("dashboard")}
+            selected={currentTab === "dashboard"}
+            onClick={() => handleTabClick("dashboard")}
           >
-            <IconWrapper active={activeTab === "dashboard"}>
+            <IconWrapper active={currentTab === "dashboard"}>
               <MdDashboard
                 size={20}
-                color={activeTab === "dashboard" ? "#1976d2" : "#666"}
+                color={currentTab === "dashboard" ? "#1976d2" : "#666"}
               />
             </IconWrapper>
             <ListItemText
@@ -141,9 +196,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                 ml: 1.5,
                 maxWidth: "100%",
                 "& .MuiListItemText-primary": {
-                  fontWeight: activeTab === "dashboard" ? 600 : 400,
+                  fontWeight: currentTab === "dashboard" ? 600 : 400,
                   fontSize: "0.95rem",
-                  color: activeTab === "dashboard" ? "#1976d2" : "inherit",
+                  color: currentTab === "dashboard" ? "#1976d2" : "inherit",
                 },
               }}
             />
@@ -151,16 +206,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
 
           <StyledListItem
             button
-            selected={activeTab === "statistics"}
-            onClick={() => {
-              setActiveTab("statistics");
-              handleNavigateToStatistics();
-            }}
+            selected={currentTab === "statistics"}
+            onClick={() => handleTabClick("statistics")}
           >
-            <IconWrapper active={activeTab === "statistics"}>
+            <IconWrapper active={currentTab === "statistics"}>
               <MdInsertChart
                 size={20}
-                color={activeTab === "statistics" ? "#1976d2" : "#666"}
+                color={currentTab === "statistics" ? "#1976d2" : "#666"}
               />
             </IconWrapper>
             <ListItemText
@@ -169,9 +221,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                 ml: 1.5,
                 maxWidth: "100%",
                 "& .MuiListItemText-primary": {
-                  fontWeight: activeTab === "statistics" ? 600 : 400,
+                  fontWeight: currentTab === "statistics" ? 600 : 400,
                   fontSize: "0.95rem",
-                  color: activeTab === "statistics" ? "#1976d2" : "inherit",
+                  color: currentTab === "statistics" ? "#1976d2" : "inherit",
                 },
               }}
             />
@@ -181,13 +233,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
 
           <StyledListItem
             button
-            selected={activeTab === "doctors"}
-            onClick={() => setActiveTab("doctors")}
+            selected={currentTab === "doctors"}
+            onClick={() => handleTabClick("doctors")}
           >
-            <IconWrapper active={activeTab === "doctors"}>
+            <IconWrapper active={currentTab === "doctors"}>
               <MdLocalHospital
                 size={20}
-                color={activeTab === "doctors" ? "#1976d2" : "#666"}
+                color={currentTab === "doctors" ? "#1976d2" : "#666"}
               />
             </IconWrapper>
             <ListItemText
@@ -196,9 +248,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                 ml: 1.5,
                 maxWidth: "100%",
                 "& .MuiListItemText-primary": {
-                  fontWeight: activeTab === "doctors" ? 600 : 400,
+                  fontWeight: currentTab === "doctors" ? 600 : 400,
                   fontSize: "0.95rem",
-                  color: activeTab === "doctors" ? "#1976d2" : "inherit",
+                  color: currentTab === "doctors" ? "#1976d2" : "inherit",
                 },
               }}
             />
@@ -206,13 +258,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
 
           <StyledListItem
             button
-            selected={activeTab === "patients"}
-            onClick={() => setActiveTab("patients")}
+            selected={currentTab === "patients"}
+            onClick={() => handleTabClick("patients")}
           >
-            <IconWrapper active={activeTab === "patients"}>
+            <IconWrapper active={currentTab === "patients"}>
               <MdPeople
                 size={20}
-                color={activeTab === "patients" ? "#1976d2" : "#666"}
+                color={currentTab === "patients" ? "#1976d2" : "#666"}
               />
             </IconWrapper>
             <ListItemText
@@ -221,9 +273,9 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                 ml: 1.5,
                 maxWidth: "100%",
                 "& .MuiListItemText-primary": {
-                  fontWeight: activeTab === "patients" ? 600 : 400,
+                  fontWeight: currentTab === "patients" ? 600 : 400,
                   fontSize: "0.95rem",
-                  color: activeTab === "patients" ? "#1976d2" : "inherit",
+                  color: currentTab === "patients" ? "#1976d2" : "inherit",
                 },
               }}
             />
@@ -233,13 +285,13 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
 
           <StyledListItem
             button
-            selected={activeTab === "news"}
-            onClick={() => setActiveTab("news")}
+            selected={currentTab === "news"}
+            onClick={() => handleTabClick("news")}
           >
-            <IconWrapper active={activeTab === "news"}>
+            <IconWrapper active={currentTab === "news"}>
               <ArticleIcon
                 fontSize="small"
-                sx={{ color: activeTab === "news" ? "#1976d2" : "#666" }}
+                sx={{ color: currentTab === "news" ? "#1976d2" : "#666" }}
               />
             </IconWrapper>
             <ListItemText
@@ -248,9 +300,37 @@ const Sidebar = ({ activeTab, setActiveTab, onLogout }) => {
                 ml: 1.5,
                 maxWidth: "100%",
                 "& .MuiListItemText-primary": {
-                  fontWeight: activeTab === "news" ? 600 : 400,
+                  fontWeight: currentTab === "news" ? 600 : 400,
                   fontSize: "0.95rem",
-                  color: activeTab === "news" ? "#1976d2" : "inherit",
+                  color: currentTab === "news" ? "#1976d2" : "inherit",
+                },
+              }}
+            />
+          </StyledListItem>
+
+          <StyledListItem
+            button
+            selected={currentTab === "reported-posts"}
+            onClick={() => handleTabClick("reported-posts")}
+          >
+            <IconWrapper active={currentTab === "reported-posts"}>
+              <ReportProblemIcon
+                fontSize="small"
+                sx={{
+                  color: currentTab === "reported-posts" ? "#1976d2" : "#666",
+                }}
+              />
+            </IconWrapper>
+            <ListItemText
+              primary="Báo cáo bài viết"
+              sx={{
+                ml: 1.5,
+                maxWidth: "100%",
+                "& .MuiListItemText-primary": {
+                  fontWeight: currentTab === "reported-posts" ? 600 : 400,
+                  fontSize: "0.95rem",
+                  color:
+                    currentTab === "reported-posts" ? "#1976d2" : "inherit",
                 },
               }}
             />

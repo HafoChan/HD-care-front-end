@@ -27,6 +27,8 @@ import {
   Autocomplete,
   Avatar,
 } from "@mui/material";
+import { Layout } from "antd";
+import Sidebar from "../../components/admin/Sidebar";
 import {
   getPendingNews,
   assignNewsToDoctor,
@@ -40,6 +42,9 @@ import PersonAddIcon from "@mui/icons-material/PersonAdd";
 import AccessTimeIcon from "@mui/icons-material/AccessTime";
 import CategoryIcon from "@mui/icons-material/Category";
 import PersonIcon from "@mui/icons-material/Person";
+import { remove } from "../../service/otherService/localStorage";
+
+const { Content } = Layout;
 
 const NewsManagementPage = () => {
   const [pendingNews, setPendingNews] = useState([]);
@@ -51,6 +56,12 @@ const NewsManagementPage = () => {
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 5;
   const theme = useTheme();
+
+  const handleLogout = () => {
+    console.log("Logging out from NewsManagementPage...");
+    remove();
+    window.location.href = "/login";
+  };
 
   const stripHtmlTags = (html) => {
     if (!html) return "";
@@ -126,296 +137,343 @@ const NewsManagementPage = () => {
   };
 
   return (
-    <Box sx={{ p: 3, bgcolor: "#f8f9fa", minHeight: "100vh" }}>
-      <Typography variant="h4" fontWeight={600} mb={3} color="primary.main">
-        Quản lý tin tức
-      </Typography>
-
-      <Alert
-        severity="info"
-        variant="outlined"
-        sx={{
-          mb: 4,
-          borderRadius: 2,
-          "& .MuiAlert-icon": {
-            alignItems: "center",
-          },
-        }}
-      >
-        Trang quản lý tin tức cho phép bạn xem các bài viết đang chờ duyệt và
-        phân công cho bác sĩ duyệt.
-      </Alert>
-
-      <Paper
-        elevation={0}
-        sx={{
-          p: 2,
-          mb: 3,
-          borderRadius: 2,
-          border: "1px solid",
-          borderColor: alpha(theme.palette.primary.main, 0.1),
-        }}
-      >
-        <Typography variant="h5" fontWeight={600} mb={3}>
-          Bài viết đang chờ duyệt
-        </Typography>
-
-        {loading ? (
-          <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
-            <CircularProgress />
-          </Box>
-        ) : pendingNews.length === 0 ? (
-          <Box sx={{ textAlign: "center", py: 4 }}>
-            <Typography variant="h6" color="text.secondary">
-              Không có bài viết nào đang chờ duyệt.
+    <Layout style={{ minHeight: "100vh" }}>
+      <Sidebar selectedKey="news" onLogout={handleLogout} />
+      <Layout className="site-layout">
+        <Content
+          style={{
+            margin: "0",
+            padding: 0,
+            minHeight: "100%",
+            background: "#f8f9fa",
+          }}
+        >
+          <Box
+            sx={{ p: 3, bgcolor: "#f8f9fa", minHeight: "100vh", ml: "280px" }}
+          >
+            <Typography
+              variant="h4"
+              fontWeight={600}
+              mb={3}
+              color="primary.main"
+            >
+              Quản lý tin tức
             </Typography>
-          </Box>
-        ) : (
-          <>
-            <Grid container spacing={3}>
-              {pendingNews.map((item) => (
-                <Grid item xs={12} key={item.id}>
-                  <Card
-                    elevation={0}
-                    sx={{
-                      borderRadius: 2,
-                      overflow: "hidden",
-                      border: "1px solid",
-                      borderColor: alpha(theme.palette.primary.main, 0.1),
-                      transition: "all 0.2s",
-                      "&:hover": {
-                        boxShadow: theme.shadows[2],
-                      },
-                    }}
-                  >
-                    <Box
-                      sx={{
-                        display: "flex",
-                        flexDirection: { xs: "column", md: "row" },
-                      }}
-                    >
-                      {item.coverImageUrl && (
-                        <CardMedia
-                          component="img"
-                          sx={{
-                            width: { xs: "100%", md: 250 },
-                            height: { xs: 200, md: "100%" },
-                            objectFit: "cover",
-                          }}
-                          image={item.coverImageUrl}
-                          alt={item.title}
-                        />
-                      )}
-                      <Box
-                        sx={{
-                          display: "flex",
-                          flexDirection: "column",
-                          width: "100%",
-                        }}
-                      >
-                        <CardContent>
-                          <Typography
-                            variant="h6"
-                            component="div"
-                            fontWeight={600}
-                            gutterBottom
-                          >
-                            {item.title}
-                          </Typography>
 
+            <Alert
+              severity="info"
+              variant="outlined"
+              sx={{
+                mb: 4,
+                borderRadius: 2,
+                "& .MuiAlert-icon": {
+                  alignItems: "center",
+                },
+              }}
+            >
+              Trang quản lý tin tức cho phép bạn xem các bài viết đang chờ duyệt
+              và phân công cho bác sĩ duyệt.
+            </Alert>
+
+            <Paper
+              elevation={0}
+              sx={{
+                p: 2,
+                mb: 3,
+                borderRadius: 2,
+                border: "1px solid",
+                borderColor: alpha(theme.palette.primary.main, 0.1),
+              }}
+            >
+              <Typography variant="h5" fontWeight={600} mb={3}>
+                Bài viết đang chờ duyệt
+              </Typography>
+
+              {loading ? (
+                <Box sx={{ display: "flex", justifyContent: "center", my: 5 }}>
+                  <CircularProgress />
+                </Box>
+              ) : pendingNews.length === 0 ? (
+                <Box sx={{ textAlign: "center", py: 4 }}>
+                  <Typography variant="h6" color="text.secondary">
+                    Không có bài viết nào đang chờ duyệt.
+                  </Typography>
+                </Box>
+              ) : (
+                <>
+                  <Grid container spacing={3}>
+                    {pendingNews.map((item) => (
+                      <Grid item xs={12} key={item.id}>
+                        <Card
+                          elevation={0}
+                          sx={{
+                            borderRadius: 2,
+                            overflow: "hidden",
+                            border: "1px solid",
+                            borderColor: alpha(theme.palette.primary.main, 0.1),
+                            transition: "all 0.2s",
+                            "&:hover": {
+                              boxShadow: theme.shadows[2],
+                            },
+                          }}
+                        >
                           <Box
                             sx={{
                               display: "flex",
-                              flexWrap: "wrap",
-                              gap: 2,
-                              mb: 2,
+                              flexDirection: { xs: "column", md: "row" },
                             }}
                           >
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <PersonIcon
+                            {item.coverImageUrl && (
+                              <CardMedia
+                                component="img"
                                 sx={{
-                                  fontSize: 18,
-                                  mr: 0.5,
-                                  color: "text.secondary",
+                                  width: { xs: "100%", md: 250 },
+                                  height: { xs: 200, md: "100%" },
+                                  objectFit: "cover",
                                 }}
+                                image={item.coverImageUrl}
+                                alt={item.title}
                               />
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                Tác giả: {item.author?.name || "N/A"}
-                              </Typography>
-                            </Box>
+                            )}
+                            <Box
+                              sx={{
+                                display: "flex",
+                                flexDirection: "column",
+                                width: "100%",
+                              }}
+                            >
+                              <CardContent>
+                                <Typography
+                                  variant="h6"
+                                  component="div"
+                                  fontWeight={600}
+                                  gutterBottom
+                                >
+                                  {item.title}
+                                </Typography>
 
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <CategoryIcon
-                                sx={{
-                                  fontSize: 18,
-                                  mr: 0.5,
-                                  color: "text.secondary",
-                                }}
-                              />
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                Danh mục: {item.category}
-                              </Typography>
-                            </Box>
+                                <Box
+                                  sx={{
+                                    display: "flex",
+                                    flexWrap: "wrap",
+                                    gap: 2,
+                                    mb: 2,
+                                  }}
+                                >
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <PersonIcon
+                                      sx={{
+                                        fontSize: 18,
+                                        mr: 0.5,
+                                        color: "text.secondary",
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      Tác giả: {item.author?.name || "N/A"}
+                                    </Typography>
+                                  </Box>
 
-                            <Box sx={{ display: "flex", alignItems: "center" }}>
-                              <AccessTimeIcon
-                                sx={{
-                                  fontSize: 18,
-                                  mr: 0.5,
-                                  color: "text.secondary",
-                                }}
-                              />
-                              <Typography
-                                variant="body2"
-                                color="text.secondary"
-                              >
-                                {formatDate(item.createdAt)}
-                              </Typography>
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <CategoryIcon
+                                      sx={{
+                                        fontSize: 18,
+                                        mr: 0.5,
+                                        color: "text.secondary",
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      Danh mục: {item.category}
+                                    </Typography>
+                                  </Box>
+
+                                  <Box
+                                    sx={{
+                                      display: "flex",
+                                      alignItems: "center",
+                                    }}
+                                  >
+                                    <AccessTimeIcon
+                                      sx={{
+                                        fontSize: 18,
+                                        mr: 0.5,
+                                        color: "text.secondary",
+                                      }}
+                                    />
+                                    <Typography
+                                      variant="body2"
+                                      color="text.secondary"
+                                    >
+                                      {formatDate(item.createdAt)}
+                                    </Typography>
+                                  </Box>
+                                </Box>
+
+                                <Typography
+                                  variant="body2"
+                                  color="text.secondary"
+                                  sx={{ mb: 2 }}
+                                >
+                                  {stripHtmlTags(item.content)
+                                    ? stripHtmlTags(item.content).substring(
+                                        0,
+                                        300
+                                      )
+                                    : ""}
+                                  {stripHtmlTags(item.content)?.length > 150
+                                    ? "..."
+                                    : ""}
+                                </Typography>
+                              </CardContent>
+
+                              <Box sx={{ flexGrow: 1 }} />
+                              <Divider />
+
+                              <CardActions sx={{ p: 2 }}>
+                                <Button
+                                  component={Link}
+                                  to={`/news/review/${item.id}`}
+                                  variant="outlined"
+                                  size="small"
+                                  startIcon={<VisibilityIcon />}
+                                  sx={{ borderRadius: 8 }}
+                                >
+                                  Xem chi tiết
+                                </Button>
+                                <Button
+                                  variant="contained"
+                                  color="primary"
+                                  size="small"
+                                  startIcon={<PersonAddIcon />}
+                                  onClick={() => openAssignModal(item.id)}
+                                  sx={{ ml: 1, borderRadius: 8 }}
+                                >
+                                  Phân công duyệt
+                                </Button>
+                              </CardActions>
                             </Box>
                           </Box>
+                        </Card>
+                      </Grid>
+                    ))}
+                  </Grid>
 
-                          <Typography
-                            variant="body2"
-                            color="text.secondary"
-                            sx={{ mb: 2 }}
-                          >
-                            {stripHtmlTags(item.content)
-                              ? stripHtmlTags(item.content).substring(0, 300)
-                              : ""}
-                            {stripHtmlTags(item.content)?.length > 150
-                              ? "..."
-                              : ""}
-                          </Typography>
-                        </CardContent>
-
-                        <Box sx={{ flexGrow: 1 }} />
-                        <Divider />
-
-                        <CardActions sx={{ p: 2 }}>
-                          <Button
-                            component={Link}
-                            to={`/news/review/${item.id}`}
-                            variant="outlined"
-                            size="small"
-                            startIcon={<VisibilityIcon />}
-                            sx={{ borderRadius: 8 }}
-                          >
-                            Xem chi tiết
-                          </Button>
-                          <Button
-                            variant="contained"
-                            color="primary"
-                            size="small"
-                            startIcon={<PersonAddIcon />}
-                            onClick={() => openAssignModal(item.id)}
-                            sx={{ ml: 1, borderRadius: 8 }}
-                          >
-                            Phân công duyệt
-                          </Button>
-                        </CardActions>
-                      </Box>
-                    </Box>
-                  </Card>
-                </Grid>
-              ))}
-            </Grid>
-
-            <Box
-              sx={{ display: "flex", justifyContent: "space-between", mt: 4 }}
-            >
-              <Button
-                variant="outlined"
-                onClick={handlePrevPage}
-                disabled={currentPage === 0}
-                sx={{ borderRadius: 8 }}
-              >
-                Trang trước
-              </Button>
-              <Typography variant="body1">Trang {currentPage + 1}</Typography>
-              <Button
-                variant="outlined"
-                onClick={handleNextPage}
-                disabled={pendingNews.length < pageSize}
-                sx={{ borderRadius: 8 }}
-              >
-                Trang sau
-              </Button>
-            </Box>
-          </>
-        )}
-      </Paper>
-
-      {/* Modal phân công bác sĩ */}
-      <Dialog
-        open={showAssignModal}
-        onClose={() => setShowAssignModal(false)}
-        maxWidth="sm"
-        fullWidth
-      >
-        <DialogTitle>
-          <Typography variant="h6" fontWeight={600}>
-            Phân công bác sĩ duyệt tin tức
-          </Typography>
-        </DialogTitle>
-        <DialogContent dividers>
-          <FormControl fullWidth margin="normal">
-            <Autocomplete
-              id="doctor-select"
-              options={doctors}
-              getOptionLabel={(option) => option.name}
-              value={doctors.find((doctor) => doctor.id === doctorId) || null}
-              onChange={(event, newValue) => {
-                setDoctorId(newValue ? newValue.id : "");
-              }}
-              renderInput={(params) => (
-                <TextField
-                  {...params}
-                  label="Chọn bác sĩ"
-                  variant="outlined"
-                  placeholder="-- Chọn bác sĩ --"
-                />
-              )}
-              renderOption={(props, option) => (
-                <li {...props}>
-                  <Box sx={{ display: "flex", alignItems: "center" }}>
-                    <Avatar
-                      src={option.avatar}
-                      alt={option.name}
-                      sx={{ width: 32, height: 32, mr: 1.5 }}
-                    />
-                    <Typography variant="body2">{option.name}</Typography>
+                  <Box
+                    sx={{
+                      display: "flex",
+                      justifyContent: "space-between",
+                      mt: 4,
+                    }}
+                  >
+                    <Button
+                      variant="outlined"
+                      onClick={handlePrevPage}
+                      disabled={currentPage === 0}
+                      sx={{ borderRadius: 8 }}
+                    >
+                      Trang trước
+                    </Button>
+                    <Typography variant="body1">
+                      Trang {currentPage + 1}
+                    </Typography>
+                    <Button
+                      variant="outlined"
+                      onClick={handleNextPage}
+                      disabled={pendingNews.length < pageSize}
+                      sx={{ borderRadius: 8 }}
+                    >
+                      Trang sau
+                    </Button>
                   </Box>
-                </li>
+                </>
               )}
-              noOptionsText="Không tìm thấy bác sĩ"
-            />
-          </FormControl>
-        </DialogContent>
-        <DialogActions sx={{ p: 2 }}>
-          <Button
-            variant="outlined"
-            onClick={() => setShowAssignModal(false)}
-            sx={{ borderRadius: 8 }}
-          >
-            Hủy
-          </Button>
-          <Button
-            variant="contained"
-            color="primary"
-            onClick={handleAssign}
-            sx={{ ml: 1, borderRadius: 8 }}
-          >
-            Phân công
-          </Button>
-        </DialogActions>
-      </Dialog>
-    </Box>
+            </Paper>
+
+            {/* Modal phân công bác sĩ */}
+            <Dialog
+              open={showAssignModal}
+              onClose={() => setShowAssignModal(false)}
+              maxWidth="sm"
+              fullWidth
+            >
+              <DialogTitle>
+                <Typography variant="h6" fontWeight={600}>
+                  Phân công bác sĩ duyệt tin tức
+                </Typography>
+              </DialogTitle>
+              <DialogContent dividers>
+                <FormControl fullWidth margin="normal">
+                  <Autocomplete
+                    id="doctor-select"
+                    options={doctors}
+                    getOptionLabel={(option) => option.name}
+                    value={
+                      doctors.find((doctor) => doctor.id === doctorId) || null
+                    }
+                    onChange={(event, newValue) => {
+                      setDoctorId(newValue ? newValue.id : "");
+                    }}
+                    renderInput={(params) => (
+                      <TextField
+                        {...params}
+                        label="Chọn bác sĩ"
+                        variant="outlined"
+                        placeholder="-- Chọn bác sĩ --"
+                      />
+                    )}
+                    renderOption={(props, option) => (
+                      <li {...props}>
+                        <Box sx={{ display: "flex", alignItems: "center" }}>
+                          <Avatar
+                            src={option.avatar}
+                            alt={option.name}
+                            sx={{ width: 32, height: 32, mr: 1.5 }}
+                          />
+                          <Typography variant="body2">{option.name}</Typography>
+                        </Box>
+                      </li>
+                    )}
+                    noOptionsText="Không tìm thấy bác sĩ"
+                  />
+                </FormControl>
+              </DialogContent>
+              <DialogActions sx={{ p: 2 }}>
+                <Button
+                  variant="outlined"
+                  onClick={() => setShowAssignModal(false)}
+                  sx={{ borderRadius: 8 }}
+                >
+                  Hủy
+                </Button>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  onClick={handleAssign}
+                  sx={{ ml: 1, borderRadius: 8 }}
+                >
+                  Phân công
+                </Button>
+              </DialogActions>
+            </Dialog>
+          </Box>
+        </Content>
+      </Layout>
+    </Layout>
   );
 };
 

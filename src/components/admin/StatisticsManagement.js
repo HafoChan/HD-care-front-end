@@ -355,7 +355,7 @@ const StatisticsManagement = ({ statType = "visits" }) => {
   };
 
   return (
-    <Box sx={{ p: 5 }}>
+    <Box sx={{ p: 5, ml: "280px" }}>
       <Box
         sx={{
           display: "flex",
@@ -365,14 +365,6 @@ const StatisticsManagement = ({ statType = "visits" }) => {
         }}
       >
         <Box sx={{ display: "flex", alignItems: "center" }}>
-          <IconButton
-            component={Link}
-            to="/admin"
-            sx={{ mr: 2 }}
-            aria-label="back"
-          >
-            <ArrowBackIcon />
-          </IconButton>
           <PageTitle variant="h4">
             Quản lý thống kê: {getActiveTabName()}
           </PageTitle>
