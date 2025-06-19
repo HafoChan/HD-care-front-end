@@ -34,6 +34,14 @@ import {
   Switch,
   FormControlLabel,
   Tooltip,
+  FormControl,
+  InputLabel,
+  Select,
+  MenuItem,
+  ImageList,
+  ImageListItem,
+  Autocomplete,
+  Backdrop,
 } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -58,6 +66,9 @@ import PersonAddAltIcon from "@mui/icons-material/PersonAddAlt";
 import HowToRegIcon from "@mui/icons-material/HowToReg";
 import CancelIcon from "@mui/icons-material/Cancel";
 import NewspaperIcon from "@mui/icons-material/Newspaper";
+import AddAPhotoIcon from "@mui/icons-material/AddAPhoto";
+import ClearIcon from "@mui/icons-material/Clear";
+import AddIcon from "@mui/icons-material/Add";
 import { useNavigate, Link } from "react-router-dom";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import patientApi from "../../api/patient";
@@ -84,7 +95,10 @@ import {
   countFollowRequests,
   countSentFollowRequests,
   setPrivate,
+  updatePost,
 } from "../../api/socialNetworkApi";
+import { getAllDoctors } from "../../api/newsApi";
+import UploadFilesService from "../../service/otherService/upload";
 import PostCard from "../../components/social-network/PostCardComponent";
 import { format, formatDistanceToNow } from "date-fns";
 import { vi } from "date-fns/locale";
@@ -188,6 +202,20 @@ function Profile() {
   const [savedNewsPage, setSavedNewsPage] = useState(0);
   const [hasMoreSavedNews, setHasMoreSavedNews] = useState(true);
   const savedNewsObserver = useRef();
+
+  // Add these new state variables for post editing
+  const [editPostModalOpen, setEditPostModalOpen] = useState(false);
+  const [postToEdit, setPostToEdit] = useState(null);
+  const [editedContent, setEditedContent] = useState("");
+  const [editedDoctorId, setEditedDoctorId] = useState("");
+  const [isEditingPost, setIsEditingPost] = useState(false);
+  const [isPostHidden, setIsPostHidden] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState([]);
+  const [images, setImages] = useState([]);
+  const [doctors, setDoctors] = useState([]);
+  const [selectedDoctor, setSelectedDoctor] = useState(null);
+  const [uploadProgress, setUploadProgress] = useState(0);
+  const fileInputRef = useRef(null);
 
   // Fetch user info on component mount
   useEffect(() => {
@@ -1530,6 +1558,22 @@ function Profile() {
                       : "vừa xong"}
                   </Typography>
                 </Box>
+
+                {/* Add Edit Button - only if the post belongs to current user */}
+                {selectedPost.user?.id === userInfo.id && (
+                  <IconButton
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      handleOpenEditPostModal(selectedPost);
+                    }}
+                    color="default"
+                    sx={{ mr: 1 }}
+                    title="Chỉnh sửa bài viết"
+                  >
+                    <EditIcon />
+                  </IconButton>
+                )}
+
                 <IconButton
                   onClick={(e) => {
                     e.stopPropagation();
@@ -1848,6 +1892,214 @@ function Profile() {
           sx={{ borderRadius: 2, px: 3, textTransform: "none" }}
         >
           Đóng
+        </Button>
+      </DialogActions>
+    </Dialog>
+  );
+
+  // Add the edit post modal
+  const renderEditPostModal = () => (
+    <Dialog
+      open={editPostModalOpen}
+      onClose={handleCloseEditPostModal}
+      fullWidth
+      maxWidth="md"
+      PaperProps={{
+        sx: { borderRadius: 3 },
+      }}
+    >
+      <DialogTitle sx={{ px: 3, pt: 3 }}>
+        <Typography variant="h5" fontWeight={600}>
+          Chỉnh sửa bài viết
+        </Typography>
+      </DialogTitle>
+      <DialogContent sx={{ p: 3 }}>
+        <Grid container spacing={3}>
+          <Grid item xs={12} md={7}>
+            <TextField
+              fullWidth
+              multiline
+              rows={6}
+              label="Nội dung"
+              variant="outlined"
+              value={editedContent}
+              onChange={(e) => setEditedContent(e.target.value)}
+              sx={{ mb: 3 }}
+              placeholder="Viết nội dung bài viết..."
+            />
+
+            {imagePreviews.length > 0 ? (
+              <Box sx={{ mb: 3 }}>
+                {renderImagePreviews()}
+                <Button
+                  variant="outlined"
+                  component="label"
+                  startIcon={<AddIcon />}
+                  sx={{ mt: 2, borderRadius: 2, textTransform: "none" }}
+                  disabled={imagePreviews.length >= 10}
+                >
+                  Thêm ảnh{" "}
+                  {imagePreviews.length > 0
+                    ? `(${imagePreviews.length}/10)`
+                    : ""}
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    hidden
+                    accept="image/*"
+                    multiple
+                    onChange={handleImagesChange}
+                  />
+                </Button>
+              </Box>
+            ) : (
+              <Box
+                sx={{
+                  width: "100%",
+                  height: "180px",
+                  display: "flex",
+                  flexDirection: "column",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  border: "2px dashed",
+                  borderColor:
+                    theme.palette.mode === "dark"
+                      ? "rgba(255,255,255,0.1)"
+                      : "rgba(0,0,0,0.1)",
+                  borderRadius: 2,
+                  mb: 3,
+                  cursor: "pointer",
+                  transition: "all 0.2s",
+                  "&:hover": {
+                    borderColor: theme.palette.primary.main,
+                    backgroundColor:
+                      theme.palette.mode === "dark"
+                        ? "rgba(255,255,255,0.03)"
+                        : "rgba(0,0,0,0.01)",
+                  },
+                }}
+                component="label"
+              >
+                <input
+                  ref={fileInputRef}
+                  accept="image/*"
+                  type="file"
+                  hidden
+                  multiple
+                  onChange={handleImagesChange}
+                />
+                <AddAPhotoIcon
+                  sx={{
+                    fontSize: 40,
+                    color: "text.secondary",
+                    mb: 1,
+                  }}
+                />
+                <Typography color="text.secondary" sx={{ fontWeight: 500 }}>
+                  Nhấn để tải ảnh lên
+                </Typography>
+                <Typography
+                  variant="caption"
+                  color="text.secondary"
+                  sx={{ mt: 0.5 }}
+                >
+                  Tối đa 10 ảnh, mỗi ảnh không quá 5MB
+                </Typography>
+              </Box>
+            )}
+          </Grid>
+
+          <Grid item xs={12} md={5}>
+            <Typography variant="subtitle1" sx={{ fontWeight: 600, mb: 2 }}>
+              Tùy chọn bài viết
+            </Typography>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                Quyền riêng tư
+              </Typography>
+              <FormControlLabel
+                control={
+                  <Switch
+                    checked={isPostHidden}
+                    onChange={(e) => setIsPostHidden(e.target.checked)}
+                    color="primary"
+                  />
+                }
+                label={
+                  isPostHidden ? "Riêng tư (chỉ bạn có thể xem)" : "Công khai"
+                }
+              />
+            </Box>
+
+            <Box sx={{ mb: 3 }}>
+              <Typography variant="body2" sx={{ mb: 1, fontWeight: 500 }}>
+                Gắn thẻ bác sĩ
+              </Typography>
+              <Autocomplete
+                id="doctor-tag"
+                options={doctors}
+                getOptionLabel={(option) => option.name}
+                value={selectedDoctor}
+                onChange={handleTagDoctor}
+                renderInput={(params) => (
+                  <TextField
+                    {...params}
+                    variant="outlined"
+                    placeholder="Tìm và gắn thẻ bác sĩ"
+                    size="small"
+                    sx={{
+                      "& .MuiOutlinedInput-root": {
+                        borderRadius: 2,
+                        backgroundColor: theme.palette.background.default,
+                      },
+                    }}
+                  />
+                )}
+                renderOption={(props, option) => (
+                  <li {...props}>
+                    <Box sx={{ display: "flex", alignItems: "center" }}>
+                      <Avatar
+                        src={option.avatar}
+                        alt={option.name}
+                        sx={{ width: 32, height: 32, mr: 1.5 }}
+                      />
+                      <Box>
+                        <Typography variant="body2" fontWeight={500}>
+                          {option.name}
+                        </Typography>
+                        {option.specialty && (
+                          <Typography variant="caption" color="text.secondary">
+                            {option.specialty}
+                          </Typography>
+                        )}
+                      </Box>
+                    </Box>
+                  </li>
+                )}
+                noOptionsText="Không tìm thấy bác sĩ"
+              />
+            </Box>
+          </Grid>
+        </Grid>
+      </DialogContent>
+      <DialogActions sx={{ px: 3, pb: 3 }}>
+        <Button
+          onClick={handleCloseEditPostModal}
+          variant="outlined"
+          sx={{ borderRadius: 2, px: 3, textTransform: "none" }}
+        >
+          Hủy
+        </Button>
+        <Button
+          onClick={handleSaveEditedPost}
+          variant="contained"
+          color="primary"
+          disabled={!editedContent.trim() || isEditingPost}
+          startIcon={isEditingPost ? <CircularProgress size={20} /> : null}
+          sx={{ borderRadius: 2, px: 3, textTransform: "none" }}
+        >
+          {isEditingPost ? "Đang lưu..." : "Lưu thay đổi"}
         </Button>
       </DialogActions>
     </Dialog>
@@ -2930,6 +3182,239 @@ function Profile() {
     }
   };
 
+  // Handle opening the edit post modal
+  const handleOpenEditPostModal = (post) => {
+    // Fetch doctor list when opening the edit modal
+    fetchDoctors();
+
+    setPostToEdit(post);
+    setEditedContent(post.content || "");
+    setEditedDoctorId(post.doctor?.id || "");
+    setIsPostHidden(post.isHidden || false);
+    setImagePreviews(post.imageUrls || []);
+
+    // Find and set the selected doctor if there is one
+    if (post.doctor?.id) {
+      const foundDoctor = doctors.find((doc) => doc.id === post.doctor.id);
+      setSelectedDoctor(foundDoctor || null);
+    } else {
+      setSelectedDoctor(null);
+    }
+
+    setEditPostModalOpen(true);
+  };
+
+  // Function to fetch doctors for tagging
+  const fetchDoctors = async () => {
+    try {
+      const data = await getAllDoctors();
+      if (data && Array.isArray(data)) {
+        setDoctors(data);
+        console.log("Doctors loaded:", data.length);
+      } else {
+        setDoctors([]);
+        console.log("No doctors found or invalid data format");
+      }
+    } catch (error) {
+      console.error("Error fetching doctors:", error);
+      toast.error("Không thể tải danh sách bác sĩ");
+      setDoctors([]);
+    }
+  };
+
+  // Handle closing the edit post modal
+  const handleCloseEditPostModal = () => {
+    setEditPostModalOpen(false);
+    setPostToEdit(null);
+    setEditedContent("");
+    setEditedDoctorId("");
+    setIsPostHidden(false);
+    setImages([]);
+    setImagePreviews([]);
+    setSelectedDoctor(null);
+  };
+
+  // Handle images change
+  const handleImagesChange = (event) => {
+    const files = Array.from(event.target.files);
+
+    // Check size limit for each file (5MB)
+    const oversizedFiles = files.filter((file) => file.size > 5000000);
+    if (oversizedFiles.length > 0) {
+      toast.error(`${oversizedFiles.length} ảnh vượt quá giới hạn 5MB`);
+      return;
+    }
+
+    // Check total number of images (max 10)
+    if (images.length + files.length > 10) {
+      toast.error("Chỉ được tải lên tối đa 10 ảnh");
+      return;
+    }
+
+    // Add new files to the existing images array
+    setImages((prevImages) => [...prevImages, ...files]);
+
+    // Generate previews for the new images
+    files.forEach((file) => {
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreviews((prevPreviews) => [...prevPreviews, reader.result]);
+      };
+      reader.readAsDataURL(file);
+    });
+
+    // Reset the file input value so the same file can be selected again if needed
+    if (fileInputRef.current) {
+      fileInputRef.current.value = "";
+    }
+  };
+
+  // Handle removing an image
+  const handleRemoveImage = (index) => {
+    // Remove from imagePreviews
+    setImagePreviews((prevPreviews) => {
+      const updatedPreviews = [...prevPreviews];
+      updatedPreviews.splice(index, 1);
+      return updatedPreviews;
+    });
+
+    // If it's a new image (in the images array), also remove it from there
+    if (index < images.length) {
+      setImages((prevImages) => {
+        const updatedImages = [...prevImages];
+        updatedImages.splice(index, 1);
+        return updatedImages;
+      });
+    }
+  };
+
+  // Handle doctor selection
+  const handleTagDoctor = (event, selectedDoctor) => {
+    setSelectedDoctor(selectedDoctor);
+    setEditedDoctorId(selectedDoctor ? selectedDoctor.id : null);
+  };
+
+  // Handle saving edited post
+  const handleSaveEditedPost = async () => {
+    if (!postToEdit || !editedContent.trim()) return;
+
+    try {
+      setIsEditingPost(true);
+      setUploadProgress(0);
+
+      // Process existing and new images
+      let updatedImageUrls = [];
+
+      // Keep track of which images are from the original post
+      const originalImages = postToEdit.imageUrls || [];
+
+      // Upload any new images
+      if (images.length > 0) {
+        const uploadResponse = await UploadFilesService.upload(
+          images,
+          (event) => {
+            setUploadProgress(Math.round((100 * event.loaded) / event.total));
+          }
+        );
+
+        // Extract the image URLs from the response
+        const newUploadedUrls = uploadResponse.result || [];
+
+        // Combine new uploaded URLs with any kept originals
+        updatedImageUrls = [
+          ...imagePreviews.filter((url) => originalImages.includes(url)),
+          ...newUploadedUrls,
+        ];
+      } else {
+        // If no new images, just use the current previews (which may include original images)
+        updatedImageUrls = imagePreviews;
+      }
+
+      // Format images as required by the API
+      const postImages = updatedImageUrls.map((url) => ({
+        imageUrl: url,
+      }));
+
+      const updateData = {
+        content: editedContent.trim(),
+        doctorId: editedDoctorId || null,
+        images: postImages,
+        isHidden: isPostHidden,
+      };
+
+      const updatedPost = await updatePost(postToEdit.id, updateData);
+
+      // Update the posts array
+      setPosts((prevPosts) =>
+        prevPosts.map((post) =>
+          post.id === postToEdit.id ? { ...post, ...updatedPost } : post
+        )
+      );
+
+      // Update the selected post if it's the one being displayed
+      if (selectedPost && selectedPost.id === postToEdit.id) {
+        setSelectedPost({ ...selectedPost, ...updatedPost });
+      }
+
+      // Update saved posts if the edited post is in the saved posts list
+      setSavedPosts((prevSavedPosts) =>
+        prevSavedPosts.map((post) =>
+          post.id === postToEdit.id ? { ...post, ...updatedPost } : post
+        )
+      );
+
+      toast.success("Bài viết đã được cập nhật thành công");
+      handleCloseEditPostModal();
+    } catch (error) {
+      console.error("Error updating post:", error);
+      toast.error("Không thể cập nhật bài viết");
+    } finally {
+      setIsEditingPost(false);
+      setUploadProgress(0);
+    }
+  };
+
+  // Render image previews
+  const renderImagePreviews = () => (
+    <ImageList
+      sx={{ width: "100%", maxHeight: 400 }}
+      cols={imagePreviews.length > 1 ? 2 : 1}
+      rowHeight={200}
+    >
+      {imagePreviews.map((preview, index) => (
+        <ImageListItem key={index} sx={{ position: "relative" }}>
+          <img
+            src={preview}
+            alt={`Preview ${index + 1}`}
+            loading="lazy"
+            style={{
+              width: "100%",
+              height: "100%",
+              objectFit: "cover",
+              borderRadius: 8,
+            }}
+          />
+          <IconButton
+            size="small"
+            sx={{
+              position: "absolute",
+              top: 8,
+              right: 8,
+              bgcolor: "rgba(0,0,0,0.6)",
+              color: "#fff",
+              "&:hover": {
+                bgcolor: "rgba(0,0,0,0.8)",
+              },
+            }}
+            onClick={() => handleRemoveImage(index)}
+          >
+            <ClearIcon fontSize="small" />
+          </IconButton>
+        </ImageListItem>
+      ))}
+    </ImageList>
+  );
+
   if (loading) {
     return (
       <Box
@@ -3521,6 +4006,28 @@ function Profile() {
 
       {/* Sent Requests Modal */}
       {renderSentRequestsModal()}
+
+      {/* Edit Post Modal */}
+      {renderEditPostModal()}
+
+      {/* Add the backdrop for upload progress */}
+      <Backdrop
+        sx={{
+          color: "#fff",
+          zIndex: (theme) => theme.zIndex.drawer + 1,
+          flexDirection: "column",
+        }}
+        open={isEditingPost && uploadProgress > 0}
+      >
+        <CircularProgress
+          color="inherit"
+          variant="determinate"
+          value={uploadProgress}
+        />
+        <Typography variant="body2" sx={{ mt: 2, color: "white" }}>
+          Đang tải ảnh lên: {uploadProgress}%
+        </Typography>
+      </Backdrop>
     </Box>
   );
 }
