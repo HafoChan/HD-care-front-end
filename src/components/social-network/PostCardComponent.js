@@ -54,6 +54,7 @@ import {
 } from "../../api/socialNetworkApi";
 import { Link } from "react-router-dom";
 import { toast } from "react-toastify";
+import ReportPostModal from "./ReportPostModal";
 
 const PostCard = ({ post, onRefresh, onLike, onSave }) => {
   const [liked, setLiked] = useState(post.liked || false);
@@ -68,6 +69,7 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
   const [hasMoreComments, setHasMoreComments] = useState(true);
   const [loadingComments, setLoadingComments] = useState(false);
   const [isSubmittingComment, setIsSubmittingComment] = useState(false);
+  const [reportModalVisible, setReportModalVisible] = useState(false);
   const theme = useTheme();
   const open = Boolean(anchorEl);
 
@@ -249,6 +251,17 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
   // Determine if the post is from the current user
   const isCurrentUserPost = post.isCurrentUserPost || false;
 
+  const handleReportPost = () => {
+    setReportModalVisible(true);
+    handleMenuClose();
+  };
+
+  const handleReportSuccess = () => {
+    toast.success(
+      "Đã gửi báo cáo thành công, chúng tôi sẽ xem xét nội dung này"
+    );
+  };
+
   return (
     <Card
       elevation={0}
@@ -375,7 +388,7 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
                         {saved ? "Bỏ lưu bài viết" : "Lưu bài viết"}
                       </ListItemText>
                     </MenuItem>,
-                    <MenuItem key="report" onClick={handleMenuClose}>
+                    <MenuItem key="report" onClick={handleReportPost}>
                       <ListItemIcon>
                         <ReportOutlinedIcon fontSize="small" />
                       </ListItemIcon>
@@ -770,6 +783,14 @@ const PostCard = ({ post, onRefresh, onLike, onSave }) => {
           </Button>
         </DialogActions>
       </Dialog>
+
+      {/* Report Modal */}
+      <ReportPostModal
+        visible={reportModalVisible}
+        onCancel={() => setReportModalVisible(false)}
+        postId={post.id}
+        onSuccess={handleReportSuccess}
+      />
     </Card>
   );
 };

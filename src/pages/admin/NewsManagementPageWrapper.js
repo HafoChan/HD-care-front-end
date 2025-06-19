@@ -1,15 +1,12 @@
 import React from "react";
-import { useParams } from "react-router-dom";
 import { Layout } from "antd";
-import StatisticsManagement from "../../components/admin/StatisticsManagement";
 import Sidebar from "../../components/admin/Sidebar";
+import NewsManagementPage from "./NewsManagementPage";
 import { remove } from "../../service/otherService/localStorage";
 
 const { Content } = Layout;
 
-const StatisticsPage = () => {
-  const { statType } = useParams();
-
+const NewsManagementPageWrapper = () => {
   const handleLogout = () => {
     console.log("Logging out...");
     remove();
@@ -18,7 +15,7 @@ const StatisticsPage = () => {
 
   return (
     <Layout style={{ minHeight: "100vh" }}>
-      <Sidebar selectedKey="statistics" onLogout={handleLogout} />
+      <Sidebar selectedKey="news" onLogout={handleLogout} />
       <Layout className="site-layout">
         <Content
           style={{
@@ -28,11 +25,11 @@ const StatisticsPage = () => {
             background: "#f8f9fa",
           }}
         >
-          <StatisticsManagement statType={statType || "visits"} />
+          <NewsManagementPage />
         </Content>
       </Layout>
     </Layout>
   );
 };
 
-export default StatisticsPage;
+export default NewsManagementPageWrapper;

@@ -31,6 +31,9 @@ import {
   ListItemSecondaryAction,
   Skeleton,
   CardMedia,
+  Switch,
+  FormControlLabel,
+  Tooltip,
 } from "@mui/material";
 import EmailIcon from "@mui/icons-material/Email";
 import PhoneIcon from "@mui/icons-material/Phone";
@@ -38,6 +41,7 @@ import HomeIcon from "@mui/icons-material/Home";
 import EditIcon from "@mui/icons-material/Edit";
 import HistoryIcon from "@mui/icons-material/History";
 import VisibilityIcon from "@mui/icons-material/Visibility";
+import VisibilityOffIcon from "@mui/icons-material/VisibilityOff";
 import ArticleIcon from "@mui/icons-material/Article";
 import BookmarkIcon from "@mui/icons-material/Bookmark";
 import PersonIcon from "@mui/icons-material/Person";
@@ -79,6 +83,7 @@ import {
   deleteFollowRequest,
   countFollowRequests,
   countSentFollowRequests,
+  setPrivate,
 } from "../../api/socialNetworkApi";
 import PostCard from "../../components/social-network/PostCardComponent";
 import { format, formatDistanceToNow } from "date-fns";
@@ -94,6 +99,8 @@ function Profile() {
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
   const [noPassword, setNoPassword] = useState(false);
+  const [isPrivate, setIsPrivate] = useState(false);
+  const [togglePrivateLoading, setTogglePrivateLoading] = useState(false);
   const [userInfo, setUserInfo] = useState({
     name: "",
     phone: "",
@@ -103,6 +110,8 @@ function Profile() {
     img: getImg(),
     dob: "",
     id: "",
+    role: "",
+    privateAccount: false,
     stats: {
       appointments: 0,
       posts: 0,
@@ -206,6 +215,7 @@ function Profile() {
 
         setImg(response.result.img);
         setNoPassword(response.result.noPassword);
+        setIsPrivate(response.result.privateAccount || false);
 
         // Set follower/following counts
         setFollowersCount(response.result.followersCount || 0);
@@ -2895,6 +2905,31 @@ function Profile() {
     </Dialog>
   );
 
+  // Handle toggling private account status
+  const handleTogglePrivate = async () => {
+    try {
+      setTogglePrivateLoading(true);
+
+      // Optimistic UI update
+      setIsPrivate(!isPrivate);
+
+      // Call API
+      await setPrivate();
+
+      toast.success(
+        `Đã ${!isPrivate ? "bật" : "tắt"} chế độ tài khoản riêng tư`
+      );
+    } catch (error) {
+      console.error("Error toggling private account status:", error);
+      toast.error("Không thể thay đổi trạng thái riêng tư");
+
+      // Revert UI on error
+      setIsPrivate(isPrivate);
+    } finally {
+      setTogglePrivateLoading(false);
+    }
+  };
+
   if (loading) {
     return (
       <Box
@@ -3111,6 +3146,77 @@ function Profile() {
                             </Typography>
                           </Box>
                         </Box>
+
+                        {/* Add privacy toggle only for non-doctor users */}
+                        {userInfo.role !== "DOCTOR" && (
+                          <Box
+                            sx={{
+                              display: "flex",
+                              alignItems: "center",
+                              py: 1,
+                              px: 2,
+                              mt: 1,
+                              borderRadius: 2,
+                              backgroundColor: alpha(
+                                isPrivate
+                                  ? theme.palette.warning.light
+                                  : theme.palette.success.light,
+                                0.1
+                              ),
+                              border: `1px solid ${alpha(
+                                isPrivate
+                                  ? theme.palette.warning.main
+                                  : theme.palette.success.main,
+                                0.2
+                              )}`,
+                            }}
+                          >
+                            {isPrivate ? (
+                              <VisibilityOffIcon
+                                sx={{
+                                  color: theme.palette.warning.main,
+                                  mr: 1.5,
+                                }}
+                              />
+                            ) : (
+                              <VisibilityIcon
+                                sx={{
+                                  color: theme.palette.success.main,
+                                  mr: 1.5,
+                                }}
+                              />
+                            )}
+                            <Box sx={{ flexGrow: 1 }}>
+                              <Typography variant="subtitle2" fontWeight={600}>
+                                {isPrivate
+                                  ? "Tài khoản riêng tư"
+                                  : "Tài khoản công khai"}
+                              </Typography>
+                              <Typography
+                                variant="caption"
+                                color="text.secondary"
+                              >
+                                {isPrivate
+                                  ? "Chỉ người theo dõi mới thấy bài viết của bạn"
+                                  : "Tất cả mọi người đều có thể thấy bài viết của bạn"}
+                              </Typography>
+                            </Box>
+                            <Tooltip
+                              title={
+                                isPrivate
+                                  ? "Chuyển sang tài khoản công khai"
+                                  : "Chuyển sang tài khoản riêng tư"
+                              }
+                            >
+                              <Switch
+                                checked={isPrivate}
+                                onChange={handleTogglePrivate}
+                                disabled={togglePrivateLoading}
+                                color={isPrivate ? "warning" : "success"}
+                              />
+                            </Tooltip>
+                          </Box>
+                        )}
                       </Stack>
 
                       <Divider sx={{ my: 3 }} />

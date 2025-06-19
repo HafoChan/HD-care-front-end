@@ -342,3 +342,54 @@ export const searchPosts = async (keyword, page = 0, size = 10) => {
     throw error;
   }
 };
+
+// API báo cáo bài post
+export const reportPost = async (postId, reportData) => {
+  try {
+    await axiosClient.post(`social/report-post/${postId}`, reportData);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API lấy danh sách bài post bị báo cáo (dành cho admin)
+export const getReportedPosts = async (page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get("social/report-post", {
+      params: { page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API lấy chi tiết các báo cáo của một post (dành cho admin)
+export const getReportsByPost = async (postId, page = 0, size = 10) => {
+  try {
+    const response = await axiosClient.get(`social/report-post/${postId}`, {
+      params: { page, size },
+    });
+    return response.result;
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API duyệt và xóa post bị báo cáo (dành cho admin)
+export const resolveReports = async (postId) => {
+  try {
+    await axiosClient.post(`social/report-post/${postId}/resolve`);
+  } catch (error) {
+    throw error;
+  }
+};
+
+// API từ chối một báo cáo riêng lẻ (dành cho admin)
+export const rejectReport = async (reportId) => {
+  try {
+    await axiosClient.post(`social/report-post/reject/${reportId}`);
+  } catch (error) {
+    throw error;
+  }
+};
