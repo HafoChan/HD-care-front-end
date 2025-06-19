@@ -15,6 +15,10 @@ const notificationApi = {
     
     getAllNotification(){
         return axiosClient.get('notification/get-all')
+    },
+
+    getNotificationByDoctorId(idDoctor){
+        return axiosClient.get(`notification/type-cancel/${idDoctor}`)
     }
 
 }

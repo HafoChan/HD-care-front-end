@@ -23,6 +23,7 @@ import {
   DialogTitle,
   DialogActions,
   Backdrop,
+  TextField,
 } from "@mui/material";
 import {
   AccessTime as AccessTimeIcon,
@@ -32,10 +33,12 @@ import {
   ArrowBack,
   Close,
   CheckCircle,
+  Cancel,
 } from "@mui/icons-material";
 import HeaderComponent from "../../components/patient/HeaderComponent";
 import { appointment } from "../../api/appointment";
 import { doctor } from "../../api/doctor";
+import patientApi from "../../api/patient";
 import EmailIcon from "@mui/icons-material/Email";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import ShoppingCartIcon from "@mui/icons-material/ShoppingCart";
@@ -53,6 +56,10 @@ const AppointmentDetailPatient = () => {
   const [pdfUrl, setPdfUrl] = useState(null);
   const [openPdf, setOpenPdf] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [openCancelDialog, setOpenCancelDialog] = useState(false);
+  const [cancelReason, setCancelReason] = useState("");
+  const [cancelling, setCancelling] = useState(false);
+  const [patientId, setPatientId] = useState(null);
 
   const getStatusColor = (status) => {
     switch (status) {
@@ -112,6 +119,17 @@ const AppointmentDetailPatient = () => {
         console.error("Error fetching doctor:", error);
         toast.error("Không thể tải thông tin bác sĩ");
       }
+
+      // Lấy thông tin patient hiện tại
+      try {
+        const patientResponse = await patientApi.getInfo();
+        if (patientResponse.code === 1000) {
+          setPatientId(patientResponse.result.id);
+        }
+      } catch (error) {
+        console.error("Error fetching patient info:", error);
+      }
+
       setLoading(false);
     };
     fetchData();
@@ -176,6 +194,64 @@ const AppointmentDetailPatient = () => {
 
   const formatNumber = (number) => {
     return new Intl.NumberFormat("vi-VN").format(number);
+  };
+
+  const handleCancelClick = () => {
+    if (appointmentData.status === "CONFIRMED") {
+      setOpenCancelDialog(true);
+    } else {
+      // PENDING - hủy ngay không cần lý do
+      handleCancelAppointment();
+    }
+  };
+
+  const handleCancelAppointment = async (reason = "") => {
+    if (appointmentData.status === "CONFIRMED" && !reason.trim()) {
+      toast.error("Vui lòng nhập lý do hủy cuộc hẹn");
+      return;
+    }
+
+    if (!patientId) {
+      toast.error("Không thể xác định thông tin người dùng");
+      return;
+    }
+
+    setCancelling(true);
+    try {
+      const data = {
+        idDoctor: appointmentData.idDoctor,
+        status: "CANCELLED",
+        note: reason || "Hủy cuộc hẹn",
+      };
+
+      const response = await appointment.changeAppointmentStatus(id, data);
+      
+      if (response.code === 1000) {
+        toast.success("Đã hủy cuộc hẹn thành công");
+        setAppointmentData(prev => ({
+          ...prev,
+          status: "CANCELLED"
+        }));
+        setOpenCancelDialog(false);
+        setCancelReason("");
+      } else {
+        toast.error("Không thể hủy cuộc hẹn. Vui lòng thử lại.");
+      }
+    } catch (error) {
+      console.error("Error cancelling appointment:", error);
+      toast.error("Có lỗi xảy ra khi hủy cuộc hẹn");
+    } finally {
+      setCancelling(false);
+    }
+  };
+
+  const handleCancelConfirm = () => {
+    handleCancelAppointment(cancelReason);
+  };
+
+  const handleCloseCancelDialog = () => {
+    setOpenCancelDialog(false);
+    setCancelReason("");
   };
 
   if (loading) {
@@ -682,6 +758,73 @@ const AppointmentDetailPatient = () => {
                 </Card>
               </Grid>
             </Grid>
+
+            {appointmentData.status === "COMPLETED" && (
+              <Box sx={{ mt: 4 }}>
+                <Button
+                  variant="contained"
+                  color="primary"
+                  startIcon={<VisibilityIcon />}
+                  onClick={handleViewPDF}
+                  fullWidth
+                  sx={{
+                    py: 1.2,
+                    textTransform: "none",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                  }}
+                >
+                  Xem đơn thuốc
+                </Button>
+              </Box>
+            )}
+
+            {(appointmentData.status === "PENDING" || appointmentData.status === "CONFIRMED") && 
+             appointmentData.idPatient === patientId && (
+              <Box sx={{ mt: 4 }}>
+                <Button
+                  variant="outlined"
+                  color="error"
+                  startIcon={<Cancel />}
+                  onClick={handleCancelClick}
+                  fullWidth
+                  sx={{
+                    py: 1.2,
+                    textTransform: "none",
+                    borderRadius: 2,
+                    fontWeight: 600,
+                    borderColor: theme.palette.error.main,
+                    color: theme.palette.error.main,
+                    "&:hover": {
+                      borderColor: theme.palette.error.dark,
+                      backgroundColor: alpha(theme.palette.error.main, 0.04),
+                    },
+                  }}
+                >
+                  Hủy cuộc hẹn
+                </Button>
+              </Box>
+            )}
+
+            {(appointmentData.status === "PENDING" || appointmentData.status === "CONFIRMED") && 
+             appointmentData.idPatient !== patientId && (
+              <Box sx={{ mt: 4 }}>
+                <Typography 
+                  variant="body2" 
+                  color="text.secondary" 
+                  sx={{ 
+                    textAlign: "center",
+                    fontStyle: "italic",
+                    p: 2,
+                    bgcolor: alpha(theme.palette.warning.main, 0.05),
+                    borderRadius: 2,
+                    border: `1px solid ${alpha(theme.palette.warning.main, 0.2)}`
+                  }}
+                >
+                  Chỉ có thể hủy cuộc hẹn của chính mình
+                </Typography>
+              </Box>
+            )}
           </Box>
         </Fade>
       </Container>
@@ -742,6 +885,82 @@ const AppointmentDetailPatient = () => {
             sx={{ borderRadius: 2, textTransform: "none" }}
           >
             Tải xuống
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog
+        open={openCancelDialog}
+        onClose={handleCloseCancelDialog}
+        fullWidth
+        maxWidth="sm"
+        PaperProps={{
+          sx: { borderRadius: 3 },
+        }}
+      >
+        <DialogTitle
+          sx={{
+            display: "flex",
+            justifyContent: "space-between",
+            alignItems: "center",
+            pb: 1,
+          }}
+        >
+          <Typography variant="h6" fontWeight={600}>
+            Nhập lý do hủy cuộc hẹn
+          </Typography>
+          <IconButton onClick={handleCloseCancelDialog} edge="end">
+            <Close />
+          </IconButton>
+        </DialogTitle>
+        <Divider />
+        <DialogContent sx={{ p: 3 }}>
+          <Typography variant="body1" color="text.secondary" sx={{ mb: 2 }}>
+            Vui lòng nhập lý do hủy cuộc hẹn để tiếp tục.
+          </Typography>
+          <TextField
+            label="Lý do hủy cuộc hẹn"
+            multiline
+            rows={4}
+            value={cancelReason}
+            onChange={(e) => setCancelReason(e.target.value)}
+            fullWidth
+            required
+            placeholder="Nhập lý do hủy cuộc hẹn..."
+            sx={{
+              "& .MuiOutlinedInput-root": {
+                borderRadius: 2,
+              },
+            }}
+          />
+        </DialogContent>
+        <DialogActions sx={{ p: 3, pt: 1 }}>
+          <Button
+            onClick={handleCloseCancelDialog}
+            color="primary"
+            variant="outlined"
+            sx={{ borderRadius: 2, textTransform: "none", fontWeight: 600 }}
+            disabled={cancelling}
+          >
+            Đóng
+          </Button>
+          <Button
+            onClick={handleCancelConfirm}
+            color="error"
+            variant="contained"
+            startIcon={cancelling ? <CircularProgress size={16} color="inherit" /> : <Cancel />}
+            sx={{ 
+              borderRadius: 2, 
+              textTransform: "none", 
+              fontWeight: 600,
+              boxShadow: "0 4px 8px rgba(211, 47, 47, 0.2)",
+              "&:hover": {
+                boxShadow: "0 6px 12px rgba(211, 47, 47, 0.3)",
+              },
+            }}
+            disabled={cancelling || !cancelReason.trim()}
+          >
+            {cancelling ? "Đang hủy..." : "Xác nhận hủy"}
           </Button>
         </DialogActions>
       </Dialog>
